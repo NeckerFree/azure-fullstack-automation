@@ -1,0 +1,23 @@
+{
+  "name": "movie-analyst-ui",
+  "version": "1.0.0",
+  "description": "ui for the movie analyst website....im totally not ripping this off.......",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juan-ruiz/movie-analyst-ui.git"
+  },
+  "author": "juan ruiz",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/juan-ruiz/movie-analyst-ui/issues"
+  },
+  "homepage": "https://github.com/juan-ruiz/movie-analyst-ui#readme",
+  "dependencies": {
+    "ejs": "^2.5.7",
+    "express": "^4.15.4",
+    "superagent": "^3.6.0"
+  }
+}

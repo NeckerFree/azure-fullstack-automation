@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="0" tests="1" failures="1">
+  <testsuite name="Root Suite" timestamp="2017-04-27T20:33:32" tests="0" failures="0" time="0">
+  </testsuite>
+  <testsuite name="unit test" timestamp="2017-04-27T20:33:32" tests="1" file="C:\Users\jruiz\workspace\nodeBackend\movie-analyst-api\test\test.js" failures="1" time="0">
+    <testcase name="unit test should return home page" time="0" classname="should return home page">
+      <failure><![CDATA[TypeError: Cannot read property 'status' of null
+    at Test.<anonymous> (test\test.js:20:10)
+    at Test.assert (node_modules\supertest\lib\test.js:165:8)
+    at assert (node_modules\supertest\lib\test.js:131:12)
+    at node_modules\supertest\lib\test.js:128:5
+    at Test.Request.callback (node_modules\superagent\lib\node\index.js:688:3)
+    at ClientRequest.<anonymous> (node_modules\superagent\lib\node\index.js:615:10)
+    at Socket.socketErrorListener (_http_client.js:309:9)
+    at emitErrorNT (net.js:1281:8)
+    at _combinedTickCallback (internal/process/next_tick.js:80:11)
+    at process._tickCallback (internal/process/next_tick.js:104:9)]]></failure>
+    </testcase>
+  </testsuite>
+</testsuites>
