@@ -35,6 +35,7 @@
 
 **Azure Full Stack Automation** is a project to deploy to Azure a full stack application.
 ## 🌦️ Cloud Diagram <a name="cloud-diagram"></a>
+![architecture diagram](https://github.com/user-attachments/assets/3e4de7b0-713c-4227-b24b-7b5434dfdbb6)
 
 ## 🛠 Built With <a name="built-with"></a>
 
