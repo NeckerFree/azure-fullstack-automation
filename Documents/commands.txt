@@ -1,0 +1,5 @@
+terraform init
+terraform workspace new qa
+terraform workspace new prod
+terraform workspace select qa
+terraform plan
