@@ -26,3 +26,10 @@ variable "tenant_id" {
   type        = string
   sensitive   = true
 }
+
+variable "resource_group_name" {
+  description = "resource group"
+  type        = string
+  default     = "rg"
+}
+

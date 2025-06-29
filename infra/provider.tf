@@ -19,6 +19,4 @@ provider "azurerm" {
   tenant_id       = var.tenant_id
 }
 
-locals {
-  env_suffix = terraform.workspace == "prod" ? "prod" : "qa"
-}
+
