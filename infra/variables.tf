@@ -27,12 +27,6 @@ variable "tenant_id" {
   sensitive   = true
 }
 
-variable "resource_group_name" {
-  description = "resource group"
-  type        = string
-  default     = "rg"
-}
-
 variable "mysql_admin_password" {
   type      = string
   sensitive = true
