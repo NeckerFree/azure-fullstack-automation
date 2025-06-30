@@ -6,12 +6,12 @@ variable "location" {
   type = string
 }
 
-variable "env_suffix" {
-  type = string
-}
+# variable "env_prefix" {
+#   type = string
+# }
 
 resource "azurerm_virtual_network" "main" {
-  name                = "vnet-${var.env_suffix}"
+  name                = "${var.env_prefix}-vnet"
   address_space       = ["10.0.0.0/16"]
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -68,3 +68,41 @@ resource "azurerm_subnet" "db" {
 #   subnet_id                 = azurerm_subnet.backend.id
 #   network_security_group_id = azurerm_network_security_group.backend_nsg.id
 # }
+# resource "azurerm_network_security_group" "backend" {
+#   name                = "nsg-backend"
+#   location            = var.location
+#   resource_group_name = var.resource_group_name
+
+#   security_rule {
+#     name                       = "Allow-LB"
+#     priority                   = 100
+#     direction                  = "Inbound"
+#     access                     = "Allow"
+#     protocol                   = "Tcp"
+#     source_port_range          = "*"
+#     destination_port_ranges    = [80, 443]
+#     source_address_prefix      = "AzureLoadBalancer"
+#     destination_address_prefix = "*"
+#   }
+
+#   security_rule {
+#     name                       = "Deny-All-Inbound"
+#     priority                   = 4000
+#     direction                  = "Inbound"
+#     access                     = "Deny"
+#     protocol                   = "*"
+#     source_port_range          = "*"
+#     destination_port_range     = "*"
+#     source_address_prefix      = "*"
+#     destination_address_prefix = "*"
+#   }
+# }
+resource "azurerm_subnet_network_security_group_association" "db" {
+  subnet_id                 = azurerm_subnet.db.id
+  network_security_group_id = azurerm_network_security_group.db.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "backend" {
+  subnet_id                 = azurerm_subnet.backend.id
+  network_security_group_id = azurerm_network_security_group.backend.id
+}
