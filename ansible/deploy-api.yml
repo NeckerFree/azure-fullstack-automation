@@ -1,0 +1,33 @@
+---
+- hosts: movie_api
+  become: yes
+  tasks:
+    - name: Ensure directory exists
+      file:
+        path: /opt/movie-analyst-api
+        state: directory
+        mode: "0755"
+
+    - name: Copy application files
+      copy:
+        src: movie-analyst-api/
+        dest: /opt/movie-analyst-api
+        owner: adminuser
+        group: adminuser
+
+    - name: Install dependencies
+      apt:
+        name:
+          - nodejs
+          - npm
+        state: present
+
+    - name: Install node modules
+      npm:
+        path: /opt/movie-analyst-api
+        state: present
+
+    - name: Restart service
+      systemd:
+        name: movie-api
+        state: restarted
