@@ -48,7 +48,9 @@ module "load-balancer" {
   virtual_network_id         = module.network.virtual_network_id
   backend_subnet_id          = module.network.backend_subnet_id
   mysql_flexible_server_fqdn = module.database.mysql_flexible_server_fqdn
+  admin_username             = var.admin_username
 }
+
 
 
 module "monitoring" {

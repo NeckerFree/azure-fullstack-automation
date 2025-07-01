@@ -1,14 +1,3 @@
-variable "resource_group_name" {
-  type = string
-}
-
-variable "location" {
-  type = string
-}
-
-# variable "env_prefix" {
-#   type = string
-# }
 
 resource "azurerm_virtual_network" "main" {
   name                = "${var.env_prefix}-vnet"
@@ -32,71 +21,6 @@ resource "azurerm_subnet" "db" {
   service_endpoints    = ["Microsoft.Storage"]
 }
 
-# resource "azurerm_network_security_group" "backend_nsg" {
-#   name                = "nsg-backend-${var.env_suffix}"
-#   location            = var.location
-#   resource_group_name = var.resource_group_name
-
-#   security_rule {
-#     name                       = "AllowSSH"
-#     priority                   = 100
-#     direction                  = "Inbound"
-#     access                     = "Allow"
-#     protocol                   = "Tcp"
-#     source_port_range          = "*"
-#     destination_port_range     = "22"
-#     source_address_prefix      = "0.0.0.0/0"
-#     destination_address_prefix = "*"
-#     description                = "Allow SSH from anywhere"
-#   }
-
-#   security_rule {
-#     name                       = "DenyAllInbound"
-#     priority                   = 200
-#     direction                  = "Inbound"
-#     access                     = "Deny"
-#     protocol                   = "*"
-#     source_port_range          = "*"
-#     destination_port_range     = "*"
-#     source_address_prefix      = "0.0.0.0/0"
-#     destination_address_prefix = "*"
-#     description                = "Deny all other inbound traffic"
-#   }
-# }
-
-# resource "azurerm_subnet_network_security_group_association" "backend_assoc" {
-#   subnet_id                 = azurerm_subnet.backend.id
-#   network_security_group_id = azurerm_network_security_group.backend_nsg.id
-# }
-# resource "azurerm_network_security_group" "backend" {
-#   name                = "nsg-backend"
-#   location            = var.location
-#   resource_group_name = var.resource_group_name
-
-#   security_rule {
-#     name                       = "Allow-LB"
-#     priority                   = 100
-#     direction                  = "Inbound"
-#     access                     = "Allow"
-#     protocol                   = "Tcp"
-#     source_port_range          = "*"
-#     destination_port_ranges    = [80, 443]
-#     source_address_prefix      = "AzureLoadBalancer"
-#     destination_address_prefix = "*"
-#   }
-
-#   security_rule {
-#     name                       = "Deny-All-Inbound"
-#     priority                   = 4000
-#     direction                  = "Inbound"
-#     access                     = "Deny"
-#     protocol                   = "*"
-#     source_port_range          = "*"
-#     destination_port_range     = "*"
-#     source_address_prefix      = "*"
-#     destination_address_prefix = "*"
-#   }
-# }
 resource "azurerm_subnet_network_security_group_association" "db" {
   subnet_id                 = azurerm_subnet.db.id
   network_security_group_id = azurerm_network_security_group.db.id

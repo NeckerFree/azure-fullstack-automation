@@ -1,0 +1,35 @@
+---
+- name: Configure infrastructure
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Ensure all nodes are in /etc/hosts
+      become: yes
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars[item]['ansible_host'] }} {{ hostvars[item]['inventory_hostname'] }}"
+        state: present
+      loop: "{{ groups['nodes'] + groups['control'] }}"
+
+- name: Configure control node ssh
+  hosts: control
+  vars:
+    ssh_private_key_path: "/home/{{ ansible_user }}/.ssh/id_rsa"  # Default path or your custom path
+  tasks:
+    - name: Create ~/.ssh directory
+      ansible.builtin.file:
+        path: ~/.ssh
+        state: directory
+        mode: "0700"
+
+    - name: Update SSH config for node* hosts
+      ansible.builtin.blockinfile:
+        path: ~/.ssh/config
+        block: |
+          Host node*
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            User {{ ansible_user }}
+            IdentityFile {{ ssh_private_key_path }}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - NODE CONFIG"
+        create: yes

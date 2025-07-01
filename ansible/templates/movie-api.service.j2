@@ -1,0 +1,14 @@
+[Unit]
+Description=Movie Analyst API
+After=network.target
+
+[Service]
+User={{ app_user }}
+Group={{ app_user }}
+WorkingDirectory={{ app_dir }}
+ExecStart=/usr/bin/pm2 start {{ app_dir }}/server.js --name movie-api --no-daemon
+Restart=always
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

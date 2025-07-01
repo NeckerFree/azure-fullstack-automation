@@ -36,3 +36,7 @@ variable "mysql_user" {
   type    = string
   default = "mysqladmin"
 }
+
+variable "admin_username" {
+  default = "adminuser"
+}
