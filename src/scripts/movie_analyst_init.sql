@@ -1,80 +1,67 @@
--- Create the database
-CREATE DATABASE IF NOT EXISTS movie_analyst;
-USE movie_analyst;
+-- Create database if not exists
+CREATE DATABASE IF NOT EXISTS movie_db;
+USE movie_db;
 
--- Create movies table
-CREATE TABLE IF NOT EXISTS movies (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(100) NOT NULL,
-  rating DECIMAL(3,1) NOT NULL,
-  release_date DATE NOT NULL,
-  image_url VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+-- Create publications table
+CREATE TABLE IF NOT EXISTS publications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    avatar VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Create reviewers table
 CREATE TABLE IF NOT EXISTS reviewers (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  avatar VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    publication VARCHAR(100) NOT NULL,
+    avatar VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (publication) REFERENCES publications(name) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Create publications table
-CREATE TABLE IF NOT EXISTS publications (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  avatar VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- Create movies table
+CREATE TABLE IF NOT EXISTS movies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    release_year CHAR(4) NOT NULL,
+    score INT NOT NULL,
+    reviewer VARCHAR(100) NOT NULL,
+    publication VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reviewer) REFERENCES reviewers(name) ON DELETE CASCADE,
+    FOREIGN KEY (publication) REFERENCES publications(name) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Create reviews table (implied by relationships)
-CREATE TABLE IF NOT EXISTS reviews (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  movie_id INT NOT NULL,
-  reviewer_id INT NOT NULL,
-  publication_id INT NOT NULL,
-  rating DECIMAL(3,1) NOT NULL,
-  review TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (movie_id) REFERENCES movies(id),
-  FOREIGN KEY (reviewer_id) REFERENCES reviewers(id),
-  FOREIGN KEY (publication_id) REFERENCES publications(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Insert publications data
+INSERT IGNORE INTO publications (name, avatar) VALUES
+('The Daily Reviewer', 'glyphicon-eye-open'),
+('International Movie Critic', 'glyphicon-fire'),
+('MoviesNow', 'glyphicon-time'),
+('MyNextReview', 'glyphicon-record'),
+('Movies n\' Games', 'glyphicon-heart-empty'),
+('TheOne', 'glyphicon-globe'),
+('ComicBookHero.com', 'glyphicon-flash');
 
--- Insert sample movies data (from seeds.js)
-INSERT INTO movies (title, rating, release_date, image_url) VALUES
-('The Shawshank Redemption', 9.3, '1994-09-23', 'https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg'),
-('The Godfather', 9.2, '1972-03-24', 'https://image.tmdb.org/t/p/w500/rPdtLWNsZmAtoZl9PK7S2wE3qiS.jpg'),
-('The Dark Knight', 9.0, '2008-07-16', 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg');
+-- Insert reviewers data
+INSERT IGNORE INTO reviewers (name, publication, avatar) VALUES
+('Robert Smith', 'The Daily Reviewer', 'https://s3.amazonaws.com/uifaces/faces/twitter/angelcolberg/128.jpg'),
+('Chris Harris', 'International Movie Critic', 'https://s3.amazonaws.com/uifaces/faces/twitter/bungiwan/128.jpg'),
+('Janet Garcia', 'MoviesNow', 'https://s3.amazonaws.com/uifaces/faces/twitter/grrr_nl/128.jpg'),
+('Andrew West', 'MyNextReview', 'https://s3.amazonaws.com/uifaces/faces/twitter/d00maz/128.jpg'),
+('Mindy Lee', 'Movies n\' Games', 'https://s3.amazonaws.com/uifaces/faces/twitter/laurengray/128.jpg'),
+('Martin Thomas', 'TheOne', 'https://s3.amazonaws.com/uifaces/faces/twitter/karsh/128.jpg'),
+('Anthony Miller', 'ComicBookHero.com', 'https://s3.amazonaws.com/uifaces/faces/twitter/9lessons/128.jpg');
 
--- Insert sample reviewers data
-INSERT INTO reviewers (name, avatar) VALUES
-('Robert Smith', 'https://randomuser.me/api/portraits/men/32.jpg'),
-('Jane Doe', 'https://randomuser.me/api/portraits/women/44.jpg'),
-('Alice Johnson', 'https://randomuser.me/api/portraits/women/68.jpg');
-
--- Insert sample publications data
-INSERT INTO publications (name, avatar) VALUES
-('The Daily Reviewer', 'https://randomuser.me/api/portraits/men/75.jpg'),
-('International Movie Critic', 'https://randomuser.me/api/portraits/men/19.jpg'),
-('MoviesNow', 'https://randomuser.me/api/portraits/women/33.jpg'),
-('MyNextReview', 'https://randomuser.me/api/portraits/men/22.jpg'),
-('Movies n\' Games', 'https://randomuser.me/api/portraits/women/53.jpg'),
-('TheOne', 'https://randomuser.me/api/portraits/men/46.jpg'),
-('ComicBookHero.com', 'https://randomuser.me/api/portraits/women/11.jpg');
-
--- Insert sample reviews data
-INSERT INTO reviews (movie_id, reviewer_id, publication_id, rating, review) VALUES
-(1, 1, 1, 9.5, 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'),
-(1, 2, 2, 9.0, 'Nulla facilisi. Vivamus euismod, ipsum eu volutpat.'),
-(2, 1, 3, 9.3, 'Pellentesque habitant morbi tristique senectus et netus.'),
-(2, 3, 4, 9.1, 'Duis aute irure dolor in reprehenderit in voluptate.'),
-(3, 2, 5, 8.8, 'Excepteur sint occaecat cupidatat non proident.'),
-(3, 3, 6, 8.9, 'Ut enim ad minim veniam, quis nostrud exercitation.');
-
--- Create application user with restricted privileges
-CREATE USER 'movie_analyst'@'%' IDENTIFIED BY 'AnalystPassword123!';
-GRANT SELECT, INSERT, UPDATE, DELETE ON movie_analyst.* TO 'movie_analyst'@'%';
-FLUSH PRIVILEGES;
+-- Insert movies data
+INSERT IGNORE INTO movies (title, release_year, score, reviewer, publication) VALUES
+('Suicide Squad', '2016', 8, 'Robert Smith', 'The Daily Reviewer'),
+('Batman vs. Superman', '2016', 6, 'Chris Harris', 'International Movie Critic'),
+('Captain America: Civil War', '2016', 9, 'Janet Garcia', 'MoviesNow'),
+('Deadpool', '2016', 9, 'Andrew West', 'MyNextReview'),
+('Avengers: Age of Ultron', '2015', 7, 'Mindy Lee', 'Movies n\' Games'),
+('Ant-Man', '2015', 8, 'Martin Thomas', 'TheOne'),
+('Guardians of the Galaxy', '2014', 10, 'Anthony Miller', 'ComicBookHero.com'),
+('Doctor Strange', '2016', 7, 'Anthony Miller', 'ComicBookHero.com'),
+('Superman: Homecoming', '2017', 10, 'Chris Harris', 'International Movie Critic'),
+('Wonder Woman', '2017', 8, 'Martin Thomas', 'TheOne');

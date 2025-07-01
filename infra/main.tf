@@ -28,8 +28,8 @@ module "network" {
   normalized_workspace = local.normalized_workspace
 }
 
-module "database" {
-  source               = "./modules/database"
+module "mysql-database" {
+  source               = "./modules/mysql-database"
   resource_group_name  = local.resource_group_name
   location             = var.location
   env_prefix           = local.name_prefix
@@ -47,7 +47,7 @@ module "load-balancer" {
   resource_group_name        = local.resource_group_name
   virtual_network_id         = module.network.virtual_network_id
   backend_subnet_id          = module.network.backend_subnet_id
-  mysql_flexible_server_fqdn = module.database.mysql_flexible_server_fqdn
+  mysql_flexible_server_fqdn = module.mysql-database.mysql_flexible_server_fqdn
   admin_username             = var.admin_username
 }
 

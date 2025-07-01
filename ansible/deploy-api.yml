@@ -14,6 +14,7 @@
       port: 3306
 
   tasks:
+    # System setup
     - name: Install system dependencies
       apt:
         name:
@@ -30,6 +31,7 @@
         name: pm2
         global: yes
 
+    # Application deployment
     - name: Ensure application directory exists
       file:
         path: "{{ app_dir }}"
@@ -54,6 +56,7 @@
         rsync_opts:
           - "--chown={{ app_user }}:{{ app_user }}"
 
+    # Database setup
     - name: Create database configuration
       template:
         src: templates/config.js.j2
@@ -62,6 +65,39 @@
         group: "{{ app_user }}"
         mode: '0640'
 
+    - name: Ensure scripts directory exists
+      file:
+        path: "{{ app_dir }}/src/scripts"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+
+    - name: Transfer MySQL initialization script
+      copy:
+        src: "src/scripts/movie_analyst_init.sql"
+        dest: "{{ app_dir }}/src/scripts/movie_analyst_init.sql"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0640'
+      when: "'src/scripts/movie_analyst_init.sql' in lookup('fileglob', 'src/scripts/*.sql')"
+
+    - name: Load MySQL initialization script
+      mysql_db:
+        login_host: "{{ mysql_config.host }}"
+        login_user: "{{ mysql_config.user }}"
+        login_password: "{{ mysql_config.password }}"
+        name: "{{ mysql_config.database }}"
+        state: import
+        target: "{{ app_dir }}/src/scripts/movie_analyst_init.sql"
+      register: db_import
+      no_log: true
+      changed_when: "'OK' in db_import.msg"
+      failed_when: >
+        db_import.failed and
+        ('already exists' not in db_import.msg)
+
+    # Application setup
     - name: Install Node.js dependencies
       npm:
         path: "{{ app_dir }}"
@@ -83,6 +119,7 @@
         state: started
         enabled: yes
 
+    # Cleanup
     - name: Clean up temporary files
       file:
         path: "/tmp/devops-rampup"
