@@ -25,6 +25,8 @@ resource "azurerm_public_ip" "control" {
   resource_group_name = var.resource_group_name
   location            = var.location
   allocation_method   = "Dynamic"
+  # allocation_method   = "Static" # Add this for Standard SKU
+  # sku                 = "Standard"
 }
 resource "azurerm_network_interface" "control" {
   name                = "${var.env_prefix}-nic-control"
@@ -120,3 +122,8 @@ resource "local_file" "ansible_inventory" {
   filename = abspath("${path.module}/../../../ansible/inventory.ini")
 }
 
+resource "local_file" "ssh_private_key" {
+  content         = tls_private_key.vm_ssh.private_key_openssh
+  filename        = abspath("${path.module}/../../../ansible/vm_ssh_key")
+  file_permission = "0600"
+}

@@ -1,5 +1,0 @@
-ansible-playbook -i inventory.ini deploy-api.yml \
-  -e mysql_host=your-mysql-host \
-  -e mysql_user=your-mysql-user \
-  -e mysql_password=your-mysql-password \
-  -e mysql_database=your-mysql-db

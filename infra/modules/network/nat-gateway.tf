@@ -1,17 +1,17 @@
 variable "env_prefix" { type = string }
-variable "normalized_workspace" { type = string }
+variable "environment" { type = string }
 resource "azurerm_public_ip" "nat" {
-  # count               = var.normalized_workspace == "prod" ? 1 : 0 # <-- HERE
+  # count               = var.environment == "prod" ? 1 : 0 # <-- HERE
   name                = "${var.env_prefix}-nat-gw-ip"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
-  sku                 = "Basic" # Free-tier eligible (Standard has cost)
-  zones               = ["1"]   # Required for Basic SKU
+  sku                 = "Standard" # Free-tier eligible (Standard has cost)
+  zones               = ["1"]      # Required for Basic SKU
 }
 
 resource "azurerm_nat_gateway" "main" {
-  # count                   = var.normalized_workspace == "prod" ? 1 : 0 # <-- HERE
+  # count                   = var.environment == "prod" ? 1 : 0 # <-- HERE
   name                    = "${var.env_prefix}-nat-gw"
   location                = var.location
   resource_group_name     = var.resource_group_name

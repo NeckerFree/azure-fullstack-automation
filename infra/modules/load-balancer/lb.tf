@@ -3,15 +3,15 @@ resource "azurerm_public_ip" "lb" {
   name                = "${var.env_prefix}-lb-pip"
   location            = var.location
   resource_group_name = var.resource_group_name
-  allocation_method   = "Dynamic" # Required for Basic SKU
-  sku                 = "Basic"   # Free-tier eligible
+  allocation_method   = "Static"
+  sku                 = "Standard"
 }
 
 resource "azurerm_lb" "main" {
   name                = "${var.env_prefix}-lb"
   location            = var.location
   resource_group_name = var.resource_group_name
-  sku                 = "Basic" # Free-tier eligible
+  sku                 = "Standard" # Free-tier eligible
 
   frontend_ip_configuration {
     name                 = "LBFrontend"

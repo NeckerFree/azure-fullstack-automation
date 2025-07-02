@@ -23,7 +23,7 @@ resource "azurerm_linux_web_app" "main" {
 
   app_settings = {
     "API_BASE_URL"                        = "http://${var.lb_public_ip}/api"
-    "NODE_ENV"                            = var.normalized_workspace
+    "NODE_ENV"                            = var.environment
     "WEBSITES_PORT"                       = "3000"
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }

@@ -1,7 +1,6 @@
 variable "location" {
-  description = "default location"
-  type        = string
-  default     = "westus2"
+  type    = string
+  default = "eastus"
 }
 variable "subscription_id" {
   description = "Azure Subscription ID"
@@ -26,17 +25,13 @@ variable "tenant_id" {
   type        = string
   sensitive   = true
 }
-
-variable "mysql_admin_password" {
-  type      = string
-  sensitive = true
+variable "environment" {
+  type    = string
+  default = "qa"
+}
+variable "tfstate_storage_account" {
+  type    = string
+  default = "epamqatfstate"
 }
 
-variable "mysql_user" {
-  type      = string
-  sensitive = true
-}
 
-variable "admin_username" {
-  default = "adminuser"
-}

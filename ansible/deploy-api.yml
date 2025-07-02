@@ -12,6 +12,7 @@
       password: "{{ mysql_password }}"
       database: "{{ mysql_database }}"
       port: 3306
+    mysql_script_path: "ansible/files/mysql/movie_db.sql"
 
   tasks:
     # System setup
@@ -65,22 +66,20 @@
         group: "{{ app_user }}"
         mode: '0640'
 
-    - name: Ensure scripts directory exists
+    - name: Ensure MySQL scripts directory exists
       file:
-        path: "{{ app_dir }}/src/scripts"
+        path: "/etc/ansible/mysql"
         state: directory
-        owner: "{{ app_user }}"
-        group: "{{ app_user }}"
         mode: '0755'
 
     - name: Transfer MySQL initialization script
       copy:
-        src: "src/scripts/movie_analyst_init.sql"
-        dest: "{{ app_dir }}/src/scripts/movie_analyst_init.sql"
-        owner: "{{ app_user }}"
-        group: "{{ app_user }}"
+        src: "{{ mysql_script_path }}"
+        dest: "/etc/ansible/mysql/movie_db.sql"
+        owner: root
+        group: root
         mode: '0640'
-      when: "'src/scripts/movie_analyst_init.sql' in lookup('fileglob', 'src/scripts/*.sql')"
+      when: lookup('fileglob', mysql_script_path)|length > 0
 
     - name: Load MySQL initialization script
       mysql_db:
@@ -89,7 +88,7 @@
         login_password: "{{ mysql_config.password }}"
         name: "{{ mysql_config.database }}"
         state: import
-        target: "{{ app_dir }}/src/scripts/movie_analyst_init.sql"
+        target: "/etc/ansible/mysql/movie_db.sql"
       register: db_import
       no_log: true
       changed_when: "'OK' in db_import.msg"
