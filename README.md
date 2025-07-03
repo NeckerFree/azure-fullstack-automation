@@ -188,6 +188,7 @@ First-Time Setup:
 
 ```
 ansible-playbook -i inventory.ini setup-infra.yml
+```
 API Deployment:
 
 ```
@@ -196,11 +197,14 @@ ansible-playbook -i inventory.ini deploy-api.yml \
   -e mysql_user=adminuser \
   -e mysql_password=$DB_PASSWORD \
   -e mysql_database=movie_analyst
+```
 Verification:
 
 ```
 ansible nodes -i inventory.ini -m 
-```shell -a "systemctl status movie-api"
+shell -a "systemctl status movie-api"
+```
+
 File Structure
 text
 ansible/
@@ -244,10 +248,12 @@ Dry-Run Verification:
 
 ```
 ansible-playbook -i inventory.ini deploy-api.yml --check --diff
+```
 Tagged Execution:
 
 ```
 ansible-playbook -i inventory.ini deploy-api.yml --tags "db,config"
+```
 Troubleshooting
 Common Issues:
 
@@ -357,6 +363,7 @@ Run Ansible playbooks using:
 
 ```sh 
 ansible-playbook -i ansible/inventory.ini ansible/setup.yml
+```
 Security Notes
 The generated private key should be:
 
@@ -393,42 +400,51 @@ Initialize Terraform:
 
 ```sh 
 terraform init
+```
 Create a Terraform workspace (for example, for QA environment):
 
 ```sh 
 terraform workspace new qa
+```
 Install
 Install Azure CLI and login:
 
 ```sh 
 az login
+```
 Install required Ansible roles:
 
 ```sh 
 ansible-galaxy install -r ansible/requirements.yml
+```
 Usage
 Plan the Terraform deployment:
 
 ```sh 
 terraform plan -var-file=environments/qa.tfvars
+```
 Apply the changes:
 
 ```sh 
 terraform apply -var-file=environments/qa.tfvars
+```
 Run Ansible playbook to configure servers:
 
 ```sh 
 ansible-playbook ansible/setup.yml -i ansible/inventory/qa
+```
 Run tests
 Run infrastructure tests:
 
 ```sh 
 terraform validate
+```
 Run application tests:
 
 ```sh 
 cd frontend && npm test
 cd ../backend && npm test
+```
 Deployment
 ## Terraform State Management in Azure <a name="terraform-state"></a>
 
@@ -466,6 +482,7 @@ terraform init -backend-config="storage_account_name=epamqatfstate" \
                -backend-config="container_name=tfstate" \
                -backend-config="key=terraform.tfstate" \
                -backend-config="resource_group_name=elio-tfstate-rg"
+```
 The project includes GitHub Actions workflows for CI/CD. Push to the main branch to trigger the deployment pipeline.
 
 For manual deployment:
@@ -475,11 +492,13 @@ Build and deploy frontend:
 ```sh 
 cd frontend && npm run build
 az webapp up --name your-frontend-app --resource-group epamqarg --runtime "NODE|14-lts"
+```
 Deploy backend API:
 
 ```sh 
 cd backend
 az webapp up --name your-backend-api --resource-group epamqarg --runtime "NODE|14-lts"
+```
 <p align="right">(<a href="#readme-top">back to top</a>)</p><!-- AUTHORS -->
 👥 Authors <a name="authors"></a>
 👤 Author Name
