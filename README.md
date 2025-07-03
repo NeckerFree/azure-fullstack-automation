@@ -1,7 +1,8 @@
 <a name="readme-top"></a>
 
 <div align="center">
-  <h3><b>Azure Full Stack App Automation</b></h3>
+  
+   # Azure Full Stack Automation
 </div>
 
 <!-- TABLE OF CONTENTS -->
@@ -36,21 +37,27 @@
 **Azure Full Stack Automation** is a project to deploy a full stack application (frontend and backend) to Azure using Terraform for infrastructure provisioning, Ansible for configuration management, and CI/CD pipelines for automated deployment.
 
 ## 🌦️ Cloud Diagram <a name="cloud-diagram"></a>
-
-![architecture diagram](https://github.com/user-attachments/assets/3e4de7b0-713c-4227-b24b-7b5434dfdbb6)
+![architecture diagram](https://github.com/user-attachments/assets/2133893e-3ed1-4f2f-b36f-73754dbdfc31)
 
 ## 🛠 Built With <a name="built-with"></a>
 ## Terraform Modules Overview <a name="terraform-modules"></a>
 
 This project uses a modular Terraform architecture with the following components:
-
-### Network Module (`./modules/network`)
-## Network Module <a name="network-module"></a>
-
+### Network Module <a name="network-module"></a>
 The Network Module establishes the foundational networking infrastructure for the application, including virtual networks, subnets, security groups, and NAT gateway configuration.
 
+- **Purpose**: Sets up the core networking infrastructure
+- **Features**:
+  - Creates Virtual Network (VNet) with CIDR configuration
+  - Provisions subnets for different application tiers
+  - Configures network security groups (NSGs) with appropriate rules
+  - Establishes route tables for network traffic
+- **Outputs**:
+  - Virtual Network ID
+  - Database subnet ID
+  - Backend subnet ID
+  - Public subnet ID (if applicable)
 ### Core Components
-
 #### Virtual Network (VNet)
 - **CIDR Block**: `10.0.0.0/16`
 - **Subnets**:
@@ -111,60 +118,11 @@ This module provides the following outputs for other modules to consume:
 - NAT Gateway Public IP
 - Network Security Group IDs
 
-### Usage Example
-
-```hcl
-module "network" {
-  source              = "./modules/network"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = var.location
-  env_prefix          = local.name_prefix
-  environment         = local.environment
-}
-Security Considerations
-Production Recommendations:
-
-Restrict SSH access to known IP ranges
-
-Implement Network Watcher flow logging
-
-Consider Azure Firewall for advanced protection
-
-Enable DDoS Protection Standard for public IPs
-
 Cost Monitoring:
 
 NAT Gateway incurs hourly charges
 
 Monitor outbound data transfer costs
-
-Consider Azure Pricing Calculator for estimation
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p> ```
-This section provides:
-
-Clear structure matching your implementation
-
-Technical details from all three files (nat-gateway.tf, network.tf, network_security.tf)
-
-Environment-specific considerations
-
-Security and cost optimization highlights
-
-Usage example and outputs
-
-Production-grade recommendations
-- **Purpose**: Sets up the core networking infrastructure
-- **Features**:
-  - Creates Virtual Network (VNet) with CIDR configuration
-  - Provisions subnets for different application tiers
-  - Configures network security groups (NSGs) with appropriate rules
-  - Establishes route tables for network traffic
-- **Outputs**:
-  - Virtual Network ID
-  - Database subnet ID
-  - Backend subnet ID
-  - Public subnet ID (if applicable)
 
 ### MySQL Database Module (`./modules/mysql-database`)
 - **Purpose**: Deploys and manages the MySQL database service
