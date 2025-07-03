@@ -63,7 +63,40 @@
 This project uses a modular Terraform architecture with the following components:
 
 <details>
-  <summary>Network Module (`./modules/mysql-database`)</summary>
+  <summary> Network Module (`./modules/mysql-database`)</summary>
+  
+### Core Components
+#### Virtual Network (VNet)
+- **CIDR Block**: `10.0.0.0/16`
+- **Subnets**:
+  - **Backend Subnet** (`10.0.2.0/24`):
+    - Hosts application servers
+    - Associated with backend NSG
+    - Connected to NAT Gateway
+  - **Database Subnet** (`10.0.3.0/24`):
+    - Isolated subnet for database services
+    - Microsoft.Storage service endpoints enabled
+    - Restricted access to backend subnet only
+
+
+#### Network Security Groups (NSGs)
+- **Backend NSG**:
+  - Allows SSH access from any IP (port 22)
+  - Permits internal HTTP traffic on port 8080
+  - Default Azure rules for outbound traffic
+- **Database NSG**:
+  - Restricts MySQL access (port 3306) to backend subnet only
+  - Explicitly denies all other inbound traffic
+  - Implements zero-trust model for database layer
+
+#### NAT Gateway (Standard SKU)
+- **Features**:
+  - Provides outbound internet connectivity for backend resources
+  - Uses static public IP address
+  - Deployed in availability zone 1
+  - 4-minute idle timeout (minimum for cost optimization)
+- **Environment Awareness**:
+  - Currently deployed in all environments (commented conditional logic available)
 
 </details>
 
@@ -260,7 +293,7 @@ The system creates a dynamic inventory using:
    ansible_ssh _common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
    ansible_ssh _private_key_file=${ssh _private_key_path}
    
-<p align="right">(<a href="#readme-top">back to top</a>)</p> ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Setup
 
