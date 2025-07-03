@@ -36,5 +36,20 @@ override.tf.json
 .terraformrc
 terraform.rc
 # Ignore folder
-/Documents/
 
+docs/terraform commands.txt
+docs/Terraform code.docx
+docs/SSH commands .txt
+docs/rampup-final-task.pdf
+docs/NSG connection.png
+docs/Monitoreo.png
+docs/ExportedEstimate monthly.xlsx
+docs/ExportedEstimate hourly.xlsx
+docs/Candidate architecture.docx
+docs/candidate architecture diagram.png
+docs/azure commands.txt
+docs/architecture diagram.png
+docs/architecture diagram previuos.png
+docs/architecture diagram 1.png
+docs/Architecture decisions.docx
+docs/ansible commands.txt
