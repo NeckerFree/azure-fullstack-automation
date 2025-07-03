@@ -64,8 +64,7 @@ This project uses a modular Terraform architecture with the following components
 
 <details>
   <summary> Network Module (`./modules/mysql-database`)</summary>
-  
-### Core Components
+
 #### Virtual Network (VNet)
 - **CIDR Block**: `10.0.0.0/16`
 - **Subnets**:
@@ -102,22 +101,100 @@ This project uses a modular Terraform architecture with the following components
 
 <details>
   <summary>MySQL Database Module (`./modules/mysql-database`)</summary>
- 
+
+ #### MySQL Flexible Server
+- **Environment-Aware Configuration**:
+  - **Production**: GP_Standard_D2ds_v4 SKU with 256GB storage
+  - **Non-Production**: B_Standard_B1ms SKU with 20GB storage (free-tier eligible)
+- **Authentication**:
+  - Custom administrator username/password
+  - MySQL 8.0.21 version
+- **Storage**:
+  - UTF8MB4 charset with Unicode collation
+  - Auto-growing storage (up to 16TB)
+
+#### Database Instance
+- Pre-configured `movie_analyst` database
+- Optimized character set for multilingual content
+- Proper collation for case-insensitive searches
+
+#### Network Integration
+- Private Endpoint connectivity
+- Isolated within database subnet
+- DNS integration via Private DNS Zone
 </details>
 
 <details>
   <summary>Load Balancer Module (`./modules/load-balancer`)</summary>
 
+#### Azure Load Balancer (Standard SKU)
+- **Frontend Configuration**:
+  - Static public IP address (Standard SKU)
+  - Listens on port 80 for HTTP traffic
+- **Backend Pool**:
+  - Contains 2 backend VMs for high availability
+  - Auto-registers VM network interfaces
+- **Health Probes**:
+  - HTTP probe checking `/health` endpoint on port 8080
+  - 15-second interval for responsiveness
+- **Load Balancing Rules**:
+  - Port 80 → 8080 forwarding
+  - TCP protocol for optimal performance
+  - Health probe integration
+
+#### Virtual Machine Infrastructure
+- **Backend VMs**:
+  - 2 Ubuntu 18.04 LTS instances (Standard_B1ls)
+  - Each with:
+    - Dynamic private IP in backend subnet
+    - Basic SKU public IP (dynamic)
+    - 30GB standard OS disk
+- **Control VM**:
+  - Ubuntu 22.04 LTS instance
+  - Static public IP (Standard SKU)
+  - Used for management/administration
 </details>
 
 <details>
   <summary>Monitoring Module (`./modules/monitoring`)</summary>
 
+#### Log Analytics Workspace
+- **SKU**: PerGB2018 (First 5GB/month free)
+- **Retention**: 30 days (free tier maximum)
+- **Features**:
+  - Centralized log collection
+  - Basic metrics storage
+  - Resource-agnostic logging
+
+#### Diagnostic Settings
+- **Free Tier Configuration**:
+  - Minimal metrics collection
+  - Load balancer basic health metrics
+  - No additional storage costs
+- **Enhanced Configuration**:
+  - Full metrics collection
+  - Comprehensive log capture
+  - All categories enabled
 </details>
 
 <details>
   <summary>App Service Module (`./modules/app-service`)</summary>
 
+#### App Service Plan
+- **Tier**: Free (F1 SKU)
+- **OS**: Linux
+- **Scaling**: Manual (single instance)
+- **Compute**: Shared infrastructure
+
+#### Web Application
+- **Runtime**: Node.js 14 LTS
+- **Configuration**:
+  - AlwaysOn disabled (Free tier limitation)
+  - System-assigned managed identity
+  - Custom application settings
+- **Networking**:
+  - Integrated with Load Balancer backend
+  - Automatic HTTPS redirection
 </details>
 
 ### Tech Stack <a name="tech-stack"></a>
