@@ -86,7 +86,6 @@ This project uses a modular Terraform architecture with the following components
   - Load Balancer ID
   - Public IP address
   - Backend pool configuration
-## Load Balancer Module <a name="load-balancer-module"></a>
 
 The Load Balancer module implements a highly available, scalable traffic distribution solution for backend application servers.
 
