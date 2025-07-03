@@ -63,6 +63,7 @@
 This project uses a modular Terraform architecture with the following components:
 ### Network Module <a name="network-module"></a>
 <details>
+  <summary>Overview</summary>
 The Network Module establishes the foundational networking infrastructure for the application, including virtual networks, subnets, security groups, and NAT gateway configuration.
 
 - **Purpose**: Sets up the core networking infrastructure
