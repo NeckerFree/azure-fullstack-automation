@@ -135,7 +135,7 @@ Before you begin, ensure you have the following installed:
 - Terraform (>= 1.0.0)
 - Azure CLI
 - Ansible (>= 2.9)
-###"Ansible Integration"
+
 ## Ansible Configuration <a name="ansible-configuration"></a>
 
 This project uses Ansible for automated configuration management and application deployment across all infrastructure components.
@@ -204,7 +204,7 @@ Verification:
 ansible nodes -i inventory.ini -m 
 shell -a "systemctl status movie-api"
 ```
-
+```
 File Structure
 text
 ansible/
@@ -218,6 +218,7 @@ ansible/
 │   └── movie-api.service.j2 # Systemd template
 ├── deploy-api.yml           # Main deployment playbook
 └── setup-infra.yml          # Infrastructure setup
+```
 
 Customization Points
 Database Configuration:
