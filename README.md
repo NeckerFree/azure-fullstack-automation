@@ -76,7 +76,7 @@ The Network Module establishes the foundational networking infrastructure for th
   - Database subnet ID
   - Backend subnet ID
   - Public subnet ID (if applicable)
-</details>
+
 ### Core Components
 #### Virtual Network (VNet)
 - **CIDR Block**: `10.0.0.0/16`
@@ -144,8 +144,11 @@ Cost Monitoring:
 NAT Gateway incurs hourly charges
 
 Monitor outbound data transfer costs
+</details>
 
-### MySQL Database Module (`./modules/mysql-database`)
+<details>
+  <summary>MySQL Database Module (`./modules/mysql-database`)</summary>
+  
 - **Purpose**: Deploys and manages the MySQL database service
 - **Features**:
   - Creates Azure Database for MySQL instance
@@ -278,7 +281,11 @@ Ready-to-use examples
 Operational guidance
 
 Integration details
-### Load Balancer Module (`./modules/load-balancer`)
+</details>
+
+<details>
+  <summary>Load Balancer Module (`./modules/load-balancer`)</summary>
+
 - **Purpose**: Manages traffic distribution and high availability
 - **Features**:
   - Deploys Azure Load Balancer with public IP
@@ -417,7 +424,10 @@ Ready-to-use examples
 Automation details
 
 The content maintains consistency with your existing documentation style while thoroughly covering the load balancer implementation. You can place this under "Infrastructure Modules" or similar section in your README.
-### Monitoring Module (`./modules/monitoring`)
+</details>
+
+<details>
+  <summary>Monitoring Module (`./modules/monitoring`)</summary>
 - **Purpose**: Implements observability and alerting
 - **Features**:
   - Creates Azure Monitor components
@@ -541,7 +551,11 @@ Practical usage examples
 Operational guidance
 
 Ready-to-use configuration snippets
-### App Service Module (`./modules/app-service`)
+</details>
+
+<details>
+  <summary>App Service Module (`./modules/app-service`)</summary>
+
 - **Purpose**: Deploys and manages the application services
 - **Features**:
   - Provisions Azure App Service plans
@@ -553,7 +567,10 @@ Ready-to-use configuration snippets
   - App Service URLs
   - Deployment credentials
   - Scaling configuration
-## App Service Module <a name="app-service-module"></a>
+</details>
+
+<details>
+  <summary>App Service Module <a name="app-service-module"></summary>
 
 This module deploys and manages an Azure Linux Web App for hosting the application frontend with integration to backend services.
 
@@ -673,6 +690,8 @@ Ready-to-use examples
 Upgrade guidance
 
 Operational considerations
+</details>
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 ### Tech Stack <a name="tech-stack"></a>
 
