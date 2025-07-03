@@ -47,7 +47,8 @@
 ![Recursos 2](https://github.com/user-attachments/assets/2f3a0567-e8d2-4e05-86e9-4486ddfa3a9d)
 
 ## Azure Monthtly Estimated Cost <a name="estimated-cost"></a>
-![monthly cost](https://github.com/user-attachments/assets/6d7ee748-1487-44d6-886c-37130aeefc62)
+![monthly cost](https://github.com/user-attachments/assets/850d1eeb-4dc5-4275-9b37-3e78495cf4ca)
+
 
 ## 🛠 Built With <a name="built-with"></a>
 <details>
