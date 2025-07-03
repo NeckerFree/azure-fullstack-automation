@@ -319,7 +319,11 @@ cd frontend && npm test
 cd ../backend && npm test
 ```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p><!-- AUTHORS -->
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- AUTHORS -->
+
+## 👥 Authors <a name="authors"></a>
 👤 **Elio Cortés**
 
 - GitHub: [@NeckerFree](https://github.com/NeckerFree)
@@ -335,7 +339,8 @@ Blue-Green Deployment: Add support for blue-green deployments
 Enhanced Monitoring: Integrate Application Insights for deeper performance monitoring
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p><!-- CONTRIBUTING -->
-🤝 Contributing <a name="contributing"></a>
+
+## 🤝 Contributing <a name="contributing"></a>
 Contributions, issues, and feature requests are welcome!
 
 Feel free to check the issues page.
@@ -345,7 +350,8 @@ Feel free to check the issues page.
 If you like this project, please give it a ⭐️ on GitHub!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p><!-- ACKNOWLEDGEMENTS -->
-🙏 Acknowledgements <a name="acknowledgements"></a>
+
+## 🙏 Acknowledgements <a name="acknowledgements"></a>
 Hat tip to anyone whose code was used
 
 Inspiration
@@ -353,7 +359,8 @@ Inspiration
 etc
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p><!-- FAQ -->
-❓ FAQ <a name="faq"></a>
+
+## ❓FAQ <a name="faq"></a>
 How do I switch between environments?
 
 Use Terraform workspaces: terraform workspace select qa or terraform workspace select prod
@@ -363,7 +370,8 @@ Where are the database credentials stored?
 Database credentials are managed through Azure Key Vault and injected as environment variables during deployment.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p><!-- LICENSE -->
-📝 License <a name="license"></a>
+
+## 📝 License <a name="license"></a>
 This project is MIT licensed.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
