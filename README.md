@@ -12,6 +12,7 @@
 - [📖 About the Project](#about-project)
   - [🌦️ Cloud Diagram](#cloud-diagram)
   - [🌦️ Azure Deployment](#azure-deployment)
+  - [🌦️ Estimated Cost](#estimated-cost)
   - [🛠 Built With](#built-with)
     - [Tech Stack](#tech-stack)
     - [Key Features](#key-features)
@@ -44,6 +45,9 @@
 ![Recursos 1](https://github.com/user-attachments/assets/04af5b7b-5872-432d-8289-10d62402f937)
 
 ![Recursos 2](https://github.com/user-attachments/assets/2f3a0567-e8d2-4e05-86e9-4486ddfa3a9d)
+
+## Azure Monthtly Estimated Cost <a name="estimated-cost"></a>
+![monthly cost](https://github.com/user-attachments/assets/6d7ee748-1487-44d6-886c-37130aeefc62)
 
 ## 🛠 Built With <a name="built-with"></a>
 <details>
