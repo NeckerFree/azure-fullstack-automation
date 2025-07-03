@@ -1,14 +1,27 @@
+
+resource "azurerm_public_ip" "nodes" {
+  count               = 2
+  name                = "${var.env_prefix}-public-ip-${count.index + 1}"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  allocation_method   = "Dynamic"
+  sku                 = "Basic"
+}
+
+
 # NICs for VMs
 resource "azurerm_network_interface" "backend" {
   count               = 2 # Two instances for HA
-  name                = "${var.env_prefix}-nic-backend-${count.index}"
+  name                = "${var.env_prefix}-nic-backend-${count.index + 1}"
   location            = var.location
   resource_group_name = var.resource_group_name
+
 
   ip_configuration {
     name                          = "internal"
     subnet_id                     = var.backend_subnet_id
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.nodes[count.index].id
   }
 }
 
@@ -24,9 +37,8 @@ resource "azurerm_public_ip" "control" {
   name                = "${var.env_prefix}-pip-control"
   resource_group_name = var.resource_group_name
   location            = var.location
-  allocation_method   = "Dynamic"
-  # allocation_method   = "Static" # Add this for Standard SKU
-  # sku                 = "Standard"
+  allocation_method   = "Static" # Add this for Standard SKU
+  sku                 = "Standard"
 }
 resource "azurerm_network_interface" "control" {
   name                = "${var.env_prefix}-nic-control"
@@ -84,7 +96,7 @@ resource "azurerm_linux_virtual_machine" "backend" {
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file("~/.ssh/id_rsa.pub")
+    public_key = tls_private_key.vm_ssh.public_key_openssh
   }
 
   os_disk {
@@ -103,8 +115,10 @@ resource "azurerm_linux_virtual_machine" "backend" {
 # Generate a Dynamic Ansible Inventory File
 resource "local_file" "ansible_inventory" {
   content = templatefile("${abspath("${path.module}/../../../ansible/inventory.tmpl")}", {
-    control_name         = azurerm_linux_virtual_machine.control.name
-    control_ip           = azurerm_linux_virtual_machine.control.public_ip_address
+    control = {
+      name = azurerm_linux_virtual_machine.control.name
+      ip   = azurerm_linux_virtual_machine.control.public_ip_address
+    }
     ssh_private_key_path = "${abspath("${path.module}/../../../ansible/vm_ssh_key")}"
     nodes = [
       {

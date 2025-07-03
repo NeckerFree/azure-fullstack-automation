@@ -1,0 +1,18 @@
+az vm list-skus --location centralus --output table
+az group delete --name epamqarg --yes --no-wait
+az group wait --name elio-tfstate-rg --deleted
+
+az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/b39abd7d-d29c-4ca3-869e-8dd95966f48c"
+
+export ARM_CLIENT_ID="your-app-id"
+export ARM_CLIENT_SECRET="your-secret-value"
+export ARM_TENANT_ID="your-tenant-id"
+export ARM_SUBSCRIPTION_ID="your-subscription-id"
+
+az login
+# Then configure provider without explicit credentials
+provider "azurerm" {
+  features {}
+  use_cli = true
+}
+az role assignment list --assignee 46c72086-7ef5-4e3a-91af-712468ab8069

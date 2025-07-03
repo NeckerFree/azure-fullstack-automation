@@ -17,6 +17,9 @@ resource "azurerm_nat_gateway" "main" {
   resource_group_name     = var.resource_group_name
   sku_name                = "Standard" # No Basic SKU available for NAT GW
   idle_timeout_in_minutes = 4          # Minimum to reduce costs
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "azurerm_nat_gateway_public_ip_association" "main" {

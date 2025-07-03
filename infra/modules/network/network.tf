@@ -11,6 +11,7 @@ resource "azurerm_subnet" "backend" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.2.0/24"]
+  depends_on           = [azurerm_virtual_network.main]
 }
 
 resource "azurerm_subnet" "db" {
@@ -19,6 +20,7 @@ resource "azurerm_subnet" "db" {
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.3.0/24"]
   service_endpoints    = ["Microsoft.Storage"]
+  depends_on           = [azurerm_virtual_network.main]
 }
 
 resource "azurerm_subnet_network_security_group_association" "db" {

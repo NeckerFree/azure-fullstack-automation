@@ -1,5 +1,5 @@
 [control]
-{control_name} ansible_host=${control_ip} ansible_user=${ssh_user} 
+${control.name} ansible_host=${control.ip} ansible_user=${ssh_user} 
 
 [nodes]
 %{for node in nodes ~}

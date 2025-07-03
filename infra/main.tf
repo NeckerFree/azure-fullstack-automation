@@ -17,7 +17,7 @@ locals {
 }
 
 resource "azurerm_resource_group" "epam-rg" {
-  name     = local.resource_group_name
+  name     = "epamqarg"
   location = var.location
   tags = {
     Workspace = local.environment
@@ -26,15 +26,16 @@ resource "azurerm_resource_group" "epam-rg" {
 
 module "network" {
   source              = "./modules/network"
-  resource_group_name = local.resource_group_name
+  resource_group_name = "epamqarg"
   location            = var.location
   env_prefix          = local.name_prefix
   environment         = local.environment
+  depends_on          = [azurerm_resource_group.epam-rg]
 }
 
 module "mysql-database" {
   source               = "./modules/mysql-database"
-  resource_group_name  = local.resource_group_name
+  resource_group_name  = "epamqarg"
   location             = var.location
   env_prefix           = local.name_prefix
   subnet_id            = module.network.db_subnet_id
@@ -48,7 +49,7 @@ module "load-balancer" {
   location            = var.location
   env_prefix          = local.name_prefix
   environment         = local.environment
-  resource_group_name = local.resource_group_name
+  resource_group_name = "epamqarg"
   virtual_network_id  = module.network.virtual_network_id
   backend_subnet_id   = module.network.backend_subnet_id
   mysql_fqdn          = module.mysql-database.mysql_fqdn
@@ -57,20 +58,20 @@ module "load-balancer" {
 
 
 
-# module "monitoring" {
-#   source              = "./modules/monitoring"
-#   location            = var.location
-#   resource_group_name = local.resource_group_name
-#   lb_id               = module.load-balancer.lb_id
-#   env_prefix          = local.name_prefix
-# }
+module "monitoring" {
+  source              = "./modules/monitoring"
+  location            = var.location
+  resource_group_name = "epamqarg"
+  lb_id               = module.load-balancer.lb_id
+  env_prefix          = local.name_prefix
+}
 
-# module "app-service" {
-#   source              = "./modules/app-service"
-#   resource_group_name = local.resource_group_name
-#   lb_public_ip        = module.load-balancer.lb_id
-#   env_prefix          = local.name_prefix
-#   app_name            = "movies"
-#   environment         = local.environment
-#   location            = var.location
-# }
+module "app-service" {
+  source              = "./modules/app-service"
+  resource_group_name = "epamqarg"
+  lb_public_ip        = module.load-balancer.lb_id
+  env_prefix          = local.name_prefix
+  app_name            = "movies"
+  environment         = local.environment
+  location            = var.location
+}

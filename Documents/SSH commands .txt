@@ -1,0 +1,12 @@
+Run powershell as admin
+
+:: Remove inherited permissions and Users group
+icacls "C:/Elio/Bootcamps/EPAM/Cloud 2/Projects/azure-fullstack-automation/ansible/vm_ssh_key" /remove "BUILTIN\Users"
+icacls "C:/Elio/Bootcamps/EPAM/Cloud 2/Projects/azure-fullstack-automation/ansible/vm_ssh_key" /remove "Everyone"
+icacls "C:/Elio/Bootcamps/EPAM/Cloud 2/Projects/azure-fullstack-automation/ansible/vm_ssh_key" /inheritance:r
+
+:: Grant exclusive permissions to your user
+icacls "C:/Elio/Bootcamps/EPAM/Cloud 2/Projects/azure-fullstack-automation/ansible/vm_ssh_key" /grant:r "necker-pc-2010\elio nelson cortés:(F)"
+
+SSH:
+ssh -i "C:/Elio/Bootcamps/EPAM/Cloud 2/Projects/azure-fullstack-automation/ansible/vm_ssh_key" adminuser@40.125.85.198
