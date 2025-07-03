@@ -40,6 +40,24 @@
 ![architecture diagram](https://github.com/user-attachments/assets/2133893e-3ed1-4f2f-b36f-73754dbdfc31)
 
 ## 🛠 Built With <a name="built-with"></a>
+<details>
+  <summary>Infrastructure as Code</summary>
+  <ul>
+    <li>Terraform</li>
+  </ul>
+</details>
+<details>
+  <summary>Configuration Management</summary>
+  <ul>
+    <li>Ansible</li>
+  </ul>
+</details>
+<details>
+  <summary>CI/CD</summary>
+  <ul>
+    <li>GH Actions</li>
+  </ul>
+</details>
 ## Terraform Modules Overview <a name="terraform-modules"></a>
 
 This project uses a modular Terraform architecture with the following components:
