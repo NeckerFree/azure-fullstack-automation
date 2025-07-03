@@ -11,6 +11,7 @@
 
 - [📖 About the Project](#about-project)
   - [🌦️ Cloud Diagram](#cloud-diagram)
+  - [🌦️ Azure Deployment](#azure-deployment)
   - [🛠 Built With](#built-with)
     - [Tech Stack](#tech-stack)
     - [Key Features](#key-features)
@@ -38,6 +39,11 @@
 
 ## 🌦️ Cloud Diagram <a name="cloud-diagram"></a>
 ![architecture diagram](https://github.com/user-attachments/assets/2133893e-3ed1-4f2f-b36f-73754dbdfc31)
+
+## Azure Deployment <a name="azure-deployment"></a>
+![Recursos 1](https://github.com/user-attachments/assets/04af5b7b-5872-432d-8289-10d62402f937)
+
+![Recursos 2](https://github.com/user-attachments/assets/2f3a0567-e8d2-4e05-86e9-4486ddfa3a9d)
 
 ## 🛠 Built With <a name="built-with"></a>
 <details>
