@@ -261,7 +261,8 @@ Debug Commands:
 
 ```
 ANSIBLE_DEBUG=1 ansible-playbook -i inventory.ini deploy-api.yml -vvv
-<p align="right">(<a href="#readme-top">back to top</a>)</p> ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+```
 This section provides:
 
 Clear playbook documentation
