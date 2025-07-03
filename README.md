@@ -267,7 +267,6 @@ Configure Azure Monitor alerts
 
 Set up Query Performance Insights
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p> ```
 This section provides:
 
 Clear technical specifications
@@ -567,10 +566,6 @@ Ready-to-use configuration snippets
   - App Service URLs
   - Deployment credentials
   - Scaling configuration
-</details>
-
-<details>
-  <summary>App Service Module <a name="app-service-module"></summary>
 
 This module deploys and manages an Azure Linux Web App for hosting the application frontend with integration to backend services.
 
