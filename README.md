@@ -87,7 +87,6 @@ This project uses a modular Terraform architecture with the following components
 
 </details>
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ### Tech Stack <a name="tech-stack"></a>
 <details>
 <summary>Database</summary>
@@ -187,11 +186,11 @@ This project uses Ansible for automated configuration management and application
 Execution Workflow
 First-Time Setup:
 
-bash 
+```
 ansible-playbook -i inventory.ini setup-infra.yml
 API Deployment:
 
-bash 
+```
 ansible-playbook -i inventory.ini deploy-api.yml \
   -e mysql_host=epamqa-mysql-eastus \
   -e mysql_user=adminuser \
@@ -199,7 +198,7 @@ ansible-playbook -i inventory.ini deploy-api.yml \
   -e mysql_database=movie_analyst
 Verification:
 
-bash 
+```
 ansible nodes -i inventory.ini -m 
 ```shell -a "systemctl status movie-api"
 File Structure
@@ -239,15 +238,15 @@ Enable host checking in production
 Best Practices
 Secret Management:
 
-bash 
+```
 ansible-vault encrypt_string '$DB_PASSWORD' --name 'mysql_password'
 Dry-Run Verification:
 
-bash 
+```
 ansible-playbook -i inventory.ini deploy-api.yml --check --diff
 Tagged Execution:
 
-bash 
+```
 ansible-playbook -i inventory.ini deploy-api.yml --tags "db,config"
 Troubleshooting
 Common Issues:
@@ -260,7 +259,7 @@ Package installation errors: Update apt cache
 
 Debug Commands:
 
-bash 
+```
 ANSIBLE_DEBUG=1 ansible-playbook -i inventory.ini deploy-api.yml -vvv
 <p align="right">(<a href="#readme-top">back to top</a>)</p> ```
 This section provides:
