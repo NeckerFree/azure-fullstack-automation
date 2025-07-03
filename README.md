@@ -502,14 +502,11 @@ cd backend
 az webapp up --name your-backend-api --resource-group epamqarg --runtime "NODE|14-lts"
 ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p><!-- AUTHORS -->
-👥 Authors <a name="authors"></a>
-👤 Author Name
+👤 **Elio Cortés**
 
-GitHub: @githubhandle
-
-Twitter: @twitterhandle
-
-LinkedIn: LinkedIn
+- GitHub: [@NeckerFree](https://github.com/NeckerFree)
+- Twitter: [@ElioCortesM](https://twitter.com/ElioCortesM)
+- LinkedIn: [elionelsoncortes](https://www.linkedin.com/in/elionelsoncortes/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p><!-- FUTURE FEATURES -->
 🔭 Future Features <a name="future-features"></a>
