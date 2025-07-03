@@ -25,7 +25,7 @@
 - [👥 Authors](#authors)
 - [🔭 Future Features](#future-features)
 - [🤝 Contributing](#contributing)
-- [⭐️ ```sh ow your support](#support)
+- [⭐️ show your support](#support)
 - [🙏 Acknowledgements](#acknowledgements)
 - [❓ FAQ](#faq)
 - [📝 License](#license)
@@ -249,12 +249,12 @@ Tagged Execution:
 
 bash 
 ansible-playbook -i inventory.ini deploy-api.yml --tags "db,config"
-Trouble```sh ooting
+Troubleshooting
 Common Issues:
 
 MySQL connection failures: Verify security group rules
 
-Permission denied: Check app_user owner```sh ip
+Permission denied: Check app_user ownership
 
 Package installation errors: Update apt cache
 
@@ -273,7 +273,7 @@ Security considerations
 
 Customization guidance
 
-Trouble```sh ooting tips
+Troubleshooting tips
 
 Best practices
 ### Configuration management or 
@@ -358,7 +358,7 @@ Run Ansible playbooks using:
 ```sh 
 ansible-playbook -i ansible/inventory.ini ansible/setup.yml
 Security Notes
-The generated private key ```sh ould be:
+The generated private key should be:
 
 Securely stored (consider using a secrets manager)
 
@@ -368,7 +368,7 @@ Not committed to version control
 
 Host key checking is disabled for initial setup only
 
-Production deployments ```sh ould implement proper host verification
+Production deployments should implement proper host verification
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p> ```
 This section explains:
@@ -385,7 +385,7 @@ Practical usage instructions
 ### Setup
 
 1. Clone the repository:
-```sh 
+sh
 git clone https://github.com/aljoveza/devops-rampup.git
 cd devops-rampup
 
@@ -450,7 +450,7 @@ This project securely stores Terraform state files in Azure Blob Storage, provid
   - Tagged with environment and cost-center metadata
 
 - **Benefits**:
-  - Enables team collaboration with ```sh ared state
+  - Enables team collaboration with shared state
   - Provides state locking to prevent conflicts
   - Maintains state history for recovery
   - Secures sensitive values in the state file
@@ -466,7 +466,7 @@ terraform init -backend-config="storage_account_name=epamqatfstate" \
                -backend-config="container_name=tfstate" \
                -backend-config="key=terraform.tfstate" \
                -backend-config="resource_group_name=elio-tfstate-rg"
-The project includes GitHub Actions workflows for CI/CD. Pu```sh  to the main branch to trigger the deployment pipeline.
+The project includes GitHub Actions workflows for CI/CD. Push to the main branch to trigger the deployment pipeline.
 
 For manual deployment:
 
@@ -505,7 +505,7 @@ Contributions, issues, and feature requests are welcome!
 Feel free to check the issues page.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p><!-- SUPPORT -->
-⭐️ ```sh ow your support <a name="support"></a>
+⭐️ show your support <a name="support"></a>
 If you like this project, please give it a ⭐️ on GitHub!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p><!-- ACKNOWLEDGEMENTS -->
