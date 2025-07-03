@@ -1,12 +1,12 @@
 
-resource "azurerm_public_ip" "nodes" {
-  count               = 2
-  name                = "${var.env_prefix}-public-ip-${count.index + 1}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  allocation_method   = "Dynamic"
-  sku                 = "Basic"
-}
+# resource "azurerm_public_ip" "nodes" {
+#   count               = 2
+#   name                = "${var.env_prefix}-public-ip-${count.index + 1}"
+#   resource_group_name = var.resource_group_name
+#   location            = var.location
+#   allocation_method   = "Static"
+#   sku                 = "Standard"
+# }
 
 
 # NICs for VMs
@@ -21,7 +21,7 @@ resource "azurerm_network_interface" "backend" {
     name                          = "internal"
     subnet_id                     = var.backend_subnet_id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.nodes[count.index].id
+    # public_ip_address_id          = azurerm_public_ip.nodes[count.index].id
   }
 }
 
