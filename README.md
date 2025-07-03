@@ -530,39 +530,4 @@ Database credentials are managed through Azure Key Vault and injected as environ
 📝 License <a name="license"></a>
 This project is MIT licensed.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p> ```
-To download this as a file:
-
-Copy all the content above
-
-Open a text editor (VS Code, Notepad++, etc.)
-
-Paste the content
-
-Save the file as README.md
-
-Place it in your project's root directory
-
-The README includes:
-
-Complete project documentation
-
-Installation and setup instructions
-
-Deployment procedures
-
-Technology stack details
-
-Future roadmap
-
-All necessary sections from your template
-
-You may want to customize:
-
-Author information
-
-Live demo URL
-
-Acknowledgements section
-
-Any project-specific details
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
