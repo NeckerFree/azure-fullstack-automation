@@ -160,7 +160,6 @@ Monitor outbound data transfer costs
   - MySQL server FQDN (Fully Qualified Domain Name)
   - Database connection strings
   - Monitoring endpoints
-## MySQL Database Module <a name="mysql-module"></a>
 
 This module provisions and manages an Azure Database for MySQL Flexible Server instance with private endpoint connectivity.
 
