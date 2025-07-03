@@ -61,9 +61,8 @@
 
 ## 🛠 Terraform Modules Overview <a name="terraform-modules"></a>
 This project uses a modular Terraform architecture with the following components:
-### Network Module <a name="network-module"></a>
 <details>
-  <summary>Overview</summary>
+  <summary>Network Module<a name="network-module"></a></summary>
 The Network Module establishes the foundational networking infrastructure for the application, including virtual networks, subnets, security groups, and NAT gateway configuration.
 
 - **Purpose**: Sets up the core networking infrastructure
@@ -77,6 +76,7 @@ The Network Module establishes the foundational networking infrastructure for th
   - Database subnet ID
   - Backend subnet ID
   - Public subnet ID (if applicable)
+</details>
 ### Core Components
 #### Virtual Network (VNet)
 - **CIDR Block**: `10.0.0.0/16`
@@ -89,7 +89,7 @@ The Network Module establishes the foundational networking infrastructure for th
     - Isolated subnet for database services
     - Microsoft.Storage service endpoints enabled
     - Restricted access to backend subnet only
-</details>
+
 
 #### Network Security Groups (NSGs)
 - **Backend NSG**:
