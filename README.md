@@ -58,10 +58,11 @@
     <li>GH Actions</li>
   </ul>
 </details>
-## Terraform Modules Overview <a name="terraform-modules"></a>
 
+## 🛠 Terraform Modules Overview <a name="terraform-modules"></a>
 This project uses a modular Terraform architecture with the following components:
 ### Network Module <a name="network-module"></a>
+<details>
 The Network Module establishes the foundational networking infrastructure for the application, including virtual networks, subnets, security groups, and NAT gateway configuration.
 
 - **Purpose**: Sets up the core networking infrastructure
@@ -87,6 +88,7 @@ The Network Module establishes the foundational networking infrastructure for th
     - Isolated subnet for database services
     - Microsoft.Storage service endpoints enabled
     - Restricted access to backend subnet only
+</details>
 
 #### Network Security Groups (NSGs)
 - **Backend NSG**:
