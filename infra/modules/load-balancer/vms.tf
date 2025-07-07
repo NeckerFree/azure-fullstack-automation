@@ -123,11 +123,11 @@ resource "local_file" "ansible_inventory" {
     nodes = [
       {
         name = azurerm_linux_virtual_machine.backend[0].name
-        ip   = azurerm_linux_virtual_machine.backend[0].public_ip_address
+        ip   = azurerm_linux_virtual_machine.backend[0].private_ip_address
       },
       {
         name = azurerm_linux_virtual_machine.backend[1].name
-        ip   = azurerm_linux_virtual_machine.backend[1].public_ip_address
+        ip   = azurerm_linux_virtual_machine.backend[1].private_ip_address
       }
     ]
     ssh_user = var.admin_username

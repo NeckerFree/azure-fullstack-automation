@@ -66,12 +66,12 @@ module "monitoring" {
   env_prefix          = local.name_prefix
 }
 
-# module "app-service" {
-#   source              = "./modules/app-service"
-#   resource_group_name = "epamqarg"
-#   lb_public_ip        = module.load-balancer.lb_id
-#   env_prefix          = local.name_prefix
-#   app_name            = "movies"
-#   environment         = local.environment
-#   location            = var.location
-# }
+module "app-service" {
+  source              = "./modules/app-service"
+  resource_group_name = "epamqarg"
+  lb_public_ip        = module.load-balancer.lb_id
+  env_prefix          = local.name_prefix
+  app_name            = "movies"
+  environment         = local.environment
+  location            = var.location
+}

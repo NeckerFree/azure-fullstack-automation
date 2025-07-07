@@ -1,0 +1,77 @@
+---
+- name: Set MySQL connection environment variables
+  hosts: nodes
+  become: yes
+  vars:
+    db_host: "your_db_host" # Replace with your actual DB host
+    db_user: "applicationuser"
+    db_password: "your_secure_password" # Replace with your actual password
+    db_name: "movie_db"
+
+  tasks:
+    - name: Add environment variables to /etc/environment
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        regexp: "^{{ item.key }}="
+        line: "{{ item.key }}={{ item.value }}"
+        state: present
+      loop:
+        - { key: "DB_HOST", value: "{{ db_host }}" }
+        - { key: "DB_USER", value: "{{ db_user }}" }
+        - { key: "DB_PASS", value: "{{ db_password }}" }
+        - { key: "DB_NAME", value: "{{ db_name }}" }
+      no_log: true # Prevents password from being logged
+
+    - name: Source the environment file for current session
+      ansible.builtin.shell: |
+        set -a
+        . /etc/environment
+        set +a
+- name: Configure Movie Analyst Database
+  hosts: nodes
+  become: yes
+  vars:
+    mysql_config:
+      host: db_host
+      user: db_user
+      password: db_password
+      database: db_name
+      port: 3306
+    mysql_script_path: "ansible/files/mysql/movie_db.sql"
+
+  tasks:
+    - name: Install MySQL client
+      apt:
+        name: mysql-client
+        update_cache: yes
+        state: present
+
+    - name: Ensure MySQL scripts directory exists
+      file:
+        path: "/etc/ansible/mysql"
+        state: directory
+        mode: "0755"
+
+    - name: Transfer MySQL initialization script
+      copy:
+        src: "{{ mysql_script_path }}"
+        dest: "/etc/ansible/mysql/movie_db.sql"
+        owner: root
+        group: root
+        mode: "0640"
+      when: lookup('fileglob', mysql_script_path)|length > 0
+
+    - name: Load MySQL initialization script
+      mysql_db:
+        login_host: "{{ mysql_config.host }}"
+        login_user: "{{ mysql_config.user }}"
+        login_password: "{{ mysql_config.password }}"
+        name: "{{ mysql_config.database }}"
+        state: import
+        target: "/etc/ansible/mysql/movie_db.sql"
+      register: db_import
+      no_log: true
+      changed_when: "'OK' in db_import.msg"
+      failed_when: >
+        db_import.failed and
+        ('already exists' not in db_import.msg)

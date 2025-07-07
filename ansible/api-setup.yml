@@ -1,0 +1,93 @@
+---
+- name: Deploy Movie Analyst API
+  hosts: nodes
+  become: yes
+  vars:
+    app_user: "adminuser"
+    app_dir: "/opt/movie-analyst-api"
+    repo_url: "https://github.com/aljoveza/devops-rampup.git"
+    mysql_config:
+      host: "{{ mysql_host }}"
+      user: "{{ mysql_user }}"
+      password: "{{ mysql_password }}"
+      database: "{{ mysql_database }}"
+      port: 3306
+
+  tasks:
+    # System setup
+    - name: Install system dependencies
+      apt:
+        name:
+          - git
+          - nodejs
+          - npm
+          - python3-pip
+        update_cache: yes
+        state: present
+
+    - name: Install PM2 process manager globally
+      npm:
+        name: pm2
+        global: yes
+
+    # Application deployment
+    - name: Ensure application directory exists
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0755"
+
+    - name: Clone repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "/tmp/devops-rampup"
+        version: master
+        force: yes
+      register: git_clone
+      changed_when: "'changed' in git_clone"
+
+    - name: Copy application files
+      synchronize:
+        src: "/tmp/devops-rampup/movie-analyst-api/"
+        dest: "{{ app_dir }}"
+        rsync_opts:
+          - "--chown={{ app_user }}:{{ app_user }}"
+
+    # Configuration
+    - name: Create database configuration
+      template:
+        src: templates/config.js.j2
+        dest: "{{ app_dir }}/config.js"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0640"
+
+    # Application setup
+    - name: Install Node.js dependencies
+      npm:
+        path: "{{ app_dir }}"
+        state: present
+
+    - name: Create systemd service file
+      template:
+        src: templates/movie-api.service.j2
+        dest: "/etc/systemd/system/movie-api.service"
+        mode: "0644"
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start movie-api service
+      systemd:
+        name: movie-api
+        state: started
+        enabled: yes
+
+    # Cleanup
+    - name: Clean up temporary files
+      file:
+        path: "/tmp/devops-rampup"
+        state: absent

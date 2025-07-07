@@ -18,15 +18,6 @@ resource "azurerm_monitor_diagnostic_setting" "lb_free" {
   name               = "lb-free-metrics"
   target_resource_id = var.lb_id
 
-  # Load Balancer logs
-  enabled_log {
-    category = "LoadBalancerAlertEvent"
-  }
-
-  enabled_log {
-    category = "LoadBalancerProbeHealthStatus"
-  }
-
   # Metrics configuration (updated to non-deprecated format)
   enabled_metric {
     category = "AllMetrics"
