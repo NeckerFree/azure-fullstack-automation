@@ -1,14 +1,16 @@
 ---
-- name: Set MySQL connection environment variables
+- name: Configure MySQL environment and database
   hosts: nodes
   become: yes
   vars:
-    db_host: "your_db_host" # Replace with your actual DB host
+    db_host: "your_db_host"  # Replace with your actual DB host
     db_user: "applicationuser"
-    db_password: "your_secure_password" # Replace with your actual password
+    db_password: "your_secure_password"  # Replace with your actual password
     db_name: "movie_db"
+    mysql_script_path: "ansible/files/mysql/movie_db.sql"
 
   tasks:
+    # Part 1: Environment variables
     - name: Add environment variables to /etc/environment
       ansible.builtin.lineinfile:
         path: /etc/environment
@@ -20,26 +22,12 @@
         - { key: "DB_USER", value: "{{ db_user }}" }
         - { key: "DB_PASS", value: "{{ db_password }}" }
         - { key: "DB_NAME", value: "{{ db_name }}" }
-      no_log: true # Prevents password from being logged
+      no_log: true
 
-    - name: Source the environment file for current session
-      ansible.builtin.shell: |
-        set -a
-        . /etc/environment
-        set +a
-- name: Configure Movie Analyst Database
-  hosts: nodes
-  become: yes
-  vars:
-    mysql_config:
-      host: db_host
-      user: db_user
-      password: db_password
-      database: db_name
-      port: 3306
-    mysql_script_path: "ansible/files/mysql/movie_db.sql"
+    # Note: Sourcing /etc/environment in the playbook won't affect subsequent tasks
+    # Environment vars will be available for processes started after this point
 
-  tasks:
+    # Part 2: MySQL configuration
     - name: Install MySQL client
       apt:
         name: mysql-client
@@ -59,14 +47,14 @@
         owner: root
         group: root
         mode: "0640"
-      when: lookup('fileglob', mysql_script_path)|length > 0
+      when: mysql_script_path is defined and lookup('fileglob', mysql_script_path)|length > 0
 
     - name: Load MySQL initialization script
       mysql_db:
-        login_host: "{{ mysql_config.host }}"
-        login_user: "{{ mysql_config.user }}"
-        login_password: "{{ mysql_config.password }}"
-        name: "{{ mysql_config.database }}"
+        login_host: "{{ db_host }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        name: "{{ db_name }}"
         state: import
         target: "/etc/ansible/mysql/movie_db.sql"
       register: db_import

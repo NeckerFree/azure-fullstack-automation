@@ -1,93 +1,55 @@
 ---
-- name: Deploy Movie Analyst API
-  hosts: nodes
+- name: Setup Movie Analyst API
+  hosts: api_servers  # Adjust host group as needed
   become: yes
-  vars:
-    app_user: "adminuser"
-    app_dir: "/opt/movie-analyst-api"
-    repo_url: "https://github.com/aljoveza/devops-rampup.git"
-    mysql_config:
-      host: "{{ mysql_host }}"
-      user: "{{ mysql_user }}"
-      password: "{{ mysql_password }}"
-      database: "{{ mysql_database }}"
-      port: 3306
 
   tasks:
-    # System setup
-    - name: Install system dependencies
+    - name: Install Node.js and npm
       apt:
         name:
-          - git
           - nodejs
           - npm
-          - python3-pip
         update_cache: yes
         state: present
 
-    - name: Install PM2 process manager globally
-      npm:
-        name: pm2
-        global: yes
-
-    # Application deployment
-    - name: Ensure application directory exists
+    - name: Ensure app directory exists
       file:
-        path: "{{ app_dir }}"
+        path: "/opt/movie-analyst-api"
         state: directory
-        owner: "{{ app_user }}"
-        group: "{{ app_user }}"
+        owner: "www-data"
+        group: "www-data"
         mode: "0755"
 
-    - name: Clone repository
-      git:
-        repo: "{{ repo_url }}"
-        dest: "/tmp/devops-rampup"
-        version: master
-        force: yes
-      register: git_clone
-      changed_when: "'changed' in git_clone"
+    - name: Copy API source code (including server.js)
+      copy:
+        src: "{{ api_source_path }}"  # Define this in vars or extra-vars
+        dest: "/opt/movie-analyst-api"
+        owner: "www-data"
+        group: "www-data"
+        mode: "0644"
+        # Ensure server.js is included in the copied files
 
-    - name: Copy application files
-      synchronize:
-        src: "/tmp/devops-rampup/movie-analyst-api/"
-        dest: "{{ app_dir }}"
-        rsync_opts:
-          - "--chown={{ app_user }}:{{ app_user }}"
-
-    # Configuration
-    - name: Create database configuration
-      template:
-        src: templates/config.js.j2
-        dest: "{{ app_dir }}/config.js"
-        owner: "{{ app_user }}"
-        group: "{{ app_user }}"
-        mode: "0640"
-
-    # Application setup
-    - name: Install Node.js dependencies
+    - name: Install API dependencies (including mysql)
       npm:
-        path: "{{ app_dir }}"
+        path: "/opt/movie-analyst-api"
         state: present
 
-    - name: Create systemd service file
+    - name: Setup systemd service for API
       template:
-        src: templates/movie-api.service.j2
-        dest: "/etc/systemd/system/movie-api.service"
+        src: "templates/movie-analyst-api.service.j2"
+        dest: "/etc/systemd/system/movie-analyst-api.service"
         mode: "0644"
+      notify:
+        - Reload systemd
+        - Restart Movie Analyst API
 
-    - name: Reload systemd daemon
-      systemd:
-        daemon_reload: yes
-
-    - name: Enable and start movie-api service
-      systemd:
-        name: movie-api
-        state: started
+    - name: Enable and start API service
+      service:
+        name: "movie-analyst-api"
         enabled: yes
+        state: started
 
-    # Cleanup
-    - name: Clean up temporary files
-      file:
-        path: "/tmp/devops-rampup"
-        state: absent
+  handlers:
+    - name: Reload systemd
+      systemd:
+   
