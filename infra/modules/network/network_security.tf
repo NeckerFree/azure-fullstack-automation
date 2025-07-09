@@ -13,52 +13,13 @@ resource "azurerm_network_security_group" "jumpbox_nsg" {
     source_port_range          = "*"
     destination_port_range     = "22"
     source_address_prefix      = var.allowed_ssh_ip
-    destination_address_prefix = "20.115.129.27/32" # Control node's public IP
+    destination_address_prefix = var.network_interface_control_private_ip
   }
-
-  # Rule 2: Allow control node to SSH to backend nodes
-  # security_rule {
-  #   name                       = "Allow-SSH-From-Control"
-  #   priority                   = 110
-  #   direction                  = "Inbound"
-  #   access                     = "Allow"
-  #   protocol                   = "Tcp"
-  #   source_port_range          = "*"
-  #   destination_port_range     = "22"
-  #   source_address_prefix      = "20.115.129.27/32"
-  #   destination_address_prefix = "10.0.2.0/24" # Backend subnet
-  # }
-
-  # Rule 3: Internal application communication
-  # security_rule {
-  #   name                       = "allow-internal-http"
-  #   priority                   = 120
-  #   direction                  = "Inbound"
-  #   access                     = "Allow"
-  #   protocol                   = "Tcp"
-  #   source_port_range          = "*"
-  #   destination_port_range     = "8080"        # Your backend app port
-  #   source_address_prefix      = "10.0.2.0/24" # Backend subnet
-  #   destination_address_prefix = "10.0.2.0/24" # Backend subnet
-  # }
-
-  # Explicit bastion-to-backend SSH rule
-  # security_rule {
-  #   name                       = "Allow-Bastion-SSH"
-  #   priority                   = 900
-  #   direction                  = "Inbound"
-  #   access                     = "Allow"
-  #   protocol                   = "Tcp"
-  #   source_port_range          = "*"
-  #   destination_port_range     = "22"
-  #   source_address_prefix      = var.bastion_public_ip #"20.56.100.22/32" Your bastion's public IP
-  #   destination_address_prefix = "*"
-  # }
 
   # Outbound SSH rule (if needed)
   security_rule {
     name                       = "allow-outbound-to-vms"
-    priority                   = 100
+    priority                   = 110
     direction                  = "Outbound"
     access                     = "Allow"
     protocol                   = "Tcp"

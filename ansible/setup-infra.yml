@@ -7,14 +7,15 @@
       become: yes
       ansible.builtin.lineinfile:
         path: /etc/hosts
-        line: "{{ hostvars[item]['ansible_host'] }} {{ hostvars[item]['inventory_hostname'] }}"
+        line: "{{ hostvars[item].ansible_host | default(item) }} {{ item }}"
         state: present
-      loop: "{{ groups['nodes'] + groups['control'] }}"
+      loop: "{{ groups['all'] }}"
 
 - name: Configure control node ssh
   hosts: control
+  gather_facts: false
   vars:
-    ssh_private_key_path: "/home/{{ ansible_user }}/.ssh/id_rsa"  # Default path or your custom path
+    ssh_private_key_path: "/home/adminuser/.ssh/id_rsa"  # ← Valor fijo
   tasks:
     - name: Create ~/.ssh directory
       ansible.builtin.file:
@@ -29,7 +30,7 @@
           Host node*
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
-            User {{ ansible_user }}
+            User adminuser
             IdentityFile {{ ssh_private_key_path }}
         marker: "# {mark} ANSIBLE MANAGED BLOCK - NODE CONFIG"
         create: yes

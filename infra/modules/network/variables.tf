@@ -17,3 +17,7 @@ variable "allowed_ssh_ip" {
 variable "network_interface_control_id" {
   type = string
 }
+
+variable "network_interface_control_private_ip" {
+  type = string
+}

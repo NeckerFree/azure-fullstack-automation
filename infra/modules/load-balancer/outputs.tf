@@ -25,3 +25,8 @@ output "network_interface_control_id" {
   value       = azurerm_network_interface.control.id
   description = "network interface id"
 }
+
+output "network_interface_control_private_ip" {
+  value       = azurerm_network_interface.control.private_ip_address
+  description = "jumpbox's private IP"
+}

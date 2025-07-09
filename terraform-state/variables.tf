@@ -34,4 +34,7 @@ variable "tfstate_storage_account" {
   default = "epamqatfstate"
 }
 
-
+variable "allowed_ssh_ip" {
+  type      = string
+  sensitive = true
+}

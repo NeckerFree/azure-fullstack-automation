@@ -49,7 +49,7 @@ resource "tls_private_key" "vm_ssh" {
 }
 
 resource "azurerm_linux_virtual_machine" "control" {
-  name                  = "jumbox"
+  name                  = "jumpbox"
   resource_group_name   = var.resource_group_name
   location              = var.location
   size                  = "Standard_B1ls"
