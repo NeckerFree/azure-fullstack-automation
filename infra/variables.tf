@@ -40,3 +40,8 @@ variable "mysql_user" {
 variable "admin_username" {
   default = "adminuser"
 }
+
+variable "allowed_ssh_ip" {
+  type      = string
+  sensitive = true
+}

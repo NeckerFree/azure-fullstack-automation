@@ -1,14 +1,3 @@
-
-# resource "azurerm_public_ip" "nodes" {
-#   count               = 2
-#   name                = "${var.env_prefix}-public-ip-${count.index + 1}"
-#   resource_group_name = var.resource_group_name
-#   location            = var.location
-#   allocation_method   = "Static"
-#   sku                 = "Standard"
-# }
-
-
 # NICs for VMs
 resource "azurerm_network_interface" "backend" {
   count               = 2 # Two instances for HA
@@ -53,13 +42,14 @@ resource "azurerm_network_interface" "control" {
   }
 }
 
+
 resource "tls_private_key" "vm_ssh" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
 resource "azurerm_linux_virtual_machine" "control" {
-  name                  = "control.example.com"
+  name                  = "jumbox"
   resource_group_name   = var.resource_group_name
   location              = var.location
   size                  = "Standard_B1ls"
@@ -117,7 +107,7 @@ resource "local_file" "ansible_inventory" {
   content = templatefile("${abspath("${path.module}/../../../ansible/inventory.tmpl")}", {
     control = {
       name = azurerm_linux_virtual_machine.control.name
-      ip   = azurerm_linux_virtual_machine.control.public_ip_address
+      ip   = azurerm_public_ip.control.ip_address
     }
     ssh_private_key_path = "${abspath("${path.module}/../../../ansible/vm_ssh_key")}"
     nodes = [
@@ -131,7 +121,7 @@ resource "local_file" "ansible_inventory" {
       }
     ]
     ssh_user = var.admin_username
-    ssh_key  = "ansible_ssh_private_key_file=${abspath("${path.module}/../../../ansible/vm_ssh_key")}"
+    # ssh_key  = "ansible_ssh_private_key_file=${abspath("${path.module}/../../../ansible/vm_ssh_key")}"
   })
   filename = abspath("${path.module}/../../../ansible/inventory.ini")
 }
@@ -141,3 +131,4 @@ resource "local_file" "ssh_private_key" {
   filename        = abspath("${path.module}/../../../ansible/vm_ssh_key")
   file_permission = "0600"
 }
+

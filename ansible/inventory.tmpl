@@ -1,11 +1,10 @@
 [control]
-${control.name} ansible_host=${control.ip} ansible_user=${ssh_user} 
+${control.name} ansible_host=${control.ip} ansible_user=${ssh_user}
 
 [nodes]
 %{for node in nodes ~}
-${node.name} ansible_host=${node.ip} ansible_user=${ssh_user} 
+${node.name} ansible_host=${node.ip} ansible_user=${ssh_user} ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q ${ssh_user}@${control.ip}"'
 %{endfor ~}
 
 [all:vars]
-ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
-ansible_ssh_private_key_file=${ssh_private_key_path}
+ansible_ssh_private_key_file=/home/adminuser/ansible/vm_ssh_key

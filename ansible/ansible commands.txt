@@ -15,3 +15,8 @@ ansible-playbook -i inventory.ini deploy-api.yml \
   -e mysql_user=$MYSQL_USER \
   -e mysql_password=$TF_VAR_admin_password \ # Assuming you set this as a variable
   -e mysql_database=$MYSQL_DB
+
+  ansible-playbook -i inventory.ini setup-infra.yml
+  ansible-playbook -i inventory.ini db-setup.yml
+  ansible-playbook -i inventory.ini api-setup.yml
+  

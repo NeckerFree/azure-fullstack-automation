@@ -1,9 +1,14 @@
 ---
 - name: Setup Movie Analyst API
-  hosts: api_servers  # Adjust host group as needed
+  hosts: nodes  # Matches your Terraform-generated inventory group
   become: yes
+  vars:
+    # Variables can be defined here, in inventory, or via --extra-vars
+    api_source_path: "/path/to/api/src"  # Override this in inventory/CLI
+    service_name: "movie-analyst-api"    # Customizable service name
 
   tasks:
+    # --- Node.js Setup ---
     - name: Install Node.js and npm
       apt:
         name:
@@ -12,44 +17,55 @@
         update_cache: yes
         state: present
 
+    # --- Directory Structure ---
     - name: Ensure app directory exists
       file:
-        path: "/opt/movie-analyst-api"
+        path: "/opt/{{ service_name }}"
         state: directory
         owner: "www-data"
         group: "www-data"
         mode: "0755"
 
+    # --- Code Deployment ---
     - name: Copy API source code (including server.js)
       copy:
-        src: "{{ api_source_path }}"  # Define this in vars or extra-vars
-        dest: "/opt/movie-analyst-api"
+        src: "{{ api_source_path }}"
+        dest: "/opt/{{ service_name }}"
         owner: "www-data"
         group: "www-data"
         mode: "0644"
-        # Ensure server.js is included in the copied files
+      register: api_code_updated
+      notify: Restart Movie Analyst API
 
-    - name: Install API dependencies (including mysql)
+    # --- Dependency Management ---
+    - name: Install npm dependencies
       npm:
-        path: "/opt/movie-analyst-api"
+        path: "/opt/{{ service_name }}"
         state: present
+      notify: Restart Movie Analyst API
 
-    - name: Setup systemd service for API
+    # --- Service Configuration ---
+    - name: Deploy systemd service file
       template:
         src: "templates/movie-analyst-api.service.j2"
-        dest: "/etc/systemd/system/movie-analyst-api.service"
+        dest: "/etc/systemd/system/{{ service_name }}.service"
         mode: "0644"
       notify:
         - Reload systemd
         - Restart Movie Analyst API
 
-    - name: Enable and start API service
+    - name: Ensure service is enabled and running
       service:
-        name: "movie-analyst-api"
+        name: "{{ service_name }}"
         enabled: yes
         state: started
 
   handlers:
     - name: Reload systemd
       systemd:
-   
+        daemon_reload: yes
+
+    - name: Restart Movie Analyst API
+      service:
+        name: "{{ service_name }}"
+        state: restarted
