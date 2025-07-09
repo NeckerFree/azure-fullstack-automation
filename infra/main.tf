@@ -82,3 +82,25 @@ module "app-service" {
   app_name            = "movies"
   environment         = local.environment
 }
+
+output "mysql_fqdn" {
+  value = module.mysql-database.mysql_fqdn
+}
+
+output "mysql_admin_user" {
+  value     = module.mysql-database.mysql_admin_user
+  sensitive = true
+}
+
+output "mysql_admin_pwd" {
+  value     = module.mysql-database.mysql_admin_pwd
+  sensitive = true
+}
+
+output "mysql_database_name" {
+  value = module.mysql-database.mysql_database_name
+}
+
+output "lb_api_url" {
+  value = module.load-balancer.lb_api_url
+}

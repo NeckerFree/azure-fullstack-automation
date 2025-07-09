@@ -1,45 +1,78 @@
 ---
-- name: Prepare target nodes for API deployment via CI/CD
+- name: Setup Movie Analyst API with NVM and Node.js 16
   hosts: nodes
-  gather_facts: yes 
   become: yes
   vars:
+    api_source_path: "/opt/movie-analyst-api"  # Puedes sobrescribir con -e si lo necesitas
     service_name: "movie-analyst-api"
-    app_dir: "/opt/{{ service_name }}"
-    ansible_python_interpreter: /usr/bin/python3
+    node_version: "16.20.2"
+    nvm_dir: "/home/{{ ansible_user }}/.nvm"
+
   tasks:
-    - name: Ensure connectivity
-      ping:
-    # --- Node.js Setup ---
-    - name: Install Node.js and npm
+    # --- Ensure required packages for NVM ---
+    - name: Install curl and build-essential
       apt:
         name:
-          - nodejs
-          - npm
+          - curl
+          - build-essential
         update_cache: yes
         state: present
 
-    # --- Directory Structure ---
-    - name: Ensure app directory exists
+    # --- Install NVM ---
+    - name: Install NVM for user
+      become: false
+      shell: |
+        export NVM_DIR="{{ nvm_dir }}"
+        if [ ! -d "$NVM_DIR" ]; then
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        fi
+      args:
+        executable: /bin/bash
+
+    # --- Install Node.js via NVM ---
+    - name: Install Node.js {{ node_version }} with NVM
+      become: false
+      shell: |
+        export NVM_DIR="{{ nvm_dir }}"
+        source "$NVM_DIR/nvm.sh"
+        nvm install {{ node_version }}
+        nvm alias default {{ node_version }}
+      args:
+        executable: /bin/bash
+
+    # --- Ensure app directory exists ---
+    - name: Create API directory
       file:
-        path: "{{ app_dir }}"
+        path: "{{ api_source_path }}"
         state: directory
-        owner: "www-data"
-        group: "www-data"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
         mode: "0755"
 
-    # --- Service Configuration ---
-    - name: Deploy systemd service file
+    # --- Install npm dependencies with NVM ---
+    - name: Install npm dependencies
+      become: false
+      shell: |
+        export NVM_DIR="{{ nvm_dir }}"
+        source "$NVM_DIR/nvm.sh"
+        nvm use {{ node_version }}
+        npm install
+      args:
+        chdir: "{{ api_source_path }}"
+        executable: /bin/bash
+
+    # --- Deploy systemd service file ---
+    - name: Copy systemd template
       template:
         src: "templates/movie-api.service.j2"
         dest: "/etc/systemd/system/{{ service_name }}.service"
         mode: "0644"
       notify:
         - Reload systemd
-        - Restart Movie Analyst API
+        - Restart API
 
-    - name: Ensure service is enabled and running
-      service:
+    - name: Enable and start API service
+      systemd:
         name: "{{ service_name }}"
         enabled: yes
         state: started
@@ -49,7 +82,7 @@
       systemd:
         daemon_reload: yes
 
-    - name: Restart Movie Analyst API
-      service:
+    - name: Restart API
+      systemd:
         name: "{{ service_name }}"
         state: restarted

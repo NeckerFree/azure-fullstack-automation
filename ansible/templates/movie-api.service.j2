@@ -3,13 +3,14 @@ Description=Movie Analyst API
 After=network.target
 
 [Service]
-User=www-data
-Group=www-data
 WorkingDirectory=/opt/movie-analyst-api
-ExecStart=/usr/bin/npm start
+ExecStart=/bin/bash -c 'source /home/adminuser/.nvm/nvm.sh && nvm use 16 && node server.js'
 Restart=always
+User=adminuser
 Environment=NODE_ENV=production
-Environment=PORT=3000
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=movie-analyst-api
 
 [Install]
 WantedBy=multi-user.target
