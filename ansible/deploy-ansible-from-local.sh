@@ -2,8 +2,8 @@
 
 # === CONFIGURACIÓN ===
 JUMP_USER="adminuser"
-JUMP_HOST="20.9.184.71"
-SSH_KEY_LOCAL="vm_ssh_key"
+JUMP_HOST="4.246.105.113"
+SSH_KEY_LOCAL="ansible/vm_ssh_key"
 REMOTE_DIR="/home/${JUMP_USER}/ansible-setup"
 SETUP_PLAYBOOK_FILE="setup-infra.yml"
 
@@ -72,6 +72,9 @@ ansible_ssh_timeout=60
 ansible_python_interpreter=/usr/bin/python3
 EOL
 EOF
+# === PASO 3.5: Subir clave SSH a la jumphost ===
+echo "[3.5/5] Subiendo clave SSH a la jumphost..."
+scp -i ${SSH_KEY_LOCAL} ${SSH_KEY_LOCAL} ${JUMP_USER}@${JUMP_HOST}:/home/${JUMP_USER}/.ssh/vm_ssh_key
 
 # === PASO 4: Asegurar permisos de la clave SSH ===
 echo "[4/5] Asegurando permisos de la clave SSH en la jumphost..."

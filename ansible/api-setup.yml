@@ -1,13 +1,15 @@
 ---
-- name: Setup Movie Analyst API
-  hosts: nodes  # Matches your Terraform-generated inventory group
+- name: Prepare target nodes for API deployment via CI/CD
+  hosts: nodes
+  gather_facts: yes 
   become: yes
   vars:
-    # Variables can be defined here, in inventory, or via --extra-vars
-    api_source_path: "/path/to/api/src"  # Override this in inventory/CLI
-    service_name: "movie-analyst-api"    # Customizable service name
-
+    service_name: "movie-analyst-api"
+    app_dir: "/opt/{{ service_name }}"
+    ansible_python_interpreter: /usr/bin/python3
   tasks:
+    - name: Ensure connectivity
+      ping:
     # --- Node.js Setup ---
     - name: Install Node.js and npm
       apt:
@@ -20,34 +22,16 @@
     # --- Directory Structure ---
     - name: Ensure app directory exists
       file:
-        path: "/opt/{{ service_name }}"
+        path: "{{ app_dir }}"
         state: directory
         owner: "www-data"
         group: "www-data"
         mode: "0755"
 
-    # --- Code Deployment ---
-    - name: Copy API source code (including server.js)
-      copy:
-        src: "{{ api_source_path }}"
-        dest: "/opt/{{ service_name }}"
-        owner: "www-data"
-        group: "www-data"
-        mode: "0644"
-      register: api_code_updated
-      notify: Restart Movie Analyst API
-
-    # --- Dependency Management ---
-    - name: Install npm dependencies
-      npm:
-        path: "/opt/{{ service_name }}"
-        state: present
-      notify: Restart Movie Analyst API
-
     # --- Service Configuration ---
     - name: Deploy systemd service file
       template:
-        src: "templates/movie-analyst-api.service.j2"
+        src: "templates/movie-api.service.j2"
         dest: "/etc/systemd/system/{{ service_name }}.service"
         mode: "0644"
       notify:

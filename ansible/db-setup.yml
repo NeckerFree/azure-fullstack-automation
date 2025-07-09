@@ -1,17 +1,17 @@
 ---
 - name: Configure MySQL environment and database
-  hosts: nodes  # Matches your inventory group
+  hosts: mysql_server
   become: yes
   vars:
     db_user: "applicationuser"
-    db_password: "your_secure_password"  # Use Ansible Vault for security
+    db_password: "your_secure_password"
     db_name: "movie_db"
     mysql_script_path: "ansible/files/mysql/movie_db.sql"
 
   tasks:
-    - name: Set db_host dynamically from inventory
+    - name: Set db_host dynamically
       set_fact:
-        db_host: "{{ hostvars['mysql_server']['ansible_host'] }}"  # Assuming 'mysql_server' is your DB host in inventory
+        db_host: "{{ hostvars[groups['mysql_server'][0]]['ansible_host'] }}"
 
     - name: Add environment variables to /etc/environment
       ansible.builtin.lineinfile:
@@ -45,19 +45,11 @@
         owner: root
         group: root
         mode: "0640"
-      when: mysql_script_path is defined and lookup('fileglob', mysql_script_path)|length > 0
 
     - name: Load MySQL initialization script
-      mysql_db:
-        login_host: "{{ db_host }}"
-        login_user: "{{ db_user }}"
-        login_password: "{{ db_password }}"
-        name: "{{ db_name }}"
-        state: import
-        target: "/etc/ansible/mysql/movie_db.sql"
-      register: db_import
+      shell: |
+        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} < /etc/ansible/mysql/movie_db.sql
+      args:
+        executable: /bin/bash
       no_log: true
-      changed_when: "'OK' in db_import.msg"
-      failed_when: >
-        db_import.failed and
-        ('already exists' not in db_import.msg)
+      changed_when: false
