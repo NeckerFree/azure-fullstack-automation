@@ -3,7 +3,7 @@
 # === CONFIGURACIÓN ===
 JUMP_USER="adminuser"
 JUMP_HOST="4.246.105.113"
-SSH_KEY_LOCAL="ansible/vm_ssh_key"
+SSH_KEY_LOCAL="$HOME/.ssh/vm_ssh_key"
 REMOTE_DIR="/home/${JUMP_USER}/ansible-setup"
 API_SRC_LOCAL="./src"
 API_SRC_REMOTE="${REMOTE_DIR}/src"

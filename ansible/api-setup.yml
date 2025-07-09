@@ -10,13 +10,23 @@
 
   tasks:
     # --- Ensure required packages for NVM ---
-    - name: Install curl and build-essential
+    - name: Install curl and build-essential (async)
       apt:
         name:
           - curl
           - build-essential
-        update_cache: yes
         state: present
+        update_cache: yes
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      async: 600
+      poll: 0
+      register: install_job
+
+    - name: Wait for apt to finish
+      async_status:
+        jid: "{{ install_job.ansible_job_id }}"
+      register: job_result
 
     # --- Install NVM ---
     - name: Install NVM for user

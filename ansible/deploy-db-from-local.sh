@@ -12,8 +12,7 @@ MYSQL_DB=$(terraform output -raw mysql_database_name)
 # 📡 SSH y rutas
 JUMPBOX_IP="4.246.105.113"
 JUMPBOX_USER="adminuser"
-SSH_KEY="ansible/vm_ssh_key"
-
+SSH_KEY_LOCAL="$HOME/.ssh/vm_ssh_key"
 PLAYBOOK="ansible/db-setup.yml"
 SQL_SCRIPT="ansible/files/mysql/movie_db.sql"
 INVENTORY="ansible/inventory.ini"

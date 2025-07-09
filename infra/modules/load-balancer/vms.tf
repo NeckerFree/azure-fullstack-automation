@@ -102,6 +102,13 @@ resource "azurerm_linux_virtual_machine" "backend" {
   }
 }
 
+# Generate ~/.ssh/vm_ssh_key from TLS private key
+resource "local_file" "ssh_private_key" {
+  content         = tls_private_key.vm_ssh.private_key_openssh
+  filename        = pathexpand("~/.ssh/vm_ssh_key")
+  file_permission = "0600"
+}
+
 # Generate a Dynamic Ansible Inventory File
 resource "local_file" "ansible_inventory" {
   content = templatefile("${abspath("${path.module}/../../../ansible/inventory.tmpl")}", {
@@ -109,7 +116,7 @@ resource "local_file" "ansible_inventory" {
       name = azurerm_linux_virtual_machine.control.name
       ip   = azurerm_public_ip.control.ip_address
     }
-    ssh_private_key_path = "${abspath("${path.module}/../../../ansible/vm_ssh_key")}"
+    ssh_private_key_path = "${pathexpand("~/.ssh/vm_ssh_key")}"
     nodes = [
       {
         name = azurerm_linux_virtual_machine.backend[0].name
@@ -121,14 +128,8 @@ resource "local_file" "ansible_inventory" {
       }
     ]
     ssh_user = var.admin_username
-    # ssh_key  = "ansible_ssh_private_key_file=${abspath("${path.module}/../../../ansible/vm_ssh_key")}"
   })
   filename = abspath("${path.module}/../../../ansible/inventory.ini")
 }
 
-resource "local_file" "ssh_private_key" {
-  content         = tls_private_key.vm_ssh.private_key_openssh
-  filename        = abspath("${path.module}/../../../ansible/vm_ssh_key")
-  file_permission = "0600"
-}
 

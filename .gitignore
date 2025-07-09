@@ -53,8 +53,12 @@ docs/architecture diagram previuos.png
 docs/architecture diagram 1.png
 docs/Architecture decisions.docx
 docs/ansible commands.txt
-ansible/vm_ssh_key
-ansible/inventory.ini
 docs/inv-chatgpt.ini
 docs/bash scripts.txt
-
+docs/Jumpbox NSG diagram.png
+docs/Recursos 1.png
+docs/Recursos 2.png
+docs/inv-chatgpt.ini
+docs/monthly cost.png
+ansible/inventory.ini
+ansible/ansible command.txt
