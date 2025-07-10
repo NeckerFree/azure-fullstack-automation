@@ -6,13 +6,12 @@
     db_user: "applicationuser"
     db_password: "your_secure_password"
     db_name: "movie_db"
-    mysql_script_path: "ansible/files/mysql/movie_db.sql"
+    db_host: "localhost"
+    mysql_script_path: "/home/adminuser/movie_db.sql"
 
   tasks:
-    - name: Set db_host dynamically
-      set_fact:
-        db_host: "{{ hostvars[groups['mysql_server'][0]]['ansible_host'] }}"
-
+    - name: Ping MySQL host
+      ping:
     - name: Add environment variables to /etc/environment
       ansible.builtin.lineinfile:
         path: /etc/environment
@@ -26,25 +25,16 @@
         - { key: "DB_NAME", value: "{{ db_name }}" }
       no_log: true
 
-    - name: Install MySQL client
-      apt:
-        name: mysql-client
-        update_cache: yes
-        state: present
-
     - name: Ensure MySQL scripts directory exists
       file:
         path: "/etc/ansible/mysql"
         state: directory
         mode: "0755"
 
-    - name: Transfer MySQL initialization script
-      copy:
-        src: "{{ mysql_script_path }}"
-        dest: "/etc/ansible/mysql/movie_db.sql"
-        owner: root
-        group: root
-        mode: "0640"
+    - name: Move SQL script to MySQL directory
+      command: mv "{{ mysql_script_path }}" "/etc/ansible/mysql/movie_db.sql"
+      args:
+        creates: "/etc/ansible/mysql/movie_db.sql"
 
     - name: Load MySQL initialization script
       shell: |
@@ -53,3 +43,4 @@
         executable: /bin/bash
       no_log: true
       changed_when: false
+

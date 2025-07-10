@@ -6,7 +6,13 @@ ${control.name} ansible_host=${control.ip} ansible_user=${ssh_user} ansible_ssh_
 ${node.name} ansible_host=${node.ip} ansible_user=${ssh_user} ansible_ssh_private_key_file=/home/adminuser/.ssh/vm_ssh_key ansible_ssh_common_args='-o ProxyJump=${ssh_user}@${control.ip}'
 %{ endfor ~}
 
+[mysql_server]
+%{ if length(nodes) > 0 ~}
+${nodes[0].name}
+%{ endif ~}
+
 [all:vars]
 ansible_connection=ssh
 ansible_ssh_timeout=60
 ansible_python_interpreter=/usr/bin/python3
+
