@@ -25,8 +25,8 @@ jobs:
       - name: Run tests
         run: npm test
 
-      # - name: Build (descomenta si tienes un paso de build)
-      #   run: npm run build
+      - name: Build the app
+        run: npm run build
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3

@@ -2,7 +2,7 @@
 
 # === CONFIGURACIÓN ===
 JUMP_USER="adminuser"
-JUMP_HOST="4.246.105.113"
+JUMP_HOST="4.155.204.253"
 SSH_KEY_LOCAL="$HOME/.ssh/vm_ssh_key"
 REMOTE_DIR="/home/${JUMP_USER}/ansible-setup"
 SETUP_PLAYBOOK_FILE="setup-infra.yml"
