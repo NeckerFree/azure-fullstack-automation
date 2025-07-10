@@ -29,15 +29,15 @@ resource "azurerm_resource_group" "epam-rg" {
 }
 
 module "network" {
-  source                               = "./modules/network"
-  resource_group_name                  = azurerm_resource_group.epam-rg.name
-  location                             = azurerm_resource_group.epam-rg.location
-  env_prefix                           = local.name_prefix
-  environment                          = local.environment
-  bastion_public_ip                    = module.load-balancer.control_node_public_ip
-  allowed_ssh_ip                       = var.allowed_ssh_ip
-  network_interface_control_id         = module.load-balancer.network_interface_control_id
-  network_interface_control_private_ip = module.load-balancer.network_interface_control_private_ip
+  source                       = "./modules/network"
+  resource_group_name          = azurerm_resource_group.epam-rg.name
+  location                     = azurerm_resource_group.epam-rg.location
+  env_prefix                   = local.name_prefix
+  environment                  = local.environment
+  bastion_public_ip            = module.load-balancer.control_node_public_ip
+  allowed_ssh_ip               = var.allowed_ssh_ip
+  network_interface_control_id = module.load-balancer.network_interface_control_id
+  jumpbox_private_ip           = module.load-balancer.network_interface_control_private_ip
 }
 
 module "mysql-database" {

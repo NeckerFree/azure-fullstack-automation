@@ -3,15 +3,12 @@
   hosts: mysql_server
   become: yes
   vars:
-    db_user: "applicationuser"
-    db_password: "your_secure_password"
-    db_name: "movie_db"
-    db_host: "localhost"
     mysql_script_path: "/home/adminuser/movie_db.sql"
 
   tasks:
     - name: Ping MySQL host
       ping:
+
     - name: Add environment variables to /etc/environment
       ansible.builtin.lineinfile:
         path: /etc/environment
@@ -43,4 +40,3 @@
         executable: /bin/bash
       no_log: true
       changed_when: false
-

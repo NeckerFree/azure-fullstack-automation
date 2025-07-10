@@ -13,7 +13,7 @@ resource "azurerm_network_security_group" "jumpbox_nsg" {
     source_port_range          = "*"
     destination_port_range     = "22"
     source_address_prefix      = var.allowed_ssh_ip
-    destination_address_prefix = var.network_interface_control_private_ip
+    destination_address_prefix = "*"
   }
 
   # Outbound SSH rule (if needed)

@@ -18,6 +18,7 @@ variable "network_interface_control_id" {
   type = string
 }
 
-variable "network_interface_control_private_ip" {
+
+variable "jumpbox_private_ip" {
   type = string
 }

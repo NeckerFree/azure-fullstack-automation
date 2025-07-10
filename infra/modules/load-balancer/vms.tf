@@ -132,4 +132,12 @@ resource "local_file" "ansible_inventory" {
   filename = abspath("${path.module}/../../../ansible/inventory.ini")
 }
 
+resource "null_resource" "fix_inventory_line_endings" {
+  depends_on = [local_file.ansible_inventory]
 
+  provisioner "local-exec" {
+    command = <<-EOT
+      powershell -Command "(Get-Content -Raw '${local_file.ansible_inventory.filename}') -replace '\\r', '' | Set-Content -NoNewline '${local_file.ansible_inventory.filename}'"
+    EOT
+  }
+}
