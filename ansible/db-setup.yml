@@ -1,16 +1,14 @@
 ---
 - name: Configure MySQL environment and database
-  hosts: nodes
+  hosts: mysql_server
   become: yes
   vars:
-    db_host: "your_db_host"  # Replace with your actual DB host
-    db_user: "applicationuser"
-    db_password: "your_secure_password"  # Replace with your actual password
-    db_name: "movie_db"
-    mysql_script_path: "ansible/files/mysql/movie_db.sql"
+    mysql_script_path: "/home/adminuser/movie_db.sql"
 
   tasks:
-    # Part 1: Environment variables
+    - name: Ping MySQL host
+      ping:
+
     - name: Add environment variables to /etc/environment
       ansible.builtin.lineinfile:
         path: /etc/environment
@@ -24,42 +22,21 @@
         - { key: "DB_NAME", value: "{{ db_name }}" }
       no_log: true
 
-    # Note: Sourcing /etc/environment in the playbook won't affect subsequent tasks
-    # Environment vars will be available for processes started after this point
-
-    # Part 2: MySQL configuration
-    - name: Install MySQL client
-      apt:
-        name: mysql-client
-        update_cache: yes
-        state: present
-
     - name: Ensure MySQL scripts directory exists
       file:
         path: "/etc/ansible/mysql"
         state: directory
         mode: "0755"
 
-    - name: Transfer MySQL initialization script
-      copy:
-        src: "{{ mysql_script_path }}"
-        dest: "/etc/ansible/mysql/movie_db.sql"
-        owner: root
-        group: root
-        mode: "0640"
-      when: mysql_script_path is defined and lookup('fileglob', mysql_script_path)|length > 0
+    - name: Move SQL script to MySQL directory
+      command: mv "{{ mysql_script_path }}" "/etc/ansible/mysql/movie_db.sql"
+      args:
+        creates: "/etc/ansible/mysql/movie_db.sql"
 
     - name: Load MySQL initialization script
-      mysql_db:
-        login_host: "{{ db_host }}"
-        login_user: "{{ db_user }}"
-        login_password: "{{ db_password }}"
-        name: "{{ db_name }}"
-        state: import
-        target: "/etc/ansible/mysql/movie_db.sql"
-      register: db_import
+      shell: |
+        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} < /etc/ansible/mysql/movie_db.sql
+      args:
+        executable: /bin/bash
       no_log: true
-      changed_when: "'OK' in db_import.msg"
-      failed_when: >
-        db_import.failed and
-        ('already exists' not in db_import.msg)
+      changed_when: false

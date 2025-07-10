@@ -3,12 +3,14 @@ Description=Movie Analyst API
 After=network.target
 
 [Service]
-User={{ app_user }}
-Group={{ app_user }}
-WorkingDirectory={{ app_dir }}
-ExecStart=/usr/bin/pm2 start {{ app_dir }}/server.js --name movie-api --no-daemon
+WorkingDirectory=/opt/movie-analyst-api
+ExecStart=/bin/bash -c 'source /home/adminuser/.nvm/nvm.sh && nvm use 16 && node server.js'
 Restart=always
+User=adminuser
 Environment=NODE_ENV=production
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=movie-analyst-api
 
 [Install]
 WantedBy=multi-user.target

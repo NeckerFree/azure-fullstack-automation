@@ -4,6 +4,7 @@ resource "azurerm_service_plan" "main" {
   resource_group_name = var.resource_group_name
   os_type             = "Linux"
   sku_name            = "F1" # Free tier
+
 }
 
 resource "azurerm_linux_web_app" "main" {

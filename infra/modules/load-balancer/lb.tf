@@ -16,6 +16,8 @@ resource "azurerm_lb" "main" {
   frontend_ip_configuration {
     name                 = "LBFrontend"
     public_ip_address_id = azurerm_public_ip.lb.id
+    # private_ip_address_allocation = "Dynamic"
+    # subnet_id                     = azurerm_subnet.private.id
   }
 }
 

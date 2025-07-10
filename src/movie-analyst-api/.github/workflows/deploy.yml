@@ -1,142 +1,47 @@
-name: Deploy Movie Analyst API with Ansible
+name: Deploy API
 
 on:
   push:
-    branches: [master]
-    paths:
-      - "movie-analyst-api/**"
+    branches:
+      - main
 
 jobs:
   deploy:
+    name: Compile, Test and Deploy API
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          terraform_version: 1.5.0
+          node-version: "16"
 
-      - name: Get VM IPs from Terraform
-        id: terraform
-        working-directory: modules/load-balancer
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build the app
+        run: npm run build
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform -chdir=infra/modules/mysql-database init
+
+      - name: Terraform Output
+        id: tf
         run: |
-          terraform init
-          VM_IPS=$(terraform output -json backend_vm_ips | jq -r '.[]')
-          echo "vm_ips=$VM_IPS" >> $GITHUB_OUTPUT
+          json=$(terraform -chdir=infra/modules/mysql-database output -json)
+          echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
+          echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
+          echo "DB_PASS=$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
+          echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
 
-      - name: Install Ansible
-        uses: ansible/ansible-setup@v1
-        with:
-          ansible-core-version: 2.14
-
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan ${{ steps.terraform.outputs.vm_ips }} >> ~/.ssh/known_hosts
-
-      - name: Create Ansible inventory
-        run: |
-          echo "[movie_api]" > inventory.ini
-          for IP in ${{ steps.terraform.outputs.vm_ips }}; do
-            echo "$IP ansible_user=adminuser" >> inventory.ini
-          done
-
-      - name: Create Ansible config file
-        run: |
-          cat > ansible.cfg << EOF
-          [defaults]
-          inventory = inventory.ini
-          private_key_file = ~/.ssh/id_rsa
-          host_key_checking = False
-          EOF
-
-      - name: Create deploy playbook
-        run: |
-          cat > deploy-api.yml << EOF
-          ---
-          - hosts: movie_api
-            become: yes
-            vars:
-              app_dir: /opt/movie-analyst-api
-              app_user: adminuser
-
-            tasks:
-              - name: Install dependencies
-                apt:
-                  name:
-                    - nodejs
-                    - npm
-                  state: present
-                  update_cache: yes
-
-              - name: Ensure app directory exists
-                file:
-                  path: "{{ app_dir }}"
-                  state: directory
-                  owner: "{{ app_user }}"
-                  group: "{{ app_user }}"
-                  mode: '0755'
-
-              - name: Copy application files
-                copy:
-                  src: movie-analyst-api/
-                  dest: "{{ app_dir }}"
-                  owner: "{{ app_user }}"
-                  group: "{{ app_user }}"
-
-              - name: Install node modules
-                npm:
-                  path: "{{ app_dir }}"
-                  state: present
-
-              - name: Create systemd service file
-                template:
-                  src: movie-analyst-api/movie-api.service.j2
-                  dest: /etc/systemd/system/movie-api.service
-                  mode: '0644'
-
-              - name: Reload systemd
-                systemd:
-                  daemon_reload: yes
-
-              - name: Ensure service is enabled and running
-                systemd:
-                  name: movie-api
-                  state: restarted
-                  enabled: yes
-          EOF
-
-      - name: Create systemd template
-        run: |
-          cat > movie-analyst-api/movie-api.service.j2 << EOF
-          [Unit]
-          Description=Movie Analyst API
-          After=network.target
-
-          [Service]
-          User={{ app_user }}
-          Group={{ app_user }}
-          WorkingDirectory={{ app_dir }}
-          ExecStart=/usr/bin/node {{ app_dir }}/server.js
-          Restart=always
-          Environment=NODE_ENV=production
-          Environment=MYSQL_HOST={{ mysql_host }}
-          Environment=MYSQL_USER={{ mysql_user }}
-          Environment=MYSQL_PASSWORD={{ mysql_password }}
-          Environment=MYSQL_DATABASE={{ mysql_database }}
-
-          [Install]
-          WantedBy=multi-user.target
-          EOF
-
-      - name: Run Ansible playbook
-        run: |
-          ansible-playbook -i inventory.ini deploy-api.yml \
-            --extra-vars "mysql_host=${{ secrets.MYSQL_HOST }} \
-                          mysql_user=${{ secrets.MYSQL_USER }} \
-                          mysql_password=${{ secrets.MYSQL_PASSWORD }} \
-                          mysql_database=${{ secrets.MYSQL_DATABASE }}"
+      - name: Deploy API with Ansible
+        run: ./ansible/deploy-api-from-local.sh
