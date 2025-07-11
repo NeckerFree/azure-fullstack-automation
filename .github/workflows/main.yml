@@ -23,8 +23,12 @@ jobs:
         run: npm ci
         working-directory: src/movie-analyst-ui
 
+      - name: List node_modules binaries
+        run: ls -l node_modules/.bin
+        working-directory: src/movie-analyst-ui
+
       - name: Run tests
-        run: npx test
+        run: npx mocha
         working-directory: src/movie-analyst-ui
 
       - name: Build the app

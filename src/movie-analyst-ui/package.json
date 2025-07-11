@@ -19,5 +19,8 @@
     "ejs": "^2.5.7",
     "express": "^4.15.4",
     "superagent": "^3.6.0"
+  },
+  "devDependencies": {
+    "mocha": "^11.7.1"
   }
 }
