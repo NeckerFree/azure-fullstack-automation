@@ -497,3 +497,50 @@ Database credentials are managed through Azure Key Vault and injected as environ
 This project is MIT licensed.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+Deploy Azure resources:
+/infra/> terraform plan
+/infra/> terraform apply
+
+when deploy completed:
+Replace JUMPBOX_HOST with the value of jumpbox ansible_host in generated inventory.ini
+
+To validate jumbox folders or files connect from Powershell as admin an run:
+ssh -i "$HOME/.ssh/vm_ssh_key" adminuser@4.154.243.88
+
+In root folder bash run:
+ chmod +x deploy-ansible-from-local.sh
+ chmod +x deploy-db-from-local.sh
+ chmod +x deploy-api-from-local.sh 
+
+# Copy files, install and configure ansible jumpbox
+./ansible/deploy-ansible-from-local.sh 
+accept fingerprint (yes)
+
+expected:
+PLAY RECAP *********************************************************************
+epamqa-vm-api-0            : ok=1    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+epamqa-vm-api-1            : ok=1    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+localhost                  : ok=3    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+Playbook executed successfully!
+
+# Copy files, install and configure VMs nodes to deploy API
+ ./ansible/deploy-api-from-local.sh
+
+ expected:
+ PLAY RECAP *********************************************************************
+epamqa-vm-api-0            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+epamqa-vm-api-1            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+Playbook executed successfully!
+
+# Copy files, install and configure database in VMs nodes
+./ansible/deploy-db-from-local.sh
+
+expected:
+PLAY RECAP *********************************************************************
+epamqa-vm-api-0            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+epamqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+epamqa-vm-api-0            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+epamqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+epamqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+Playbook executed successfully!
