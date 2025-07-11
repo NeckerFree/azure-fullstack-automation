@@ -14,6 +14,12 @@ TEMPLATE_REMOTE="${REMOTE_DIR}/templates/movie-api.service.j2"
 INVENTORY_LOCAL="./ansible/inventory.ini"
 INVENTORY_REMOTE="${REMOTE_DIR}/inventory.ini"
 
+# === STEP 0: JUMPBOX_HOST, JUMPBOX_USER validation===
+if [ -z "$JUMPBOX_HOST" ] || [ -z "$JUMPBOX_USER" ]; then
+  echo "❌ JUMPBOX_HOST or JUMPBOX_USER not defined"
+  exit 1
+fi
+
 # === STEP 1: Upload playbook and inventory ===
 echo "[1/4] Uploading playbook and inventory..."
 scp -i "${SSH_KEY_LOCAL}" "${API_PLAYBOOK_LOCAL}" "${INVENTORY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}:${REMOTE_DIR}/"
