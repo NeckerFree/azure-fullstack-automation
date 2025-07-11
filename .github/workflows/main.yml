@@ -21,19 +21,15 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: src/movie-analyst-ui
-
-      - name: List node_modules binaries
-        run: ls -l node_modules/.bin
-        working-directory: src/movie-analyst-ui
+        working-directory: src/movie-analyst-api
 
       - name: Run tests
         run: npm test
-        working-directory: src/movie-analyst-ui
+        working-directory: src/movie-analyst-api
 
       - name: Build the app
         run: npm run build
-        working-directory: src/movie-analyst-ui
+        working-directory: src/movie-analyst-api
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
