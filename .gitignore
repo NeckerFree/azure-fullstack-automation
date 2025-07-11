@@ -1,0 +1,65 @@
+# Local .terraform directories
+.terraform/
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data, such as
+# password, private keys, and other secrets. These should not be part of version 
+# control as they are data points which are potentially sensitive and subject 
+# to change depending on the environment.
+*.tfvars
+*.tfvars.json
+
+# Ignore override files as they are usually used to override resources locally and so
+# are not checked in
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore transient lock info files created by terraform apply
+.terraform.tfstate.lock.info
+
+# Include override files you do wish to add to version control using negated pattern
+# !example_override.tf
+
+# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
+# example: *tfplan*
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+# Ignore folder
+
+docs/terraform commands.txt
+docs/Terraform code.docx
+docs/SSH commands .txt
+docs/rampup-final-task.pdf
+docs/NSG connection.png
+docs/Monitoreo.png
+docs/ExportedEstimate monthly.xlsx
+docs/ExportedEstimate hourly.xlsx
+docs/Candidate architecture.docx
+docs/candidate architecture diagram.png
+docs/azure commands.txt
+docs/architecture diagram.png
+docs/architecture diagram previuos.png
+docs/architecture diagram 1.png
+docs/Architecture decisions.docx
+docs/ansible commands.txt
+docs/inv-chatgpt.ini
+docs/bash scripts.txt
+docs/Jumpbox NSG diagram.png
+docs/Recursos 1.png
+docs/Recursos 2.png
+docs/inv-chatgpt.ini
+docs/monthly cost.png
+ansible/inventory.ini
+ansible/ansible command.txt
+infra/.terraform.lock.hcl

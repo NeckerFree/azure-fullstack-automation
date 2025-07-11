@@ -1,0 +1,10 @@
+# Initialize Azure tfstate :
+terraform init -upgrade
+terraform apply -auto-approve
+
+terraform destroy \
+  -target="module.network" \
+  -target="module.mysql-database" \
+  -target="module.load-balancer" \
+  -target="module.monitoring" \
+  -target="module.app-service"

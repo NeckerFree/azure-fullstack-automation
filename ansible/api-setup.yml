@@ -1,0 +1,86 @@
+---
+- name: Setup Movie Analyst API with NVM and Node.js 16
+  hosts: nodes
+  become: yes
+  vars:
+    api_source_path: "/opt/movie-analyst-api"  # Puedes sobrescribir con -e si lo necesitas
+    service_name: "movie-analyst-api"
+    node_version: "16.20.2"
+    nvm_dir: "/home/{{ ansible_user }}/.nvm"
+
+  tasks:
+    # --- Ensure required packages for NVM ---
+    - name: Install curl and build-essential (async)
+      apt:
+        name:
+          - curl
+          - build-essential
+        state: present
+        update_cache: yes
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      async: 600
+      poll: 0
+      register: install_job
+
+    - name: Wait for apt to finish
+      async_status:
+        jid: "{{ install_job.ansible_job_id }}"
+      register: job_result
+
+    # --- Install NVM ---
+    - name: Install NVM for user
+      become: false
+      shell: |
+        export NVM_DIR="{{ nvm_dir }}"
+        if [ ! -d "$NVM_DIR" ]; then
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        fi
+      args:
+        executable: /bin/bash
+
+    # --- Install Node.js via NVM ---
+    - name: Install Node.js {{ node_version }} with NVM
+      become: false
+      shell: |
+        export NVM_DIR="{{ nvm_dir }}"
+        source "$NVM_DIR/nvm.sh"
+        nvm install {{ node_version }}
+        nvm alias default {{ node_version }}
+      args:
+        executable: /bin/bash
+
+    # --- Ensure app directory exists ---
+    - name: Create API directory
+      file:
+        path: "{{ api_source_path }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+
+    # --- Deploy systemd service file ---
+    - name: Copy systemd template
+      template:
+        src: "templates/movie-api.service.j2"
+        dest: "/etc/systemd/system/{{ service_name }}.service"
+        mode: "0644"
+      notify:
+        - Reload systemd
+        - Restart API
+
+    - name: Enable and start API service
+      systemd:
+        name: "{{ service_name }}"
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Restart API
+      systemd:
+        name: "{{ service_name }}"
+        state: restarted

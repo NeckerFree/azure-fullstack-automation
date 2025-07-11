@@ -1,0 +1,48 @@
+---
+- name: Configure MySQL environment and database
+  hosts: mysql_server
+  become: yes
+  vars:
+    mysql_script_path: "/home/adminuser/movie_db.sql"
+    remote_mysql_script_path: "/etc/ansible/mysql/movie_db.sql"
+
+  tasks:
+    - name: Ping MySQL host
+      ping:
+
+    - name: Ensure MySQL client is installed
+      ansible.builtin.package:
+        name: mysql-client
+        state: present
+
+    - name: Add environment variables to /etc/environment
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        regexp: "^{{ item.key }}="
+        line: "{{ item.key }}={{ item.value }}"
+        state: present
+      loop:
+        - { key: "DB_HOST", value: "{{ db_host }}" }
+        - { key: "DB_USER", value: "{{ db_user }}" }
+        - { key: "DB_PASS", value: "{{ db_password }}" }
+        - { key: "DB_NAME", value: "{{ db_name }}" }
+      no_log: true
+
+    - name: Ensure MySQL scripts directory exists
+      file:
+        path: "/etc/ansible/mysql"
+        state: directory
+        mode: "0755"
+
+    - name: Copy SQL script to MySQL directory
+      copy:
+        src: "{{ mysql_script_path }}"
+        dest: "{{ remote_mysql_script_path }}"
+        mode: "0644"
+
+    - name: Load MySQL initialization script
+      shell: |
+        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} < {{ remote_mysql_script_path }}
+      args:
+        executable: /bin/bash
+      changed_when: false
