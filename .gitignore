@@ -60,6 +60,5 @@ docs/Recursos 1.png
 docs/Recursos 2.png
 docs/inv-chatgpt.ini
 docs/monthly cost.png
-ansible/inventory.ini
 ansible/ansible command.txt
 infra/.terraform.lock.hcl
