@@ -20,13 +20,11 @@ jobs:
           node-version: "16"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
         working-directory: src/movie-analyst-ui
 
       - name: Run tests
-        run: |
-          export PATH=$(npm bin):$PATH
-          npm test
+        run: npx test
         working-directory: src/movie-analyst-ui
 
       - name: Build the app
