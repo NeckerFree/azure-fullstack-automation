@@ -1,22 +1,26 @@
 ---
-- name: Deploy Node.js Movie Analyst API
-  hosts: mysql_server
+- name: Setup and Deploy Node.js API
+  hosts: nodes
   become: yes
-
   vars:
-    node_version: "16"
-    api_source_path: "/home/adminuser/ansible-setup/src"
-    service_name: "mysqlmovie-api"
-    systemd_template: "/home/adminuser/ansible-setup/templates/movie-api.service.j2"
+    app_path: /home/adminuser/ansible-setup/src/movie-analyst-api
 
   tasks:
-    - name: Ensure Node.js is installed (via NVM)
+    - name: Ensure curl is installed
+      apt:
+        name: curl
+        state: present
+        update_cache: true
+
+    - name: Install NVM and Node.js
       shell: |
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
         export NVM_DIR="$HOME/.nvm"
+        if [ ! -d "$NVM_DIR" ]; then
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        fi
         source "$NVM_DIR/nvm.sh"
-        nvm install {{ node_version }}
-        nvm alias default {{ node_version }}
+        nvm install 16
+        nvm alias default 16
       args:
         executable: /bin/bash
 
@@ -24,23 +28,7 @@
       shell: |
         export NVM_DIR="$HOME/.nvm"
         source "$NVM_DIR/nvm.sh"
-        cd {{ api_source_path }}
+        cd {{ app_path }}
         npm install
       args:
         executable: /bin/bash
-
-    - name: Copy systemd service unit file
-      template:
-        src: "{{ systemd_template }}"
-        dest: "/etc/systemd/system/{{ service_name }}.service"
-        mode: "0644"
-
-    - name: Reload systemd
-      systemd:
-        daemon_reload: yes
-
-    - name: Enable and start the API service
-      systemd:
-        name: "{{ service_name }}"
-        state: restarted
-        enabled: yes
