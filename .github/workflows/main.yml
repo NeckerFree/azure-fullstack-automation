@@ -11,29 +11,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "16"
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm install
         working-directory: src/movie-analyst-api
 
-      - name: Run tests
+      - name: 🧪 Run tests
         run: npm test
         working-directory: src/movie-analyst-api
 
-      - name: Set up Terraform
+      - name: 🛠️ Set up Terraform CLI
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
+      - name: 📦 Terraform Init
         run: terraform -chdir=infra/modules/mysql-database init
 
-      - name: Terraform Output
+      - name: 📤 Export Terraform Outputs
         id: tf
         run: |
           json=$(terraform -chdir=infra/modules/mysql-database output -json)
@@ -42,7 +42,7 @@ jobs:
           echo "DB_PASS=$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
           echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
 
-      - name: Create SSH key file
+      - name: 🔑 Create SSH key file
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
@@ -50,14 +50,14 @@ jobs:
         env:
           VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
 
-      - name: Add jumpbox to known_hosts (disable host checking for simplicity, or add manually)
+      - name: ✅ Trust SSH host key (disable strict checking for testing)
         run: |
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      - name: Make script executable
+      - name: 🚀 Make deploy script executable
         run: chmod +x ./ansible/deploy-api-from-local.sh
 
-      - name: Deploy API with Ansible
+      - name: 🚀 Deploy API with Ansible
         run: ./ansible/deploy-api-from-local.sh
         env:
           JUMPBOX_HOST: 4.154.243.88

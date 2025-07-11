@@ -3,7 +3,7 @@
   hosts: nodes
   become: yes
   vars:
-    app_path: /home/adminuser/ansible-setup/src/movie-analyst-api
+    app_path: "{{ api_source_path | default('/home/adminuser/ansible-setup/src/movie-analyst-api') }}"
 
   tasks:
     - name: Ensure curl is installed
@@ -24,26 +24,22 @@
       args:
         executable: /bin/bash
 
-    - name: Ensure API code directory exists
+    - name: Ensure API code directory exists on jumphost
       ansible.builtin.stat:
-        path: /home/adminuser/ansible-setup/src/movie-analyst-api
+        path: "{{ app_path }}"
       register: api_dir
+      delegate_to: jumpbox
 
-    - name: Fail if API code not found
+    - name: Fail if API code not found on jumphost
       ansible.builtin.fail:
-        msg: "API source code not found in /home/adminuser/ansible-setup/src/movie-analyst-api"
+        msg: "API source code not found at {{ app_path }} on jumpbox"
       when: not api_dir.stat.exists
+      delegate_to: jumpbox
 
-    - name: Ensure destination directory exists
-      file:
-        path: /home/adminuser/ansible-setup/src/
-        state: directory
-        mode: '0755'
-
-    - name: Copy API source code from jumphost to each node
+    - name: Sync API source code from jumphost to target node
       synchronize:
-        src: /home/adminuser/ansible-setup/src/movie-analyst-api/
-        dest: /home/adminuser/ansible-setup/src/movie-analyst-api/
+        src: "{{ app_path }}/"
+        dest: "{{ app_path }}/"
         recursive: yes
         mode: push
       delegate_to: jumpbox
@@ -52,8 +48,7 @@
       shell: |
         export NVM_DIR="$HOME/.nvm"
         source "$NVM_DIR/nvm.sh"
-        cd /home/adminuser/ansible-setup/src/movie-analyst-api
+        cd "{{ app_path }}"
         npm install
       args:
         executable: /bin/bash
-
