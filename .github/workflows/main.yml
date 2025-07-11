@@ -27,10 +27,6 @@ jobs:
         run: npm test
         working-directory: src/movie-analyst-api
 
-      - name: Build the app
-        run: npm run build
-        working-directory: src/movie-analyst-api
-
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
