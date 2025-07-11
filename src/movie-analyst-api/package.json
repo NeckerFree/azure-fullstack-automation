@@ -4,8 +4,7 @@
   "description": "Backend API",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
-    "start": "SET NODE_ENV=dev && node server.js"
+    "test": "mocha test/**/*.js"
   },
   "repository": {
     "type": "git",

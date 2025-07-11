@@ -28,7 +28,7 @@ jobs:
         working-directory: src/movie-analyst-ui
 
       - name: Run tests
-        run: npx mocha
+        run: npm test
         working-directory: src/movie-analyst-ui
 
       - name: Build the app
