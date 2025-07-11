@@ -34,6 +34,16 @@ echo "[3/4] Uploading systemd template..."
 ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" "mkdir -p ${REMOTE_DIR}/templates"
 scp -i "${SSH_KEY_LOCAL}" "${TEMPLATE_LOCAL}" "${JUMP_USER}@${JUMP_HOST}:${TEMPLATE_REMOTE}"
 
+# === STEP 3.5: Preload known_hosts in the jumpbox to avoid host key verification ===
+echo "[3.5/4] Adding backend VM keys to known_hosts on the jumpbox..."
+ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" bash <<'EOF'
+  set -e
+  # Parse inventory to get IPs and add them to known_hosts
+  for ip in $(grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' inventory.ini); do
+    ssh-keyscan -H "$ip" >> ~/.ssh/known_hosts 2>/dev/null || true
+  done
+EOF
+
 # === STEP 4: Execute playbook remotely ===
 echo "[4/4] Executing playbook from the jump host..."
 ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" << EOF
