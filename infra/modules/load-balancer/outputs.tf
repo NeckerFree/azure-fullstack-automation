@@ -39,3 +39,11 @@ output "private_dns_zone_mysql_id" {
 output "private_dns_zone_mysql_name" {
   value = azurerm_private_dns_zone.mysql.name
 }
+
+output "network_interface_backend_0_id" {
+  value = azurerm_network_interface.backend[0].id
+}
+
+output "network_interface_backend_1_id" {
+  value = azurerm_network_interface.backend[1].id
+}

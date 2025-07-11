@@ -1,86 +1,46 @@
 ---
-- name: Setup Movie Analyst API with NVM and Node.js 16
-  hosts: nodes
+- name: Deploy Node.js Movie Analyst API
+  hosts: mysql_server
   become: yes
+
   vars:
-    api_source_path: "/opt/movie-analyst-api"  # Puedes sobrescribir con -e si lo necesitas
-    service_name: "movie-analyst-api"
-    node_version: "16.20.2"
-    nvm_dir: "/home/{{ ansible_user }}/.nvm"
+    node_version: "16"
+    api_source_path: "/home/adminuser/ansible-setup/src"
+    service_name: "mysqlmovie-api"
+    systemd_template: "/home/adminuser/ansible-setup/templates/movie-api.service.j2"
 
   tasks:
-    # --- Ensure required packages for NVM ---
-    - name: Install curl and build-essential (async)
-      apt:
-        name:
-          - curl
-          - build-essential
-        state: present
-        update_cache: yes
-      environment:
-        DEBIAN_FRONTEND: noninteractive
-      async: 600
-      poll: 0
-      register: install_job
-
-    - name: Wait for apt to finish
-      async_status:
-        jid: "{{ install_job.ansible_job_id }}"
-      register: job_result
-
-    # --- Install NVM ---
-    - name: Install NVM for user
-      become: false
+    - name: Ensure Node.js is installed (via NVM)
       shell: |
-        export NVM_DIR="{{ nvm_dir }}"
-        if [ ! -d "$NVM_DIR" ]; then
-          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-        fi
-      args:
-        executable: /bin/bash
-
-    # --- Install Node.js via NVM ---
-    - name: Install Node.js {{ node_version }} with NVM
-      become: false
-      shell: |
-        export NVM_DIR="{{ nvm_dir }}"
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        export NVM_DIR="$HOME/.nvm"
         source "$NVM_DIR/nvm.sh"
         nvm install {{ node_version }}
         nvm alias default {{ node_version }}
       args:
         executable: /bin/bash
 
-    # --- Ensure app directory exists ---
-    - name: Create API directory
-      file:
-        path: "{{ api_source_path }}"
-        state: directory
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: "0755"
+    - name: Install app dependencies
+      shell: |
+        export NVM_DIR="$HOME/.nvm"
+        source "$NVM_DIR/nvm.sh"
+        cd {{ api_source_path }}
+        npm install
+      args:
+        executable: /bin/bash
 
-    # --- Deploy systemd service file ---
-    - name: Copy systemd template
+    - name: Copy systemd service unit file
       template:
-        src: "templates/movie-api.service.j2"
+        src: "{{ systemd_template }}"
         dest: "/etc/systemd/system/{{ service_name }}.service"
         mode: "0644"
-      notify:
-        - Reload systemd
-        - Restart API
 
-    - name: Enable and start API service
-      systemd:
-        name: "{{ service_name }}"
-        enabled: yes
-        state: started
-
-  handlers:
     - name: Reload systemd
       systemd:
         daemon_reload: yes
 
-    - name: Restart API
+    - name: Enable and start the API service
       systemd:
         name: "{{ service_name }}"
         state: restarted
+        enabled: yes
