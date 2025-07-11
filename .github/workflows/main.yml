@@ -22,9 +22,9 @@ jobs:
       - name: Install dependencies
         run: npm install
         working-directory: src/movie-analyst-ui
-        
+
       - name: Run tests
-        run: npm test
+        run: npx test
         working-directory: src/movie-analyst-ui
 
       - name: Build the app
