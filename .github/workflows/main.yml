@@ -47,6 +47,12 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
           chmod 600 ~/.ssh/vm_ssh_key
+        env:
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+
+      - name: Add jumpbox to known_hosts (disable host checking for simplicity, or add manually)
+        run: |
+          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
       - name: Make script executable
         run: chmod +x ./ansible/deploy-api-from-local.sh
