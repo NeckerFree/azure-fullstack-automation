@@ -42,5 +42,8 @@ jobs:
           echo "DB_PASS=$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
           echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
 
+      - name: Make script executable
+        run: chmod +x ./ansible/deploy-api-from-local.sh
+
       - name: Deploy API with Ansible
         run: ./ansible/deploy-api-from-local.sh
