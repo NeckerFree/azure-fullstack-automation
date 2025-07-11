@@ -34,6 +34,20 @@
         msg: "API source code not found in /home/adminuser/ansible-setup/src/movie-analyst-api"
       when: not api_dir.stat.exists
 
+    - name: Ensure destination directory exists
+      file:
+        path: /home/adminuser/ansible-setup/src/
+        state: directory
+        mode: '0755'
+
+    - name: Copy API source code from jumphost to each node
+      synchronize:
+        src: /home/adminuser/ansible-setup/src/movie-analyst-api/
+        dest: /home/adminuser/ansible-setup/src/movie-analyst-api/
+        recursive: yes
+        mode: push
+      delegate_to: jumpbox
+
     - name: Install app dependencies
       shell: |
         export NVM_DIR="$HOME/.nvm"
