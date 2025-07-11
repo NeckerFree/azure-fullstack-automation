@@ -26,7 +26,8 @@ scp -i "${SSH_KEY_LOCAL}" "${API_PLAYBOOK_LOCAL}" "${INVENTORY_LOCAL}" "${JUMP_U
 
 # [2/4] Copiar código fuente de la API
 echo "[2/4] Copiando código fuente de la API..."
-scp -r -i "$SSH_KEY_LOCAL" ./src/movie-analyst-api "$JUMPBOX_USER@$JUMPBOX_HOST:/home/$JUMPBOX_USER/ansible-setup/src/"
+scp -i "$SSH_KEY_LOCAL" -r ./src/movie-analyst-api "$JUMPBOX_USER@$JUMPBOX_HOST:/home/$JUMPBOX_USER/ansible-setup/src/"
+
 
 # === STEP 2: Upload systemd template ===
 echo "[3/4] Uploading systemd template..."

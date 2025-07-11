@@ -24,11 +24,22 @@
       args:
         executable: /bin/bash
 
+    - name: Ensure API code directory exists
+      ansible.builtin.stat:
+        path: /home/adminuser/ansible-setup/src/movie-analyst-api
+      register: api_dir
+
+    - name: Fail if API code not found
+      ansible.builtin.fail:
+        msg: "API source code not found in /home/adminuser/ansible-setup/src/movie-analyst-api"
+      when: not api_dir.stat.exists
+
     - name: Install app dependencies
       shell: |
         export NVM_DIR="$HOME/.nvm"
         source "$NVM_DIR/nvm.sh"
-        cd {{ app_path }}
+        cd /home/adminuser/ansible-setup/src/movie-analyst-api
         npm install
       args:
         executable: /bin/bash
+
