@@ -30,3 +30,12 @@ output "network_interface_control_private_ip" {
   value       = azurerm_network_interface.control.private_ip_address
   description = "jumpbox's private IP"
 }
+
+output "private_dns_zone_mysql_id" {
+  value       = azurerm_private_dns_zone.mysql.id
+  description = "private dns zone mysql id"
+}
+
+output "private_dns_zone_mysql_name" {
+  value = azurerm_private_dns_zone.mysql.name
+}

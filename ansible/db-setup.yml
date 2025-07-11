@@ -4,10 +4,16 @@
   become: yes
   vars:
     mysql_script_path: "/home/adminuser/movie_db.sql"
+    remote_mysql_script_path: "/etc/ansible/mysql/movie_db.sql"
 
   tasks:
     - name: Ping MySQL host
       ping:
+
+    - name: Ensure MySQL client is installed
+      ansible.builtin.package:
+        name: mysql-client
+        state: present
 
     - name: Add environment variables to /etc/environment
       ansible.builtin.lineinfile:
@@ -28,15 +34,15 @@
         state: directory
         mode: "0755"
 
-    - name: Move SQL script to MySQL directory
-      command: mv "{{ mysql_script_path }}" "/etc/ansible/mysql/movie_db.sql"
-      args:
-        creates: "/etc/ansible/mysql/movie_db.sql"
+    - name: Copy SQL script to MySQL directory
+      copy:
+        src: "{{ mysql_script_path }}"
+        dest: "{{ remote_mysql_script_path }}"
+        mode: "0644"
 
     - name: Load MySQL initialization script
       shell: |
-        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} < /etc/ansible/mysql/movie_db.sql
+        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} < {{ remote_mysql_script_path }}
       args:
         executable: /bin/bash
-      no_log: true
       changed_when: false

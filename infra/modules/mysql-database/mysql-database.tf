@@ -1,4 +1,12 @@
 
+resource "azurerm_private_dns_zone_virtual_network_link" "mysql" {
+  name                  = "${var.env_prefix}-mysql-vnet-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = var.private_dns_zone_mysql_name
+  virtual_network_id    = var.virtual_network_main_id
+  registration_enabled  = false
+}
+
 resource "azurerm_mysql_flexible_server" "mysql" {
   name                   = "${var.env_prefix}-mysql-${var.location}"
   resource_group_name    = var.resource_group_name
@@ -7,29 +15,12 @@ resource "azurerm_mysql_flexible_server" "mysql" {
   administrator_password = var.mysql_admin_password
   sku_name               = var.environment == "prod" ? "GP_Standard_D2ds_v4" : "B_Standard_B1ms"
   version                = "8.0.21"
-
+  delegated_subnet_id    = var.subnet_db_id
+  private_dns_zone_id    = var.private_dns_zone_mysql_id
   storage {
     size_gb = var.environment == "prod" ? 256 : 20
   }
-  # high_availability {
-  #   mode = "Disabled"
-  # }
-  # public_network_access_enabled = false
-  depends_on = [var.subnet_id]
-}
-resource "azurerm_private_endpoint" "mysql" {
-  name                = "epamdefault-pe-mysql"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  subnet_id           = var.subnet_id
-
-  private_service_connection {
-    name                           = "mysql-private-connection"
-    private_connection_resource_id = azurerm_mysql_flexible_server.mysql.id
-    is_manual_connection           = false
-    subresource_names              = ["mysqlServer"]
-  }
-  depends_on = [var.subnet_id]
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.mysql]
 }
 
 resource "azurerm_mysql_flexible_database" "movie_analyst" {

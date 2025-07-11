@@ -21,10 +21,17 @@ resource "azurerm_subnet" "db" {
   address_prefixes     = ["10.0.3.0/24"]
   service_endpoints    = ["Microsoft.Storage"]
   depends_on           = [azurerm_virtual_network.main]
+  delegation {
+    name = "mysql-delegation"
+    service_delegation {
+      name    = "Microsoft.DBforMySQL/flexibleServers"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+    }
+  }
 }
 
-resource "azurerm_subnet_network_security_group_association" "db" {
-  subnet_id                 = azurerm_subnet.db.id
-  network_security_group_id = azurerm_network_security_group.db.id
+# Asociar NSG a la subred backend
+resource "azurerm_subnet_network_security_group_association" "backend" {
+  subnet_id                 = azurerm_subnet.backend.id
+  network_security_group_id = azurerm_network_security_group.jumpbox_nsg.id
 }
-

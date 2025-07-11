@@ -41,26 +41,29 @@ module "network" {
 }
 
 module "mysql-database" {
-  source               = "./modules/mysql-database"
-  resource_group_name  = azurerm_resource_group.epam-rg.name
-  location             = azurerm_resource_group.epam-rg.location
-  env_prefix           = local.name_prefix
-  subnet_id            = module.network.db_subnet_id
-  environment          = local.environment
-  mysql_user           = var.mysql_user
-  mysql_admin_password = var.mysql_admin_password
+  source                      = "./modules/mysql-database"
+  resource_group_name         = azurerm_resource_group.epam-rg.name
+  location                    = azurerm_resource_group.epam-rg.location
+  env_prefix                  = local.name_prefix
+  environment                 = local.environment
+  mysql_user                  = var.mysql_user
+  mysql_admin_password        = var.mysql_admin_password
+  subnet_db_id                = module.network.db_subnet_id
+  private_dns_zone_mysql_id   = module.load-balancer.private_dns_zone_mysql_id
+  private_dns_zone_mysql_name = module.load-balancer.private_dns_zone_mysql_name
+  virtual_network_main_id     = module.network.virtual_network_main_id
 }
 
 module "load-balancer" {
-  source              = "./modules/load-balancer"
-  resource_group_name = azurerm_resource_group.epam-rg.name
-  location            = azurerm_resource_group.epam-rg.location
-  env_prefix          = local.name_prefix
-  environment         = local.environment
-  virtual_network_id  = module.network.virtual_network_id
-  backend_subnet_id   = module.network.backend_subnet_id
-  mysql_fqdn          = module.mysql-database.mysql_fqdn
-  admin_username      = var.admin_username
+  source                  = "./modules/load-balancer"
+  resource_group_name     = azurerm_resource_group.epam-rg.name
+  location                = azurerm_resource_group.epam-rg.location
+  env_prefix              = local.name_prefix
+  environment             = local.environment
+  virtual_network_main_id = module.network.virtual_network_main_id
+  backend_subnet_id       = module.network.backend_subnet_id
+  mysql_fqdn              = module.mysql-database.mysql_fqdn
+  admin_username          = var.admin_username
 }
 
 
