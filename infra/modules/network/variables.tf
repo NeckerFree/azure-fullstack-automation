@@ -30,3 +30,7 @@ variable "network_interface_backend_0_id" {
 variable "network_interface_backend_1_id" {
   type = string
 }
+
+variable "azurerm_lb_backend_address_pool_api_pool_id" {
+  type = string
+}
