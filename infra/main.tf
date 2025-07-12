@@ -16,9 +16,9 @@ locals {
   tfstate_storage_account = "${replace(local.environment_final, "-", "")}tfstate"
 }
 
-data "http" "myip" {
-  url = "https://ifconfig.me/ip"
-}
+# data "http" "myip" {
+#   url = "https://ifconfig.me/ip"
+# }
 
 resource "azurerm_resource_group" "epam-rg" {
   name     = local.resource_group_name

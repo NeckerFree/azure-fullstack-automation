@@ -1,7 +1,3 @@
-# Obtener la clave pública ya sea del recurso generado o del archivo existente
-locals {
-  ssh_public_key = fileexists(pathexpand("~/.ssh/vm_ssh_key")) ? trimspace(file(pathexpand("~/.ssh/vm_ssh_key.pub"))) : tls_private_key.vm_ssh[0].public_key_openssh
-}
 # NICs for VMs
 resource "azurerm_network_interface" "backend" {
   count               = 2 # Two instances for HA
@@ -46,12 +42,6 @@ resource "azurerm_network_interface" "control" {
   }
 }
 
-resource "tls_private_key" "vm_ssh" {
-  count     = fileexists(pathexpand("~/.ssh/vm_ssh_key")) ? 0 : 1
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
 resource "azurerm_linux_virtual_machine" "control" {
   name                  = "jumpbox"
   resource_group_name   = var.resource_group_name
@@ -61,7 +51,7 @@ resource "azurerm_linux_virtual_machine" "control" {
   network_interface_ids = [azurerm_network_interface.control.id]
   admin_ssh_key {
     username   = var.admin_username
-    public_key = local.ssh_public_key
+    public_key = tls_private_key.vm_ssh.public_key_openssh
   }
   os_disk {
     caching              = "ReadWrite"
@@ -90,7 +80,7 @@ resource "azurerm_linux_virtual_machine" "backend" {
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = local.ssh_public_key
+    public_key = tls_private_key.vm_ssh.public_key_openssh
   }
 
   os_disk {
@@ -106,12 +96,42 @@ resource "azurerm_linux_virtual_machine" "backend" {
   }
 }
 
-# Generate ~/.ssh/vm_ssh_key from TLS private key
-resource "local_file" "ssh_private_key" {
-  count           = fileexists(pathexpand("~/.ssh/vm_ssh_key")) ? 0 : 1
-  content         = tls_private_key.vm_ssh[0].private_key_openssh
-  filename        = pathexpand("~/.ssh/vm_ssh_key")
+# Optional: generate a TLS private key (only if needed)
+resource "tls_private_key" "vm_ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Create ~/.ssh if not exists
+resource "null_resource" "ensure_ssh_folder" {
+  provisioner "local-exec" {
+    command = "powershell -Command \"New-Item -ItemType Directory -Force -Path $HOME\\.ssh\""
+  }
+}
+
+resource "local_file" "temp_ssh_key" {
+  content         = tls_private_key.vm_ssh.private_key_openssh
+  filename        = "${path.module}/temp_vm_ssh_key"
   file_permission = "0600"
+}
+
+# Generate SSH private key file *only if it doesn't exist*
+resource "null_resource" "write_ssh_key_once" {
+  provisioner "local-exec" {
+    command = <<EOT
+powershell.exe -Command "
+  \$targetPath = Join-Path \$env:USERPROFILE '.ssh\\vm_ssh_key';
+  if (!(Test-Path -Path \$targetPath)) {
+    Write-Host '📁 Target path does not exist. Copying SSH key...';
+    Copy-Item -Path 'modules/load-balancer/temp_vm_ssh_key' -Destination \$targetPath;
+    icacls \$targetPath /inheritance:r /grant:r `"\$env:USERNAME`:F`";
+    Write-Host '✅ SSH key copied to: ' \$targetPath;
+  } else {
+    Write-Host 'ℹ️ SSH key already exists at: ' \$targetPath;
+  }
+"
+EOT
+  }
 }
 
 # Generate a Dynamic Ansible Inventory File

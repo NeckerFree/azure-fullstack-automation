@@ -1,46 +1,64 @@
 ---
-- name: Deploy Node.js Movie Analyst API
-  hosts: mysql_server
+- name: Setup and Deploy Node.js API
+  hosts: nodes
   become: yes
-
   vars:
-    node_version: "16"
-    api_source_path: "/home/adminuser/ansible-setup/src"
-    service_name: "mysqlmovie-api"
-    systemd_template: "/home/adminuser/ansible-setup/templates/movie-api.service.j2"
+    app_path: /home/adminuser/ansible-setup/src/movie-analyst-api
+
+  pre_tasks:
+    - name: Ensure curl is installed
+      apt:
+        name: curl
+        state: present
+        update_cache: true
+
+    - name: Disable SSH host key checking for this session
+      set_fact:
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
 
   tasks:
-    - name: Ensure Node.js is installed (via NVM)
+    - name: Install NVM and Node.js
       shell: |
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
         export NVM_DIR="$HOME/.nvm"
+        if [ ! -d "$NVM_DIR" ]; then
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        fi
         source "$NVM_DIR/nvm.sh"
-        nvm install {{ node_version }}
-        nvm alias default {{ node_version }}
+        nvm install 16
+        nvm alias default 16
       args:
         executable: /bin/bash
+
+    - name: Ensure destination directory exists
+      file:
+        path: "{{ app_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: Ensure API code directory exists on jumphost
+      delegate_to: localhost
+      stat:
+        path: "{{ app_path }}"
+      register: api_dir
+
+    - name: Fail if API source not found
+      fail:
+        msg: "API source code not found at {{ app_path }} on jumphost"
+      when: not api_dir.stat.exists
+
+    - name: Copy API source code from jumphost to backend nodes
+      synchronize:
+        src: "{{ app_path }}/"
+        dest: "{{ app_path }}/"
+        recursive: yes
+        mode: push
+      delegate_to: jumpbox
 
     - name: Install app dependencies
       shell: |
         export NVM_DIR="$HOME/.nvm"
         source "$NVM_DIR/nvm.sh"
-        cd {{ api_source_path }}
+        cd "{{ app_path }}"
         npm install
       args:
         executable: /bin/bash
-
-    - name: Copy systemd service unit file
-      template:
-        src: "{{ systemd_template }}"
-        dest: "/etc/systemd/system/{{ service_name }}.service"
-        mode: "0644"
-
-    - name: Reload systemd
-      systemd:
-        daemon_reload: yes
-
-    - name: Enable and start the API service
-      systemd:
-        name: "{{ service_name }}"
-        state: restarted
-        enabled: yes
