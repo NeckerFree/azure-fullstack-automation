@@ -5,16 +5,14 @@
   vars:
     app_path: /home/adminuser/ansible-setup/src/movie-analyst-api
 
+  environment:
+    ANSIBLE_HOST_KEY_CHECKING: "False"
   pre_tasks:
     - name: Ensure curl is installed
       apt:
         name: curl
         state: present
         update_cache: true
-
-    - name: Disable SSH host key checking for this session
-      set_fact:
-        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
 
   tasks:
     - name: Install NVM and Node.js

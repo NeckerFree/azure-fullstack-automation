@@ -524,14 +524,15 @@ epamqa-vm-api-1            : ok=1    changed=1    unreachable=0    failed=0    s
 localhost                  : ok=3    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 Playbook executed successfully!
 
-# Copy files, install and configure VMs nodes to deploy API
+Executed in GH main.yml workflow
+<!-- # Copy files, install and configure VMs nodes to deploy API
  ./ansible/deploy-api-from-local.sh
 
  expected:
  PLAY RECAP *********************************************************************
 epamqa-vm-api-0            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 epamqa-vm-api-1            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-Playbook executed successfully!
+Playbook executed successfully! -->
 
 # Copy files, install and configure database in VMs nodes
 ./ansible/deploy-db-from-local.sh
