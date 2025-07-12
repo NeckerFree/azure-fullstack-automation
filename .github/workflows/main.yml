@@ -60,5 +60,5 @@ jobs:
       - name: 🚀 Deploy API with Ansible
         run: ./ansible/deploy-api-from-local.sh
         env:
-          JUMPBOX_HOST: 4.154.243.88
+          JUMPBOX_HOST: 4.154.201.231
           JUMPBOX_USER: adminuser
