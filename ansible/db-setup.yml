@@ -40,9 +40,25 @@
         dest: "{{ remote_mysql_script_path }}"
         mode: "0644"
 
-    - name: Load MySQL initialization script
+    - name: Load MySQL initialization script (run once)
+      run_once: true
       shell: |
         mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} < {{ remote_mysql_script_path }}
       args:
         executable: /bin/bash
       changed_when: false
+      register: db_load_result
+
+    - name: Verify database initialization
+      run_once: true
+      shell: |
+        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} -e "SHOW TABLES;"
+      register: db_check
+      changed_when: false
+      when: db_load_result.rc == 0
+
+    - name: Fail if database initialization failed
+      run_once: true
+      fail:
+        msg: "Database initialization failed with exit code {{ db_load_result.rc }}. Check the SQL script for errors."
+      when: db_load_result.rc != 0 or db_check is skipped

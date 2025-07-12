@@ -35,13 +35,27 @@ resource "azurerm_lb_probe" "http" {
   interval_in_seconds = 15
 }
 
-resource "azurerm_lb_rule" "http" {
+# resource "azurerm_lb_rule" "http" {
+#   loadbalancer_id                = azurerm_lb.main.id
+#   name                           = "HTTP"
+#   protocol                       = "Tcp"
+#   frontend_port                  = 80
+#   backend_port                   = 8080 # App listens on 8080
+#   frontend_ip_configuration_name = "LBFrontend"
+#   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.main.id]
+#   probe_id                       = azurerm_lb_probe.http.id
+# }
+
+# 2. Create a distinct rule with unique parameters
+resource "azurerm_lb_rule" "movie_api" {
+  name                           = "MovieAPIRule"
   loadbalancer_id                = azurerm_lb.main.id
-  name                           = "HTTP"
   protocol                       = "Tcp"
-  frontend_port                  = 80
-  backend_port                   = 8080 # App listens on 8080
-  frontend_ip_configuration_name = "LBFrontend"
-  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.main.id]
+  frontend_port                  = 8080 # Public port
+  backend_port                   = 3000 # Different from other rules
+  frontend_ip_configuration_name = azurerm_lb.main.frontend_ip_configuration[0].name
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.main.id] # Unique pool
   probe_id                       = azurerm_lb_probe.http.id
+  enable_floating_ip             = true # Different from other rules
+  idle_timeout_in_minutes        = 30   # Extended timeout for APIs
 }

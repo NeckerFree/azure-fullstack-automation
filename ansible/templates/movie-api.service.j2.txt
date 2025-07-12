@@ -1,0 +1,17 @@
+[Unit]
+Description=Movie Analyst API
+After=network.target
+
+[Service]
+WorkingDirectory=/home/adminuser/ansible-setup/src/movie-analyst-api
+Environment=NODE_ENV=production
+Environment=PORT=8080
+ExecStart=/bin/bash -c 'export NVM_DIR=/home/adminuser/.nvm && source $NVM_DIR/nvm.sh && nvm use 16 && node server.js'
+Restart=always
+User=adminuser
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=movie-analyst-api
+
+[Install]
+WantedBy=multi-user.target

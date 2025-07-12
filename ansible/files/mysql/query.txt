@@ -1,0 +1,2 @@
+mysql -h epamqa-mysql-westus2.mysql.database.azure.com -u"mysqladmin" -p"Sec#reP@ssword123!" "movie_analyst" -e "SELECT COUNT(*) FROM movies;"
+mysql -h epamqa-mysql-westus2.mysql.database.azure.com -u"mysqladmin" -p"Sec#reP@ssword123!" "movie_analyst" -e "SHOW TABLES; DESCRIBE movies;"

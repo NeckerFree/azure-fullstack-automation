@@ -56,7 +56,6 @@ resource "azurerm_network_security_group" "jumpbox_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = azurerm_subnet.backend.address_prefixes[0]
   }
-
 }
 
 # Asocia el NSG al Jumpbox
@@ -73,4 +72,18 @@ resource "azurerm_network_interface_security_group_association" "backend_nic_0" 
 resource "azurerm_network_interface_security_group_association" "backend_nic_1" {
   network_interface_id      = var.network_interface_backend_1_id
   network_security_group_id = azurerm_network_security_group.jumpbox_nsg.id
+}
+
+resource "azurerm_network_security_rule" "api" {
+  name                        = "AllowAPI3000"
+  priority                    = 1002
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "3000"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = azurerm_network_security_group.jumpbox_nsg.name
 }
