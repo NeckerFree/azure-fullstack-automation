@@ -22,3 +22,15 @@ variable "network_interface_control_id" {
 variable "jumpbox_private_ip" {
   type = string
 }
+
+variable "network_interface_backend_0_id" {
+  type = string
+}
+
+variable "network_interface_backend_1_id" {
+  type = string
+}
+
+variable "azurerm_lb_backend_address_pool_api_pool_id" {
+  type = string
+}

@@ -1,8 +1,15 @@
 #!/bin/bash
 
 # === CONFIGURACIÓN ===
-JUMP_USER="adminuser"
-JUMP_HOST="4.154.243.88"
+# === STEP 0: Read JUMP_HOST and JUMP_USER from inventory ===
+INVENTORY_FILE="./ansible/inventory.ini"
+JUMP_HOST=$(awk '/^\[control\]/ {getline; match($0, /ansible_host=([^ ]+)/, m); print m[1]}' "$INVENTORY_FILE")
+JUMP_USER=$(awk '/^\[control\]/ {getline; match($0, /ansible_user=([^ ]+)/, m); print m[1]}' "$INVENTORY_FILE")
+if [ -z "$JUMP_USER" ] || [ -z "$JUMP_HOST" ]; then
+  echo "❌ Could not parse JUMP_USER or JUMP_HOST from inventory.ini"
+  exit 1
+fi
+
 SSH_KEY_LOCAL="$HOME/.ssh/vm_ssh_key"
 REMOTE_DIR="/home/${JUMP_USER}/ansible-setup"
 SETUP_PLAYBOOK_FILE="setup-infra.yml"

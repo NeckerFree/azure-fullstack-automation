@@ -1,0 +1,39 @@
+
+# Ubuntu/Debian
+curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+sudo apt-get install -y nodejs
+cd /home/adminuser/ansible-setup/src/movie-analyst-api
+npm install
+
+sudo tee /etc/systemd/system/movie-api.service <<'EOF'
+[Unit]
+Description=Movie Analyst API
+After=network.target
+
+[Service]
+WorkingDirectory=/home/adminuser/ansible-setup/src/movie-analyst-api
+Environment=NODE_ENV=production
+Environment=PORT=8080
+Environment=DB_HOST=epamqa-mysql-westus2.mysql.database.azure.com
+Environment=DB_USER=mysqladmin
+Environment=DB_PASS=Sec#reP@ssword123!
+Environment=DB_NAME=movie_analyst
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=10
+User=adminuser
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=movie-api
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo chmod 644 /etc/systemd/system/movie-api.service
+sudo chown root:root /etc/systemd/system/movie-api.service
+sudo chown -R adminuser:adminuser /home/adminuser/ansible-setup
+
+sudo systemctl daemon-reload
+sudo systemctl enable movie-api
+sudo systemctl start movie-api
