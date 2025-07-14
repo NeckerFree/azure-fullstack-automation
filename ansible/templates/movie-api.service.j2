@@ -9,7 +9,7 @@ WorkingDirectory={{ app_path }}
 # Variables de entorno necesarias para conectar a la DB y configurar la API
 Environment=NODE_ENV=production
 Environment=PORT=8080
-Environment=DB_HOST={{ db_host }}
+Environment=DB_HOST={{ db_host | default('NOT_DEFINED') }}
 Environment=DB_USER={{ db_user }}
 Environment=DB_PASS={{ db_password }}
 Environment=DB_NAME={{ db_name }}

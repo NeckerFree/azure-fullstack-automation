@@ -65,3 +65,4 @@ ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" << EOF
   -e "db_password=${DB_PASS}" \
   -e "db_name=${DB_NAME}"
 EOF
+
