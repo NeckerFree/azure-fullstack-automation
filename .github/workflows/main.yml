@@ -48,10 +48,5 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      - name:  🚀Run Ansible deployment
-        run: |
-          ansible-playbook -i ansible/inventory.ini ansible/api-setup.yml \
-            -e "db_host=${{ env.DB_HOST }}" \
-            -e "db_user=${{ env.DB_USER }}" \
-            -e "db_password=${{ env.DB_PASS }}" \
-            -e "db_name=${{ env.DB_NAME }}"
+      - name: 🚀 Run remote deploy script from jumpbox
+        run: ./ansible/deploy-api-from-local.sh
