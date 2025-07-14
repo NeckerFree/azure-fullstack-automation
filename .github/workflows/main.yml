@@ -30,7 +30,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: 📦 Terraform Init
-        run: terraform -chdir=infra init
+        run: terraform -chdir=infra/modules/mysql-database init
 
       - name: 📤 Get Terraform outputs
         id: terraform
