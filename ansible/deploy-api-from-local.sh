@@ -58,6 +58,10 @@ ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" << EOF
   set -e
   cd "${REMOTE_DIR}"
   ansible-playbook -i inventory.ini api-setup.yml \
-    -e "api_source_path=${API_SRC_REMOTE}" \
-    -e "service_name=mysqlmovie-api"
+  -e "api_source_path=${API_SRC_REMOTE}" \
+  -e "service_name=mysqlmovie-api" \
+  -e "db_host=${DB_HOST}" \
+  -e "db_user=${DB_USER}" \
+  -e "db_password=${DB_PASS}" \
+  -e "db_name=${DB_NAME}"
 EOF

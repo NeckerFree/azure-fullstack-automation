@@ -3,17 +3,28 @@ Description=Movie Analyst API
 After=network.target
 
 [Service]
+# La aplicación se ejecutará desde el directorio del código
 WorkingDirectory={{ app_path }}
+
+# Variables de entorno necesarias para conectar a la DB y configurar la API
 Environment=NODE_ENV=production
 Environment=PORT=8080
 Environment=DB_HOST={{ db_host }}
 Environment=DB_USER={{ db_user }}
 Environment=DB_PASS={{ db_password }}
 Environment=DB_NAME={{ db_name }}
-ExecStart=/usr/bin/node server.js
+
+# Comando de inicio
+ExecStart=/usr/bin/node {{ app_path }}/server.js
+
+# Reinicio automático en caso de fallo
 Restart=always
 RestartSec=10
+
+# Ejecutar como el usuario configurado
 User=adminuser
+
+# Logging vía syslog
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=movie-api
