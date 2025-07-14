@@ -77,6 +77,12 @@
         mode: '0644'
       notify: restart movie-api
 
+    - name: Ensure mysql2 is installed
+      npm:
+        name: mysql2
+        path: "{{ app_path }}"
+        state: present
+
 
   handlers:
     - name: restart movie-api
