@@ -68,11 +68,10 @@
         state: present
         production: yes
 
-    - name: Deploy systemd service
-      copy:
-        src: /home/adminuser/ansible-setup/templates/movie-api.service.j2
+    - name: Deploy systemd service from local template
+      template:
+        src: templates/movie-api.service.j2
         dest: /etc/systemd/system/movie-api.service
-        remote_src: true
         owner: root
         group: root
         mode: '0644'

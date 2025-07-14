@@ -38,9 +38,9 @@ ssh -i "$SSH_KEY_LOCAL" "$JUMP_USER@$JUMP_HOST" "mkdir -p ${REMOTE_DIR}/src"
 scp -i "$SSH_KEY_LOCAL" -r "$API_SRC_LOCAL" "$JUMP_USER@$JUMP_HOST:${REMOTE_DIR}/src/"
 
 # === STEP 3: Upload systemd template ===
-echo "[3/4] Uploading systemd template..."
-ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" "mkdir -p ${REMOTE_DIR}/templates"
-scp -i "${SSH_KEY_LOCAL}" "${TEMPLATE_LOCAL}" "${JUMP_USER}@${JUMP_HOST}:${TEMPLATE_REMOTE}"
+# echo "[3/4] Uploading systemd template..."
+# ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" "mkdir -p ${REMOTE_DIR}/templates"
+# scp -i "${SSH_KEY_LOCAL}" "${TEMPLATE_LOCAL}" "${JUMP_USER}@${JUMP_HOST}:${TEMPLATE_REMOTE}"
 
 # === STEP 3.5: Preload known_hosts in the jumpbox to avoid host key verification ===
 echo "[3.5/4] Adding backend VM keys to known_hosts on the jumpbox..."
