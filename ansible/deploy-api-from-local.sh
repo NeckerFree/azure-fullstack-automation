@@ -52,6 +52,12 @@ ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" bash <<'EOF'
   done
 EOF
 
+# === STEP 3.7: Validate database environment variables ===
+if [[ -z "$DB_HOST" || -z "$DB_USER" || -z "$DB_PASS" || -z "$DB_NAME" ]]; then
+  echo "❌ Missing database environment variables"
+  exit 1
+fi
+
 # === STEP 4: Execute playbook remotely ===
 echo "[4/4] Executing playbook from the jump host..."
 ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" << EOF
