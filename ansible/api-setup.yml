@@ -4,40 +4,39 @@
   become: yes
   vars:
     app_path: /home/adminuser/ansible-setup/src/movie-analyst-api
-    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ConnectTimeout=30"
+    ansible_ssh_retries: 3
     ansible_ssh_private_key_file: "~/.ssh/vm_ssh_key"
 
   pre_tasks:
-    - name: Wait for SSH to become available
+    - name: Wait for SSH connectivity
       wait_for_connection:
         timeout: 60
-
-    - name: Verify network connectivity
-      ping:
+        delay: 10
+        sleep: 5
 
   tasks:
-    - name: Install Node.js via Nodesource (replaces NVM)
-      block:
-        - name: Install prerequisites
-          apt:
-            name:
-              - ca-certificates
-              - curl
-              - gnupg
-            state: present
-            update_cache: yes
+    - name: Install system dependencies
+      apt:
+        name:
+          - curl
+          - gnupg
+          - ca-certificates
+        state: present
+        update_cache: yes
 
-        - name: Add Nodesource repository
-          apt_repository:
-            repo: "deb https://deb.nodesource.com/node_16.x {{ ansible_distribution_release }} main"
-            state: present
-            update_cache: yes
+    - name: Add NodeSource repository
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_16.x {{ ansible_distribution_release }} main"
+        state: present
+        filename: nodesource
+        update_cache: yes
 
-        - name: Install Node.js
-          apt:
-            name: nodejs
-            state: present
-            update_cache: yes
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
 
     - name: Ensure app directory exists
       file:
@@ -47,43 +46,34 @@
         owner: adminuser
         group: adminuser
 
-    - name: Copy API code
+    - name: Synchronize API code
       synchronize:
         src: "{{ playbook_dir }}/../src/movie-analyst-api/"
         dest: "{{ app_path }}"
         recursive: yes
         owner: yes
         group: yes
+      delegate_to: localhost
 
-    - name: Install dependencies
+    - name: Install npm dependencies
       npm:
         path: "{{ app_path }}"
         state: present
         production: yes
 
-    - name: Configure systemd service
+    - name: Deploy systemd service
       template:
         src: "{{ playbook_dir }}/../templates/movie-api.service.j2"
         dest: /etc/systemd/system/movie-api.service
         owner: root
         group: root
         mode: '0644'
-      notify:
-        - Reload systemd
-        - Restart movie-api
-
-    - name: Ensure service is enabled
-      systemd:
-        name: movie-api
-        enabled: yes
-        state: started
+      notify: restart movie-api
 
   handlers:
-    - name: Reload systemd
-      systemd:
-        daemon_reload: yes
-
-    - name: Restart movie-api
+    - name: restart movie-api
       systemd:
         name: movie-api
         state: restarted
+        enabled: yes
+        daemon_reload: yes
