@@ -70,12 +70,14 @@
 
     - name: Deploy systemd service
       template:
-        src: "{{ api_source_path }}/../templates/movie-api.service.j2"
+        src: "/home/adminuser/ansible-setup/templates/movie-api.service.j2"
         dest: /etc/systemd/system/movie-api.service
+        remote_src: true
         owner: root
         group: root
         mode: '0644'
       notify: restart movie-api
+
 
   handlers:
     - name: restart movie-api
