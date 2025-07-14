@@ -52,13 +52,14 @@
         group: adminuser
 
     - name: Synchronize API code
-      synchronize:
-        src: "{{ playbook_dir }}/../src/movie-analyst-api/"
+      ansible.posix.synchronize:
+        src: "{{ api_source_path }}/movie-analyst-api/"
         dest: "{{ app_path }}"
         recursive: yes
-        owner: yes
-        group: yes
+        rsync_opts:
+          - "--rsh=ssh -i /home/adminuser/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
       delegate_to: localhost
+      become: false
 
     - name: Install npm dependencies
       npm:
