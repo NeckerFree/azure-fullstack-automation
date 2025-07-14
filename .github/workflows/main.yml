@@ -2,63 +2,56 @@ name: Deploy API
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
+
+env:
+  NODE_VERSION: 16
 
 jobs:
   deploy:
-    name: Compile, Test and Deploy API
     runs-on: ubuntu-latest
-
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: 📦 Install dependencies
-        run: npm install
+        run: npm ci
         working-directory: src/movie-analyst-api
 
       - name: 🧪 Run tests
         run: npm test
         working-directory: src/movie-analyst-api
 
-      - name: 🛠️ Set up Terraform CLI
+      - name: 🛠️ Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: 📦 Terraform Init
-        run: terraform -chdir=infra/modules/mysql-database init
+        run: terraform -chdir=infra init
 
-      - name: 📤 Export Terraform Outputs
-        id: tf
+      - name: 📤 Get Terraform outputs
+        id: terraform
         run: |
-          json=$(terraform -chdir=infra/modules/mysql-database output -json)
-          echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
-          echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
-          echo "DB_PASS=$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
-          echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
+          cd infra
+          echo "DB_HOST=$(terraform output -raw mysql_fqdn)" >> $GITHUB_ENV
+          echo "DB_USER=$(terraform output -raw mysql_admin_user)" >> $GITHUB_ENV
+          echo "DB_PASS=$(terraform output -raw mysql_admin_pwd)" >> $GITHUB_ENV
+          echo "DB_NAME=$(terraform output -raw mysql_database_name)" >> $GITHUB_ENV
 
-      - name: 🔑 Create SSH key file
+      - name: 🔑 Configure SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
           chmod 600 ~/.ssh/vm_ssh_key
-        env:
-          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
-
-      - name: ✅ Trust SSH host key (disable strict checking for testing)
-        run: |
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      - name: 🚀 Make deploy script executable
-        run: chmod +x ./ansible/deploy-api-from-local.sh
-
-      - name: 🚀 Deploy API with Ansible
-        run: ./ansible/deploy-api-from-local.sh
-        env:
-          JUMPBOX_HOST: 20.114.46.171
-          JUMPBOX_USER: adminuser
+      - name:  🚀Run Ansible deployment
+        run: |
+          ansible-playbook -i ansible/inventory.ini ansible/api-setup.yml \
+            -e "db_host=${{ env.DB_HOST }}" \
+            -e "db_user=${{ env.DB_USER }}" \
+            -e "db_password=${{ env.DB_PASS }}" \
+            -e "db_name=${{ env.DB_NAME }}"
