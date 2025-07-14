@@ -70,7 +70,7 @@
 
     - name: Deploy systemd service
       template:
-        src: "{{ playbook_dir }}/../templates/movie-api.service.j2"
+        src: "{{ api_source_path }}/../templates/movie-api.service.j2"
         dest: /etc/systemd/system/movie-api.service
         owner: root
         group: root
