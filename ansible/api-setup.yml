@@ -3,7 +3,7 @@
   hosts: nodes
   become: yes
   vars:
-    app_dest_path: /home/adminuser/ansible-setup/src/movie-analyst-api
+    app_path: /home/adminuser/ansible-setup/src/movie-analyst-api
     api_source_path: /home/adminuser/ansible-setup/src/movie-analyst-api
     ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ConnectTimeout=30"
     ansible_ssh_retries: 3
@@ -46,7 +46,7 @@
 
     - name: Ensure app directory exists
       file:
-        path: "{{ app_dest_path }}"
+        path: "{{ app_path }}"
         state: directory
         mode: '0755'
         owner: adminuser
@@ -55,7 +55,7 @@
     - name: Synchronize API code
       ansible.posix.synchronize:
         src: "{{ api_source_path }}/"
-        dest: "{{ app_dest_path }}"
+        dest: "{{ app_path }}"
         recursive: yes
         rsync_opts:
           - "--rsh=ssh -i /home/adminuser/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
@@ -64,7 +64,7 @@
 
     - name: Install npm dependencies
       npm:
-        path: "{{ app_dest_path }}"
+        path: "{{ app_path }}"
         state: present
         production: yes
 
