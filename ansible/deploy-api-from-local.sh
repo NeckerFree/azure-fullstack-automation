@@ -16,6 +16,7 @@ REMOTE_DIR="/home/${JUMP_USER}/ansible-setup"
 API_SRC_LOCAL="./src/movie-analyst-api"
 API_SRC_REMOTE="${REMOTE_DIR}/src/movie-analyst-api"
 API_PLAYBOOK_LOCAL="./ansible/api-setup.yml"
+TEST_PLAYBOOK_LOCAL=".ansible/connection-test.yml"
 TEMPLATE_LOCAL="./ansible/templates/movie-api.service.j2"
 TEMPLATE_REMOTE="${REMOTE_DIR}/templates/movie-api.service.j2"
 INVENTORY_LOCAL="./ansible/inventory.ini"
@@ -27,9 +28,9 @@ if [ -z "$JUMP_USER" ] || [ -z "$JUMP_HOST" ]; then
   exit 1
 fi
 
-# === STEP 1: Upload playbook and inventory ===
+# === STEP 1: Upload playbook, test connection and inventory ===
 echo "[1/4] Uploading playbook and inventory..."
-scp -i "${SSH_KEY_LOCAL}" "${API_PLAYBOOK_LOCAL}" "${INVENTORY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}:${REMOTE_DIR}/"
+scp -i "${SSH_KEY_LOCAL}" "${API_PLAYBOOK_LOCAL}" "${TEST_PLAYBOOK_LOCAL}" "${INVENTORY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}:${REMOTE_DIR}/"
 
 # === STEP 2: Copy API source code ===
 echo "[2/4] Copying API source code..."
