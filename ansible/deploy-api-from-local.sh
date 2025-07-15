@@ -49,7 +49,9 @@ scp -i "${SSH_KEY_LOCAL}" "${API_PLAYBOOK_LOCAL}" "${TEST_PLAYBOOK_LOCAL}" "${IN
 # === STEP 2: Copy API source code ===
 echo "[2/4] Copying API source code..."
 ssh -i "$SSH_KEY_LOCAL" "$JUMP_USER@$JUMP_HOST" "mkdir -p ${REMOTE_DIR}/src"
-scp -i "$SSH_KEY_LOCAL" -r "$API_SRC_LOCAL" "$JUMP_USER@$JUMP_HOST:${REMOTE_DIR}/src/"
+rsync -avz -e "ssh -i $SSH_KEY_LOCAL -o StrictHostKeyChecking=no" \
+  --exclude "node_modules" \
+  "$API_SRC_LOCAL/" "$JUMP_USER@$JUMP_HOST:${API_SRC_REMOTE}/"
 
 # === STEP 3.5: Preload known_hosts in the jumpbox to avoid host key verification ===
 echo "[3.5/4] Adding backend VM keys to known_hosts on the jumpbox..."
