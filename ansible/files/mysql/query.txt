@@ -1,4 +1,0 @@
-mysql -h epamqa-mysql-westus2.mysql.database.azure.com -u"mysqladmin" -p"Sec#reP@ssword123!" "movie_analyst" -e "SELECT COUNT(*) FROM movies;"
-mysql -h epamqa-mysql-westus2.mysql.database.azure.com -u"mysqladmin" -p"Sec#reP@ssword123!" "movie_analyst" -e "SHOW TABLES; DESCRIBE movies;"
-
-DB_HOST=epamqa-mysql-westus2.mysql.database.azure.com DB_USER=mysqladmin DB_PASS='Sec#reP@ssword123!' DB_NAME=movie_analyst node db-test.js
