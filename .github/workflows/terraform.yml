@@ -20,7 +20,7 @@ jobs:
   terraform:
     name: Terraform
     runs-on: ubuntu-latest
-    environment: production
+    environment: qa
 
     steps:
       - name: 📦 Checkout code
@@ -67,11 +67,11 @@ jobs:
         run: terraform -chdir=infra validate
 
       - name: 📋 Terraform Plan
-        run: terraform -chdir=infra plan -input=false
+        run: terraform -chdir=infra plan -input=false -var-file=terraform.tfvars
 
       - name: 🚀 Terraform Apply
         if: github.ref == 'refs/heads/master'
-        run: terraform -chdir=infra apply -auto-approve -input=false
+        run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
 
       - name: 📤 Terraform Output
         run: terraform -chdir=infra output
