@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read  # Necesario para checkout
+  id-token: write # Requerido para Azure login si usas OIDC (aunque este ejemplo no lo usa)
+
 env:
   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
   ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
@@ -19,38 +23,40 @@ jobs:
     environment: production
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: 📦 Checkout code
+        uses: actions/checkout@v3
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: 1.5.0
+      - name: ⚙️ Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
-    - name: 🔐 Azure Login
-      uses: azure/login@v1
-      with:
-        client-id: ${{ secrets.ARM_CLIENT_ID }}
-        tenant-id: ${{ secrets.ARM_TENANT_ID }}
-        subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        client-secret: ${{ secrets.ARM_CLIENT_SECRET }}
-        auth-type: SERVICE_PRINCIPAL
+      - name: 🔐 Azure Login with Service Principal
+        uses: azure/login@v1
+        with:
+          creds: >-
+            {
+              "clientId": "${{ secrets.ARM_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.ARM_TENANT_ID }}"
+            }
 
-    - name: Verify Azure CLI login
-      run: az account show
-      
-    - name: Terraform Init
-      run: terraform -chdir=infra init
+      - name: 🧪 Verify Azure login
+        run: az account show
 
-    - name: Terraform Format
-      run: terraform -chdir=infra fmt -check
+      - name: 📥 Terraform Init
+        run: terraform -chdir=infra init
 
-    - name: Terraform Validate
-      run: terraform -chdir=infra validate
+      - name: 🧹 Terraform Format
+        run: terraform -chdir=infra fmt -check
 
-    - name: Terraform Plan
-      run: terraform -chdir=infra plan -input=false
+      - name: 🔍 Terraform Validate
+        run: terraform -chdir=infra validate
 
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main'
-      run: terraform -chdir=infra apply -auto-approve -input=false
+      - name: 📋 Terraform Plan
+        run: terraform -chdir=infra plan -input=false
+
+      - name: 🚀 Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform -chdir=infra apply -auto-approve -input=false
