@@ -63,15 +63,16 @@ jobs:
 
       - name: 🧹 Optional Unlock (if lock is active)
         run: |
-          cd infra
-          terraform init
-          if [ -f ".terraform/terraform.tfstate.lock.info" ]; then
-            LOCK_ID=$(jq -r '.ID' .terraform/terraform.tfstate.lock.info)
+          terraform -chdir=infra init
+          LOCK_FILE=".terraform/terraform.tfstate.lock.info"
+          if [ -f "infra/$LOCK_FILE" ]; then
+            LOCK_ID=$(jq -r '.ID' "infra/$LOCK_FILE")
             echo "🔓 Lock found: $LOCK_ID. Attempting to unlock..."
-            terraform force-unlock -force "$LOCK_ID"
+            terraform -chdir=infra force-unlock -force "$LOCK_ID"
           else
-            echo "✅ No lock file found."
+            echo "✅ No lock file found. Continuing..."
           fi
+
 
       - name: 🧹 Terraform Format
         run: | 
