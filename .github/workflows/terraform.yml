@@ -45,6 +45,19 @@ jobs:
       - name: 🧪 Verify Azure login
         run: az account show
 
+      - name: 📝 Generate terraform.tfvars
+        run: |
+          cat > infra/terraform.tfvars <<EOF
+          subscription_id = "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          client_id       = "${{ secrets.ARM_CLIENT_ID }}"
+          client_secret   = "${{ secrets.ARM_CLIENT_SECRET }}"
+          tenant_id       = "${{ secrets.ARM_TENANT_ID }}"
+
+          allowed_ssh_ip  = "186.67.87.160/32"
+          mysql_user           = "${{ secrets.MYSQL_USER }}"
+          mysql_admin_password = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
+          EOF
+
       - name: 📥 Terraform Init
         run: terraform -chdir=infra init
 
