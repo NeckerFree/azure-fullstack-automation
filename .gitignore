@@ -63,3 +63,4 @@ docs/monthly cost.png
 ansible/inventory.ini
 ansible/ansible command.txt
 infra/.terraform.lock.hcl
+docs/query.txt

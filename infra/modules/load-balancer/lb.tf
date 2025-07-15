@@ -1,4 +1,3 @@
-
 resource "azurerm_public_ip" "lb" {
   name                = "${var.env_prefix}-lb-pip"
   location            = var.location
@@ -11,37 +10,57 @@ resource "azurerm_lb" "main" {
   name                = "${var.env_prefix}-lb"
   location            = var.location
   resource_group_name = var.resource_group_name
-  sku                 = "Standard" # Free-tier eligible
+  sku                 = "Standard"
 
   frontend_ip_configuration {
     name                 = "LBFrontend"
     public_ip_address_id = azurerm_public_ip.lb.id
-    # private_ip_address_allocation = "Dynamic"
-    # subnet_id                     = azurerm_subnet.private.id
   }
 }
 
+# Default backend pool for other services
 resource "azurerm_lb_backend_address_pool" "main" {
   loadbalancer_id = azurerm_lb.main.id
   name            = "BackendPool"
 }
 
+# Dedicated backend pool for Movie API
+resource "azurerm_lb_backend_address_pool" "api_pool" {
+  loadbalancer_id = azurerm_lb.main.id
+  name            = "MovieAPIBackendPool"
+}
+
+# HTTP probe for default services
 resource "azurerm_lb_probe" "http" {
   loadbalancer_id     = azurerm_lb.main.id
   name                = "HTTP-Probe"
-  port                = 8080 # Movie API port
+  port                = 80
+  protocol            = "Http"
+  request_path        = "/"
+  interval_in_seconds = 15
+}
+
+# Dedicated probe for Movie API
+resource "azurerm_lb_probe" "api" {
+  loadbalancer_id     = azurerm_lb.main.id
+  name                = "API-Probe"
+  port                = 8080
   protocol            = "Http"
   request_path        = "/health"
   interval_in_seconds = 15
 }
 
-resource "azurerm_lb_rule" "http" {
+# Movie API specific rule
+resource "azurerm_lb_rule" "movie_api" {
+  name                           = "MovieAPIRule"
   loadbalancer_id                = azurerm_lb.main.id
-  name                           = "HTTP"
   protocol                       = "Tcp"
-  frontend_port                  = 80
-  backend_port                   = 8080 # App listens on 8080
+  frontend_port                  = 8080
+  backend_port                   = 8080
   frontend_ip_configuration_name = "LBFrontend"
-  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.main.id]
-  probe_id                       = azurerm_lb_probe.http.id
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.api_pool.id]
+  probe_id                       = azurerm_lb_probe.api.id
+  enable_floating_ip             = false
+  idle_timeout_in_minutes        = 30
 }
+
