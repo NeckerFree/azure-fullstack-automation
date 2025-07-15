@@ -30,12 +30,12 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: 📦 Terraform Init
-        run: terraform -chdir=infra/modules/mysql-database init
+        run: terraform -chdir=infra init
 
       - name: 📤 Export Terraform Outputs
         id: tf
         run: |
-          json=$(terraform -chdir=infra/modules/mysql-database output -json)
+          json=$(terraform -chdir=infra output -json)
           echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
           echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
           echo "DB_PASS=$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
