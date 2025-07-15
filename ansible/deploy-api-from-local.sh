@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+# === EXPORT DB ENV VARS from outer scope ===
+DB_HOST=${DB_HOST:-$1}
+DB_USER=${DB_USER:-$2}
+DB_PASS=${DB_PASS:-$3}
+DB_NAME=${DB_NAME:-$4}
+
+if [[ -z "$DB_HOST" || -z "$DB_USER" || -z "$DB_PASS" || -z "$DB_NAME" ]]; then
+  echo "❌ Missing required DB variables"
+  exit 1
+fi
+
 # === CONFIG ===
 # === STEP 0: Read JUMP_HOST and JUMP_USER from inventory ===
 INVENTORY_FILE="./ansible/inventory.ini"
@@ -37,11 +48,6 @@ echo "[2/4] Copying API source code..."
 ssh -i "$SSH_KEY_LOCAL" "$JUMP_USER@$JUMP_HOST" "mkdir -p ${REMOTE_DIR}/src"
 scp -i "$SSH_KEY_LOCAL" -r "$API_SRC_LOCAL" "$JUMP_USER@$JUMP_HOST:${REMOTE_DIR}/src/"
 
-# === STEP 3: Upload systemd template ===
-# echo "[3/4] Uploading systemd template..."
-# ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" "mkdir -p ${REMOTE_DIR}/templates"
-# scp -i "${SSH_KEY_LOCAL}" "${TEMPLATE_LOCAL}" "${JUMP_USER}@${JUMP_HOST}:${TEMPLATE_REMOTE}"
-
 # === STEP 3.5: Preload known_hosts in the jumpbox to avoid host key verification ===
 echo "[3.5/4] Adding backend VM keys to known_hosts on the jumpbox..."
 ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" bash <<'EOF'
@@ -65,16 +71,21 @@ echo "DB_HOST=${DB_HOST}"
 echo "DB_USER=${DB_USER}"
 echo "DB_PASS=${DB_PASS}"
 echo "DB_NAME=${DB_NAME}"
-ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" bash -s <<EOF
-  set -e
+ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" <<EOF
+  export DB_HOST="${DB_HOST}"
+  export DB_USER="${DB_USER}"
+  export DB_PASS="${DB_PASS}"
+  export DB_NAME="${DB_NAME}"
+
   cd "${REMOTE_DIR}"
   ansible-playbook -i inventory.ini api-setup.yml \
     -e "api_source_path=${API_SRC_REMOTE}" \
     -e "service_name=movie-api" \
-    -e "db_host=${DB_HOST}" \
-    -e "db_user=${DB_USER}" \
-    -e "db_password=${DB_PASS}" \
-    -e "db_name=${DB_NAME}"
+    -e "db_host=\$DB_HOST" \
+    -e "db_user=\$DB_USER" \
+    -e "db_password=\$DB_PASS" \
+    -e "db_name=\$DB_NAME"
 EOF
+
 
 

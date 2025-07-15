@@ -47,14 +47,12 @@ jobs:
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-          
-      - name: ✅ Make deploy script executable
-        run: chmod +x ./ansible/deploy-api-from-local.sh
-      
+
       - name: 🚀 Run remote deploy script from jumpbox
         run: |
-          DB_HOST=${{ env.DB_HOST }} \
-          DB_USER=${{ env.DB_USER }} \
-          DB_PASS=${{ env.DB_PASS }} \
-          DB_NAME=${{ env.DB_NAME }} \
-          ./ansible/deploy-api-from-local.sh
+          chmod +x ./ansible/deploy-api-from-local.sh
+          ./ansible/deploy-api-from-local.sh \
+            "${{ env.DB_HOST }}" \
+            "${{ env.DB_USER }}" \
+            "${{ env.DB_PASS }}" \
+            "${{ env.DB_NAME }}"
