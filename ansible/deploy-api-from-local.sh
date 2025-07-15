@@ -60,15 +60,21 @@ fi
 
 # === STEP 4: Execute playbook remotely ===
 echo "[4/4] Executing playbook from the jump host..."
-ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" << EOF
+echo "🔎 Verificando envs en jumpbox:"
+echo "DB_HOST=${DB_HOST}"
+echo "DB_USER=${DB_USER}"
+echo "DB_PASS=${DB_PASS}"
+echo "DB_NAME=${DB_NAME}"
+ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" bash -s <<EOF
   set -e
   cd "${REMOTE_DIR}"
   ansible-playbook -i inventory.ini api-setup.yml \
-  -e "api_source_path=${API_SRC_REMOTE}" \
-  -e "service_name=mysqlmovie-api" \
-  -e "db_host=${DB_HOST}" \
-  -e "db_user=${DB_USER}" \
-  -e "db_password=${DB_PASS}" \
-  -e "db_name=${DB_NAME}"
+    -e "api_source_path=${API_SRC_REMOTE}" \
+    -e "service_name=movie-api" \
+    -e "db_host=${DB_HOST}" \
+    -e "db_user=${DB_USER}" \
+    -e "db_password=${DB_PASS}" \
+    -e "db_name=${DB_NAME}"
 EOF
+
 
