@@ -1,6 +1,6 @@
 
 locals {
-  company     = "epam"
+  company     = "mycompany"
   environment = lower(terraform.workspace)
   name_prefix = "${local.company}${local.environment}"
 
