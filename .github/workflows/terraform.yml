@@ -106,8 +106,12 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
 
-      - name: 📄 Generate Terraform outputs
-        run: terraform -chdir=infra output -json > infra/tf_outputs.json
+      - name: 📄 Generate and inspect Terraform outputs
+        run: |
+          terraform -chdir=infra output -json > infra/tf_outputs.json
+          cat infra/tf_outputs.json
+          echo "Trying to extract IP:"
+          jq -r '.control_node_public_ip' infra/tf_outputs.json
 
       - name: 📦 Upload inventory.ini as artifact
         uses: actions/upload-artifact@v4
@@ -122,8 +126,15 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
+      # - name: 📤 Copy inventory.ini to jumpbox
+      #   run: |
+      #     CONTROL_IP=$(jq -r '.control_node_public_ip.value' infra/tf_outputs.json)
+      #     SSH_USER=$(jq -r '.ssh_user.value' infra/tf_outputs.json)
+      #     scp -i ~/.ssh/vm_ssh_key ansible/inventory.ini $SSH_USER@$CONTROL_IP:~/inventory.ini
+
       - name: 📤 Copy inventory.ini to jumpbox
         run: |
-          CONTROL_IP=$(jq -r '.control_node_public_ip.value' infra/tf_outputs.json)
-          SSH_USER=$(jq -r '.ssh_user.value' infra/tf_outputs.json)
+          CONTROL_IP=$(jq -r '.control_node_public_ip' infra/tf_outputs.json)
+          SSH_USER=$(jq -r '.ssh_user' infra/tf_outputs.json)
           scp -i ~/.ssh/vm_ssh_key ansible/inventory.ini $SSH_USER@$CONTROL_IP:~/inventory.ini
+
