@@ -46,7 +46,12 @@ jobs:
         run: az account show
 
       - name: 📥 Terraform Init
-        run: terraform -chdir=infra init
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="resource_group_name=elio-tfstate-rg" \
+            -backend-config="storage_account_name=eliosastate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=terraform.tfstate"
 
       - name: 🧹 Optional Unlock (if lock is active)
         run: |
@@ -77,7 +82,7 @@ jobs:
           mysql_user           = "${{ secrets.MYSQL_USER }}"
           mysql_admin_password = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
           EOF
-          
+
       - name: 🔍 Terraform Validate
         run: terraform -chdir=infra validate
 
