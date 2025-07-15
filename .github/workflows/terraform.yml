@@ -72,3 +72,7 @@ jobs:
       - name: 🚀 Terraform Apply
         if: github.ref == 'refs/heads/master'
         run: terraform -chdir=infra apply -auto-approve -input=false
+
+      - name: 📤 Terraform Output
+        run: terraform -chdir=infra output
+
