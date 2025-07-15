@@ -106,12 +106,13 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
 
-      - name: 📄 Generate and inspect Terraform outputs
+      - name: 📄 Generate Terraform outputs
         run: |
           terraform -chdir=infra output -json > infra/tf_outputs.json
-          cat infra/tf_outputs.json
-          echo "Trying to extract IP:"
-          jq -r '.control_node_public_ip' infra/tf_outputs.json
+
+      # cat infra/tf_outputs.json
+      # echo "Trying to extract IP:"
+      # jq -r '.control_node_public_ip' infra/tf_outputs.json
 
       - name: 📦 Upload inventory.ini as artifact
         uses: actions/upload-artifact@v4
