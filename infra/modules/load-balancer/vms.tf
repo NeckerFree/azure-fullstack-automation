@@ -142,7 +142,11 @@ resource "null_resource" "fix_inventory_line_endings" {
 
   provisioner "local-exec" {
     command = <<-EOT
+    if command -v powershell >/dev/null 2>&1; then
       powershell -Command "(Get-Content -Raw '${local_file.ansible_inventory.filename}') -replace '\\r', '' | Set-Content -NoNewline '${local_file.ansible_inventory.filename}'"
-    EOT
+    else
+      sed -i 's/\r//' '${local_file.ansible_inventory.filename}'
+    fi
+  EOT
   }
 }
