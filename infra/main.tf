@@ -68,7 +68,7 @@ module "load-balancer" {
   backend_subnet_id       = module.network.backend_subnet_id
   mysql_fqdn              = module.mysql-database.mysql_fqdn
   admin_username          = var.admin_username
-  ssh_public_key          = file("~/.ssh/vm_ssh_key.pub")
+  ssh_public_key          = var.ssh_public_key
 }
 
 

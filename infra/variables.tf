@@ -46,4 +46,7 @@ variable "allowed_ssh_ip" {
   sensitive = true
 }
 
-
+variable "ssh_public_key" {
+  type      = string
+  sensitive = true
+}
