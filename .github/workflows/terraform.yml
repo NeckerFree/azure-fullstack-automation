@@ -36,7 +36,9 @@ jobs:
         client-secret: ${{ secrets.ARM_CLIENT_SECRET }}
         auth-type: SERVICE_PRINCIPAL
 
-
+    - name: Verify Azure CLI login
+      run: az account show
+      
     - name: Terraform Init
       run: terraform -chdir=infra init
 
