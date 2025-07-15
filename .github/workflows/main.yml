@@ -72,7 +72,17 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      - name: 🚀 Run remote deploy script from jumpbox
+      - name: Run Deploy Script to Configure Ansible
+        run: |
+          chmod +x ./ansible/deploy-ansible-from-local.sh
+          ./ansible/deploy-ansible-from-local.sh
+
+      - name: Run Deploy Script to configure DB
+        run: | 
+          chmod +x ./ansible/deploy-db-from-local.sh
+          ./ansible/deploy-db-from-local.sh
+          
+      - name: 🚀 Run remote deploy script to deploy api
         run: |
           export DB_HOST="${{ env.DB_HOST }}"
           export DB_USER="${{ env.DB_USER }}"

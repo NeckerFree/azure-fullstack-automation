@@ -20,7 +20,7 @@ locals {
 #   url = "https://ifconfig.me/ip"
 # }
 
-resource "azurerm_resource_group" "epam-rg" {
+resource "azurerm_resource_group" "soft-rg" {
   name     = local.resource_group_name
   location = var.location
   tags = {
@@ -30,8 +30,8 @@ resource "azurerm_resource_group" "epam-rg" {
 
 module "network" {
   source                                      = "./modules/network"
-  resource_group_name                         = azurerm_resource_group.epam-rg.name
-  location                                    = azurerm_resource_group.epam-rg.location
+  resource_group_name                         = azurerm_resource_group.soft-rg.name
+  location                                    = azurerm_resource_group.soft-rg.location
   env_prefix                                  = local.name_prefix
   environment                                 = local.environment
   bastion_public_ip                           = module.load-balancer.control_node_public_ip
@@ -46,8 +46,8 @@ module "network" {
 
 module "mysql-database" {
   source                      = "./modules/mysql-database"
-  resource_group_name         = azurerm_resource_group.epam-rg.name
-  location                    = azurerm_resource_group.epam-rg.location
+  resource_group_name         = azurerm_resource_group.soft-rg.name
+  location                    = azurerm_resource_group.soft-rg.location
   env_prefix                  = local.name_prefix
   environment                 = local.environment
   mysql_user                  = var.mysql_user
@@ -60,30 +60,31 @@ module "mysql-database" {
 
 module "load-balancer" {
   source                  = "./modules/load-balancer"
-  resource_group_name     = azurerm_resource_group.epam-rg.name
-  location                = azurerm_resource_group.epam-rg.location
+  resource_group_name     = azurerm_resource_group.soft-rg.name
+  location                = azurerm_resource_group.soft-rg.location
   env_prefix              = local.name_prefix
   environment             = local.environment
   virtual_network_main_id = module.network.virtual_network_main_id
   backend_subnet_id       = module.network.backend_subnet_id
   mysql_fqdn              = module.mysql-database.mysql_fqdn
   admin_username          = var.admin_username
+  ssh_public_key          = file("~/.ssh/vm_ssh_key.pub")
 }
 
 
 
 module "monitoring" {
   source              = "./modules/monitoring"
-  resource_group_name = azurerm_resource_group.epam-rg.name
-  location            = azurerm_resource_group.epam-rg.location
+  resource_group_name = azurerm_resource_group.soft-rg.name
+  location            = azurerm_resource_group.soft-rg.location
   lb_id               = module.load-balancer.lb_id
   env_prefix          = local.name_prefix
 }
 
 module "app-service" {
   source              = "./modules/app-service"
-  resource_group_name = azurerm_resource_group.epam-rg.name
-  location            = azurerm_resource_group.epam-rg.location
+  resource_group_name = azurerm_resource_group.soft-rg.name
+  location            = azurerm_resource_group.soft-rg.location
   lb_public_ip        = module.load-balancer.lb_id
   env_prefix          = local.name_prefix
   app_name            = "movies"
@@ -110,4 +111,14 @@ output "mysql_database_name" {
 
 output "lb_api_url" {
   value = module.load-balancer.lb_api_url
+}
+
+output "control_node_public_ip" {
+  description = "Jumpbox IP"
+  value       = module.load-balancer.control_node_public_ip
+}
+
+output "ssh_user" {
+  description = "SSH admin user for VMs"
+  value       = var.admin_username
 }

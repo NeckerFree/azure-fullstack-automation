@@ -1,10 +1,10 @@
 resource "azurerm_resource_group" "tfstate" {
-  name     = "elio-tfstate-rg"
+  name     = "soft-tfstate-rg"
   location = var.location
 }
 
 resource "azurerm_storage_account" "tfstate" {
-  name                            = "epamqatfstate"
+  name                            = "softqatfstate"
   resource_group_name             = azurerm_resource_group.tfstate.name
   location                        = var.location
   account_tier                    = "Premium" # Free-tier eligible

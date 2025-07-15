@@ -14,7 +14,7 @@ After=network.target
 WorkingDirectory=/home/adminuser/ansible-setup/src/movie-analyst-api
 Environment=NODE_ENV=production
 Environment=PORT=8080
-Environment=DB_HOST=epamqa-mysql-westus2.mysql.database.azure.com
+Environment=DB_HOST=softqa-mysql-westus2.mysql.database.azure.com
 Environment=DB_USER=mysqladmin
 Environment=DB_PASS=Sec#reP@ssword123!
 Environment=DB_NAME=movie_analyst

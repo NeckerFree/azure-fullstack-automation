@@ -19,8 +19,6 @@ output "control_node_public_ip" {
   description = "Public IP address of the control/bastion node"
 }
 
-
-
 output "network_interface_control_id" {
   value       = azurerm_network_interface.control.id
   description = "network interface id"

@@ -315,7 +315,7 @@ API Deployment:
 
 ```
 ansible-playbook -i inventory.ini deploy-api.yml \
-  -e mysql_host=epamqa-mysql-eastus \
+  -e mysql_host=softqa-mysql-eastus \
   -e mysql_user=adminuser \
   -e mysql_password=$DB_PASSWORD \
   -e mysql_database=movie_analyst
@@ -519,8 +519,8 @@ accept fingerprint (yes)
 
 expected:
 PLAY RECAP *********************************************************************
-epamqa-vm-api-0            : ok=1    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-epamqa-vm-api-1            : ok=1    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+softqa-vm-api-0            : ok=1    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+softqa-vm-api-1            : ok=1    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 localhost                  : ok=3    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 Playbook executed successfully!
 
@@ -530,8 +530,8 @@ Executed in GH main.yml workflow
 
  expected:
  PLAY RECAP *********************************************************************
-epamqa-vm-api-0            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-epamqa-vm-api-1            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+softqa-vm-api-0            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+softqa-vm-api-1            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 Playbook executed successfully! -->
 
 # Copy files, install and configure database in VMs nodes
@@ -539,11 +539,11 @@ Playbook executed successfully! -->
 
 expected:
 PLAY RECAP *********************************************************************
-epamqa-vm-api-0            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-epamqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-epamqa-vm-api-0            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-epamqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-epamqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+softqa-vm-api-0            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+softqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+softqa-vm-api-0            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+softqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+softqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 Playbook executed successfully!
 
 After execute GH actions workflow 

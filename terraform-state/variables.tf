@@ -31,7 +31,7 @@ variable "environment" {
 }
 variable "tfstate_storage_account" {
   type    = string
-  default = "epamqatfstate"
+  default = "softqatfstate"
 }
 
 # variable "allowed_ssh_ip" {

@@ -70,8 +70,8 @@ cat > /home/adminuser/ansible-setup/inventory.ini <<EOL
 localhost ansible_connection=local
 
 [nodes]
-epamqa-vm-api-0 ansible_host=10.0.2.5 ansible_user=adminuser ansible_ssh_private_key_file=/home/adminuser/.ssh/vm_ssh_key ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
-epamqa-vm-api-1 ansible_host=10.0.2.6 ansible_user=adminuser ansible_ssh_private_key_file=/home/adminuser/.ssh/vm_ssh_key ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+softqa-vm-api-0 ansible_host=10.0.2.5 ansible_user=adminuser ansible_ssh_private_key_file=/home/adminuser/.ssh/vm_ssh_key ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+softqa-vm-api-1 ansible_host=10.0.2.6 ansible_user=adminuser ansible_ssh_private_key_file=/home/adminuser/.ssh/vm_ssh_key ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 [all:vars]
 ansible_connection=ssh
