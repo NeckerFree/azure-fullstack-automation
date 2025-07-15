@@ -6,7 +6,10 @@ DB_HOST=${DB_HOST:-$1}
 DB_USER=${DB_USER:-$2}
 DB_PASS=${DB_PASS:-$3}
 DB_NAME=${DB_NAME:-$4}
-
+: "${DB_HOST:?Missing DB_HOST}"
+: "${DB_USER:?Missing DB_USER}"
+: "${DB_PASS:?Missing DB_PASS}"
+: "${DB_NAME:?Missing DB_NAME}"
 if [[ -z "$DB_HOST" || -z "$DB_USER" || -z "$DB_PASS" || -z "$DB_NAME" ]]; then
   echo "❌ Missing required DB variables"
   exit 1
@@ -71,11 +74,16 @@ echo "DB_HOST=${DB_HOST}"
 echo "DB_USER=${DB_USER}"
 echo "DB_PASS=${DB_PASS}"
 echo "DB_NAME=${DB_NAME}"
+
 ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" <<EOF
+  set -e
   export DB_HOST="${DB_HOST}"
   export DB_USER="${DB_USER}"
   export DB_PASS="${DB_PASS}"
   export DB_NAME="${DB_NAME}"
+
+  echo "🔍 [jumpbox] DB_HOST=\$DB_HOST"
+  echo "🔍 [jumpbox] DB_USER=\$DB_USER"
 
   cd "${REMOTE_DIR}"
   ansible-playbook -i inventory.ini api-setup.yml \
@@ -86,6 +94,5 @@ ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" <<EOF
     -e "db_password=\$DB_PASS" \
     -e "db_name=\$DB_NAME"
 EOF
-
 
 
