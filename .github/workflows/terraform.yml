@@ -128,7 +128,8 @@ jobs:
 
       - name: 📤 Copy inventory.ini to jumpbox
         run: |
-          CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip)
-          SSH_USER=$(terraform -chdir=infra output -raw ssh_user)
+          CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip.value)
+          SSH_USER=$(terraform -chdir=infra output -raw ssh_user.value)
+          echo "Using IP: $CONTROL_IP and user: $SSH_USER"
           scp -i ~/.ssh/vm_ssh_key ansible/inventory.ini $SSH_USER@$CONTROL_IP:~/inventory.ini
 
