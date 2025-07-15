@@ -1,3 +1,7 @@
+# Obtener la clave pública ya sea del recurso generado o del archivo existente
+locals {
+  ssh_public_key = fileexists(pathexpand("~/.ssh/vm_ssh_key")) ? trimspace(file(pathexpand("~/.ssh/vm_ssh_key.pub"))) : tls_private_key.vm_ssh[0].public_key_openssh
+}
 # NICs for VMs
 resource "azurerm_network_interface" "backend" {
   count               = 2 # Two instances for HA
@@ -42,8 +46,8 @@ resource "azurerm_network_interface" "control" {
   }
 }
 
-
 resource "tls_private_key" "vm_ssh" {
+  count     = fileexists(pathexpand("~/.ssh/vm_ssh_key")) ? 0 : 1
   algorithm = "RSA"
   rsa_bits  = 4096
 }
@@ -57,7 +61,7 @@ resource "azurerm_linux_virtual_machine" "control" {
   network_interface_ids = [azurerm_network_interface.control.id]
   admin_ssh_key {
     username   = var.admin_username
-    public_key = tls_private_key.vm_ssh.public_key_openssh
+    public_key = local.ssh_public_key
   }
   os_disk {
     caching              = "ReadWrite"
@@ -86,7 +90,7 @@ resource "azurerm_linux_virtual_machine" "backend" {
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = tls_private_key.vm_ssh.public_key_openssh
+    public_key = local.ssh_public_key
   }
 
   os_disk {
@@ -104,7 +108,8 @@ resource "azurerm_linux_virtual_machine" "backend" {
 
 # Generate ~/.ssh/vm_ssh_key from TLS private key
 resource "local_file" "ssh_private_key" {
-  content         = tls_private_key.vm_ssh.private_key_openssh
+  count           = fileexists(pathexpand("~/.ssh/vm_ssh_key")) ? 0 : 1
+  content         = tls_private_key.vm_ssh[0].private_key_openssh
   filename        = pathexpand("~/.ssh/vm_ssh_key")
   file_permission = "0600"
 }

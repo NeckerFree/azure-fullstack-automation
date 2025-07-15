@@ -63,3 +63,4 @@ docs/monthly cost.png
 ansible/ansible command.txt
 infra/.terraform.lock.hcl
 *node_modules/*
+docs/query.txt

@@ -23,15 +23,28 @@ PLAYBOOK="ansible/db-setup.yml"
 SQL_SCRIPT="ansible/files/mysql/movie_db.sql"
 INVENTORY="ansible/inventory.ini"
 
+echo "[1/4] Testing SSH connection to jump host..."
+if ! ssh -i "$SSH_KEY_LOCAL" -p $SSH_PORT -o ConnectTimeout=10 -q "$JUMP_USER@$JUMP_HOST" exit; then
+  echo "❌ SSH connection failed to $JUMP_HOST:$SSH_PORT"
+  echo "Please verify:"
+  echo "1. The VM is running"
+  echo "2. NSG allows port $SSH_PORT"
+  echo "3. Correct key is at $SSH_KEY_LOCAL"
+  exit 1
+fi
+
 echo "[1/4] Copying playbook, SQL script and inventory to the jumphost..."
-scp -i "$SSH_KEY_LOCAL" "$PLAYBOOK" "$SQL_SCRIPT" "$INVENTORY" "$JUMPBOX_USER@$JUMPBOX_HOST:/home/$JUMPBOX_USER/"
+scp -i "$SSH_KEY_LOCAL" -P $SSH_PORT "$PLAYBOOK" "$SQL_SCRIPT" "$INVENTORY" "$JUMP_USER@$JUMP_HOST:/home/$JUMP_USER/"
 
 # [2/4] Execute playbook from jumphost
 echo "[2/4] Running playbook from jumphost..."
-ssh -i "$SSH_KEY_LOCAL" "$JUMPBOX_USER@$JUMPBOX_HOST" bash <<EOF
+ssh -i "$SSH_KEY_LOCAL" -p $SSH_PORT "$JUMP_USER@$JUMP_HOST" bash <<EOF
   set -e
+  echo "Updating packages..."
   sudo apt update -qq
+  echo "Installing dependencies..."
   sudo apt install -y ansible mysql-client
+  echo "Executing playbook..."
   ansible-playbook -i inventory.ini db-setup.yml \
     --extra-vars "db_user=$MYSQL_USER db_password=$MYSQL_PWD db_name=$MYSQL_DB db_host=$MYSQL_HOST"
 EOF

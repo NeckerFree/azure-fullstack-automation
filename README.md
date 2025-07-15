@@ -545,3 +545,10 @@ epamqa-vm-api-0            : ok=7    changed=1    unreachable=0    failed=0    s
 epamqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 epamqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 Playbook executed successfully!
+
+After execute GH actions workflow 
+execute \infra> terraform output
+to get api URL:
+lb_api_url = "http://4.155.207.109"
+
+and test it browser, postman or using curl

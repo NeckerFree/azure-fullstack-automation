@@ -33,5 +33,5 @@ resource "azurerm_subnet" "db" {
 # Asociar NSG a la subred backend
 resource "azurerm_subnet_network_security_group_association" "backend" {
   subnet_id                 = azurerm_subnet.backend.id
-  network_security_group_id = azurerm_network_security_group.jumpbox_nsg.id
+  network_security_group_id = azurerm_network_security_group.main.id
 }

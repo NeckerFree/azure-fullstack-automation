@@ -55,7 +55,7 @@
       file:
         path: "{{ app_path }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
         owner: adminuser
         group: adminuser
 
@@ -82,7 +82,7 @@
         remote_src: true
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       notify: restart movie-api
 
   handlers:
