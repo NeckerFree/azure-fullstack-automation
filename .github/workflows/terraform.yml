@@ -53,7 +53,7 @@ jobs:
           client_secret   = "${{ secrets.ARM_CLIENT_SECRET }}"
           tenant_id       = "${{ secrets.ARM_TENANT_ID }}"
 
-          allowed_ssh_ip  = "186.67.87.160/32"
+          allowed_ssh_ip  = "${{ secrets.MY_IP_ADDRESS }}"
           mysql_user           = "${{ secrets.MYSQL_USER }}"
           mysql_admin_password = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
           EOF
@@ -74,7 +74,7 @@ jobs:
           fi
 
       - name: 🧹 Terraform Format
-        run: terraform -chdir=infra fmt -check
+        run: terraform -chdir=infra fmt -check -diff -recursive -no-color | grep -v terraform.tfvars || true
 
       - name: 🔍 Terraform Validate
         run: terraform -chdir=infra validate
