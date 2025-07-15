@@ -1,91 +1,91 @@
-# name: Deploy API
+name: Deploy API
 
-# on:
-#   push:
-#     branches: [ master ]
+on:
+  push:
+    branches: [ master ]
 
-# env:
-#   NODE_VERSION: 16
+env:
+  NODE_VERSION: 16
 
-# permissions:
-#   contents: read
-#   id-token: write
+permissions:
+  contents: read
+  id-token: write
 
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v3
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-#       - name: 🟢 Set up Node.js
-#         uses: actions/setup-node@v3
-#         with:
-#           node-version: ${{ env.NODE_VERSION }}
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
-#       - name: 📦 Install dependencies
-#         run: npm ci
-#         working-directory: src/movie-analyst-api
+      - name: 📦 Install dependencies
+        run: npm ci
+        working-directory: src/movie-analyst-api
 
-#       - name: 🧪 Run tests
-#         run: npm test
-#         working-directory: src/movie-analyst-api
+      - name: 🧪 Run tests
+        run: npm test
+        working-directory: src/movie-analyst-api
 
-#       - name: 🛠️ Set up Terraform
-#         uses: hashicorp/setup-terraform@v3
-#         with:
-#             terraform_version: 1.5.0
+      - name: 🛠️ Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+            terraform_version: 1.5.0
 
-#       - name: 📦 Terraform Init
-#         run: terraform -chdir=infra init
+      - name: 📦 Terraform Init
+        run: terraform -chdir=infra init
 
-#       - name: 🐛 Debug Terraform Outputs
-#         run: terraform -chdir=infra output
+      - name: 🐛 Debug Terraform Outputs
+        run: terraform -chdir=infra output
 
-#       - name: 📤 Export Terraform Outputs
-#         id: tf
-#         run: |
-#           json=$(terraform -chdir=infra output -json)
-#           echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
-#           echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
-#           echo "DB_PASS=$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
-#           echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
+      - name: 📤 Export Terraform Outputs
+        id: tf
+        run: |
+          json=$(terraform -chdir=infra output -json)
+          echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
+          echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
+          echo "DB_PASS=$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
+          echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
 
-#       - name: ✅ Validate Terraform Outputs
-#         run: |
-#             if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
-#             echo "❌ One or more Terraform outputs are missing"
-#             exit 1
-#             fi
+      - name: ✅ Validate Terraform Outputs
+        run: |
+            if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
+            echo "❌ One or more Terraform outputs are missing"
+            exit 1
+            fi
 
-#       - name: 🔐 Check SSH key presence
-#         run: |
-#             if [ -z "${{ secrets.VM_SSH_KEY }}" ]; then
-#             echo "❌ SSH key is missing"
-#             exit 1
-#             fi
+      - name: 🔐 Check SSH key presence
+        run: |
+            if [ -z "${{ secrets.VM_SSH_KEY }}" ]; then
+            echo "❌ SSH key is missing"
+            exit 1
+            fi
 
-#       - name: 🔑 Configure SSH
-#         run: |
-#           mkdir -p ~/.ssh
-#           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
-#           chmod 600 ~/.ssh/vm_ssh_key
-#           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+      - name: 🔑 Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
+          chmod 600 ~/.ssh/vm_ssh_key
+          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-#       - name: Run Deploy Script to Configure Ansible
-#         run: |
-#           chmod +x ./ansible/deploy-ansible-from-local.sh
-#           ./ansible/deploy-ansible-from-local.sh
+      - name: Run Deploy Script to Configure Ansible
+        run: |
+          chmod +x ./ansible/deploy-ansible-from-local.sh
+          ./ansible/deploy-ansible-from-local.sh
 
-#       - name: Run Deploy Script to configure DB
-#         run: | 
-#           chmod +x ./ansible/deploy-db-from-local.sh
-#           ./ansible/deploy-db-from-local.sh
+      - name: Run Deploy Script to configure DB
+        run: | 
+          chmod +x ./ansible/deploy-db-from-local.sh
+          ./ansible/deploy-db-from-local.sh
           
-#       - name: 🚀 Run remote deploy script to deploy api
-#         run: |
-#           export DB_HOST="${{ env.DB_HOST }}"
-#           export DB_USER="${{ env.DB_USER }}"
-#           export DB_PASS="${{ env.DB_PASS }}"
-#           export DB_NAME="${{ env.DB_NAME }}"
-#           chmod +x ./ansible/deploy-api-from-local.sh
-#           ./ansible/deploy-api-from-local.sh
+      - name: 🚀 Run remote deploy script to deploy api
+        run: |
+          export DB_HOST="${{ env.DB_HOST }}"
+          export DB_USER="${{ env.DB_USER }}"
+          export DB_PASS="${{ env.DB_PASS }}"
+          export DB_NAME="${{ env.DB_NAME }}"
+          chmod +x ./ansible/deploy-api-from-local.sh
+          ./ansible/deploy-api-from-local.sh
