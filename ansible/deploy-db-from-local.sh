@@ -5,8 +5,6 @@ set -e
 INVENTORY_FILE="./ansible/inventory.ini"
 JUMP_HOST=$(awk '/^\[control\]/ {getline; match($0, /ansible_host=([^ ]+)/, m); print m[1]}' "$INVENTORY_FILE")
 JUMP_USER=$(awk '/^\[control\]/ {getline; match($0, /ansible_user=([^ ]+)/, m); print m[1]}' "$INVENTORY_FILE")
-SSH_PORT=22  # Default, change if you use a custom port
-
 if [ -z "$JUMP_USER" ] || [ -z "$JUMP_HOST" ]; then
   echo "❌ Could not parse JUMP_USER or JUMP_HOST from inventory.ini"
   exit 1

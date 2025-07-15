@@ -1,0 +1,10 @@
+---
+- name: Verify SSH connectivity
+  hosts: nodes
+  gather_facts: no
+  tasks:
+    - name: Wait for SSH to become available
+      wait_for_connection:
+        timeout: 60
+        delay: 10
+        sleep: 5

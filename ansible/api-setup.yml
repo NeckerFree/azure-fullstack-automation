@@ -4,61 +4,91 @@
   become: yes
   vars:
     app_path: /home/adminuser/ansible-setup/src/movie-analyst-api
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ConnectTimeout=30"
+    ansible_ssh_retries: 3
+    ansible_ssh_private_key_file: "~/.ssh/vm_ssh_key"
 
   pre_tasks:
-    - name: Ensure curl is installed
-      apt:
-        name: curl
-        state: present
-        update_cache: true
+    - name: Wait for SSH connectivity
+      wait_for_connection:
+        timeout: 60
+        delay: 10
+        sleep: 5
 
-    - name: Disable SSH host key checking for this session
-      set_fact:
-        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    - name: Show received DB environment variables
+      debug:
+        msg:
+          - "DB_HOST: {{ db_host | default('null') }}"
+          - "DB_USER: {{ db_user | default('null') }}"
+          - "DB_PASS: {{ db_password | default('null') }}"
+          - "DB_NAME: {{ db_name | default('null') }}"
 
   tasks:
-    - name: Install NVM and Node.js
-      shell: |
-        export NVM_DIR="$HOME/.nvm"
-        if [ ! -d "$NVM_DIR" ]; then
-          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-        fi
-        source "$NVM_DIR/nvm.sh"
-        nvm install 16
-        nvm alias default 16
-      args:
-        executable: /bin/bash
+    - name: Install system dependencies
+      apt:
+        name:
+          - curl
+          - gnupg
+          - ca-certificates
+        state: present
+        update_cache: yes
 
-    - name: Ensure destination directory exists
+    - name: Add NodeSource GPG key
+      apt_key:
+        url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+        state: present
+
+    - name: Add NodeSource repository
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_16.x {{ ansible_distribution_release }} main"
+        state: present
+        filename: nodesource
+        update_cache: yes
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+
+    - name: Ensure app directory exists
       file:
         path: "{{ app_path }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
+        owner: adminuser
+        group: adminuser
 
-    - name: Ensure API code directory exists on jumphost
-      delegate_to: localhost
-      stat:
-        path: "{{ app_path }}"
-      register: api_dir
-
-    - name: Fail if API source not found
-      fail:
-        msg: "API source code not found at {{ app_path }} on jumphost"
-      when: not api_dir.stat.exists
-
-    - name: Copy API source code from jumphost to backend nodes
-      synchronize:
-        src: "{{ app_path }}/"
-        dest: "{{ app_path }}/"
+    - name: Synchronize API code
+      ansible.posix.synchronize:
+        src: "{{ api_source_path }}/"
+        dest: "{{ app_path }}"
         recursive: yes
-        mode: push
-      delegate_to: jumpbox
+        rsync_opts:
+          - "--rsh=ssh -i /home/adminuser/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
+          - "--exclude=node_modules"
+      delegate_to: localhost
 
-    - name: Install app dependencies
-      shell: |
-        export NVM_DIR="$HOME/.nvm"
-        source "$NVM_DIR/nvm.sh"
-        cd "{{ app_path }}"
-        npm install
-      args:
-        executable: /bin/bash
+    - name: Install npm dependencies
+      npm:
+        path: "{{ app_path }}"
+        state: present
+        production: yes
+
+    - name: Deploy systemd service
+      template:
+        src: "/home/adminuser/ansible-setup/templates/movie-api.service.j2"
+        dest: /etc/systemd/system/movie-api.service
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0644"
+      notify: restart movie-api
+
+  handlers:
+    - name: restart movie-api
+      systemd:
+        name: movie-api
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
