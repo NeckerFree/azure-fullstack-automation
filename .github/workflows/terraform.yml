@@ -126,10 +126,10 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      - name: 📤 Copy inventory.ini to jumpbox
-        run: |
-          CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip.value)
-          SSH_USER=$(terraform -chdir=infra output -raw ssh_user.value)
-          echo "Using IP: $CONTROL_IP and user: $SSH_USER"
-          scp -i ~/.ssh/vm_ssh_key ansible/inventory.ini $SSH_USER@$CONTROL_IP:~/inventory.ini
+      # - name: 📤 Copy inventory.ini to jumpbox
+      #   run: |
+      #     CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip.value)
+      #     SSH_USER=$(terraform -chdir=infra output -raw ssh_user.value)
+      #     echo "Using IP: $CONTROL_IP and user: $SSH_USER"
+      #     scp -i ~/.ssh/vm_ssh_key ansible/inventory.ini $SSH_USER@$CONTROL_IP:~/inventory.ini
 
