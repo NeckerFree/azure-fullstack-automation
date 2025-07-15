@@ -45,6 +45,19 @@ jobs:
       - name: 🧪 Verify Azure login
         run: az account show
 
+      - name: 🏗️ Ensure Terraform remote backend exists
+        run: |
+          az group create --name soft-tfstate-rg --location eastus
+          az storage account create \
+            --name softsastate \
+            --resource-group soft-tfstate-rg \
+            --location eastus \
+            --sku Standard_LRS \
+            --encryption-services blob
+          az storage container create \
+            --name tfstate \
+            --account-name softsastate
+
       - name: 📥 Terraform Init
         run: |
           terraform -chdir=infra init \
