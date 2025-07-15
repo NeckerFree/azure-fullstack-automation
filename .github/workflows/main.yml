@@ -32,6 +32,9 @@ jobs:
       - name: 📦 Terraform Init
         run: terraform -chdir=infra init
 
+      - name: 🐛 Debug Terraform Outputs
+        run: terraform -chdir=infra output
+
       - name: 📤 Export Terraform Outputs
         id: tf
         run: |
