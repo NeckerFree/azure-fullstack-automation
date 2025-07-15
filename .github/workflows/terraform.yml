@@ -74,8 +74,9 @@ jobs:
           fi
 
       - name: 🧹 Terraform Format
-        run: terraform -chdir=infra fmt -check -diff -recursive -no-color | grep -v terraform.tfvars || true
-
+        run: | 
+         terraform -chdir=infra fmt -check -diff -recursive -no-color || true
+  
       - name: 🔍 Terraform Validate
         run: terraform -chdir=infra validate
 
