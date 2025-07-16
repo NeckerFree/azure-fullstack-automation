@@ -129,18 +129,16 @@ jobs:
 
       - name: 🚀 Upload Inventory to Jumpbox
         run: |
-          # Use provided Terraform binary path or fallback
-          TF_BIN="${TERRAFORM_CLI_PATH:-terraform}"
+          # Get outputs from Terraform
+          CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip)
+          SSH_USER=$(terraform -chdir=infra output -raw ssh_user)
 
-          # Get outputs
-          CONTROL_IP=$($TF_BIN -chdir=infra output -raw control_node_public_ip)
-          SSH_USER=$($TF_BIN -chdir=infra output -raw ssh_user)
+          # Log and validate
+          echo "CONTROL_IP: $CONTROL_IP"
+          echo "SSH_USER: $SSH_USER"
 
-          echo "Using IP: $CONTROL_IP and user: $SSH_USER"
-
-          # Confirm variables aren't empty
           if [[ -z "$CONTROL_IP" || -z "$SSH_USER" ]]; then
-            echo "❌ Missing CONTROL_IP or SSH_USER from Terraform output"
+            echo "❌ Terraform outputs not found!"
             exit 1
           fi
 
@@ -148,7 +146,7 @@ jobs:
           ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${SSH_USER}@${CONTROL_IP} \
             "mkdir -p /home/${SSH_USER}/ansible-setup"
 
-          # Upload inventory file
+          # Upload inventory
           scp -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no \
             ./ansible/inventory.ini \
             ${SSH_USER}@${CONTROL_IP}:/home/${SSH_USER}/ansible-setup/inventory.ini
@@ -156,5 +154,3 @@ jobs:
           # Verify upload
           ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${SSH_USER}@${CONTROL_IP} \
             "ls -la /home/${SSH_USER}/ansible-setup/"
-          
-
