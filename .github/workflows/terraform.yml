@@ -127,11 +127,25 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      - name: 📤 Copy inventory.ini to jumpbox
+      - name: 🚀 Upload Inventory to Jumpbox
         run: |
-          CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip.value)
-          SSH_USER=$(terraform -chdir=infra output -raw ssh_user.value)
-          ssh -i ~/.ssh/vm_ssh_key ${SSH_USER}@${CONTROL_IP} "mkdir -p /home/${JUMP_USER}/ansible-setup"
+          # Get outputs using correct syntax
+          CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip)
+          SSH_USER=$(terraform -chdir=infra output -raw ssh_user)
+          
           echo "Using IP: $CONTROL_IP and user: $SSH_USER"
-          scp -i ~/.ssh/vm_ssh_key ansible/inventory.ini $SSH_USER@$CONTROL_IP:/home/${SSH_USER}/ansible-setup/inventory.ini
+          
+          # Create remote directory
+          ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${SSH_USER}@${CONTROL_IP} \
+            "mkdir -p /home/${SSH_USER}/ansible-setup"
+          
+          # Upload inventory file
+          scp -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no \
+            ./ansible/inventory.ini \
+            ${SSH_USER}@${CONTROL_IP}:/home/${SSH_USER}/ansible-setup/inventory.ini
+          
+          # Verify upload
+          ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${SSH_USER}@${CONTROL_IP} \
+            "ls -la /home/${SSH_USER}/ansible-setup/"
+          
 
