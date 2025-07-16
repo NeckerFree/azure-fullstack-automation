@@ -23,7 +23,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Set up Azure credentials first
+      # Set up Terraform first since we might need it for fallback
+      - name: 🛠️ Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      # Set up Azure credentials
       - name: 🔐 Configure Azure Credentials
         run: |
           echo "ARM_CLIENT_ID=${{ secrets.ARM_CLIENT_ID }}" >> $GITHUB_ENV
@@ -31,7 +37,7 @@ jobs:
           echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
 
-      # Get Terraform outputs - reliable method
+      # Get Terraform outputs
       - name: 🛠️ Get Terraform Outputs
         id: get-outputs
         env:
@@ -41,7 +47,7 @@ jobs:
           echo "Attempting to download artifact..."
           if gh api repos/${{ github.repository }}/actions/artifacts | grep -q "terraform-outputs"; then
             echo "Artifact exists, downloading..."
-            gh run download ${{ github.event.workflow_run.id }} -n terraform-outputs -D infra || echo "Download failed, using fallback"
+            gh run download ${{ github.event.workflow_run.id }} -n terraform-outputs -D infra || echo "Download failed, will use fallback"
           fi
 
           # Method 2: Direct Terraform output (fallback)
@@ -55,30 +61,9 @@ jobs:
             terraform -chdir=infra output -json > infra/tf_outputs.json
           fi
 
-          # Validate and fix JSON if needed
-          echo "Validating JSON file..."
-          if ! jq empty infra/tf_outputs.json 2>/dev/null; then
-            echo "Invalid JSON detected, attempting to fix..."
-            # Try to extract just the JSON portion
-            grep -oP '(?<=^\{).*(?=\}$)' infra/tf_outputs.json > infra/tf_outputs_fixed.json || true
-            if [ -s infra/tf_outputs_fixed.json ]; then
-              mv infra/tf_outputs_fixed.json infra/tf_outputs.json
-            else
-              echo "Unable to fix JSON, using direct output method"
-              terraform -chdir=infra output -json > infra/tf_outputs.json
-            fi
-          fi
-
-          # Parse outputs with strict validation
+          # Parse outputs with validation
           echo "Parsing outputs..."
           json=$(cat infra/tf_outputs.json)
-          if ! jq -e '.mysql_fqdn.value' <<< "$json" >/dev/null; then
-            echo "❌ Error: Invalid or missing required fields in tf_outputs.json"
-            echo "File contents:"
-            cat infra/tf_outputs.json
-            exit 1
-          fi
-
           echo "DB_HOST=$(jq -r '.mysql_fqdn.value' <<< "$json")" >> $GITHUB_ENV
           echo "DB_USER=$(jq -r '.mysql_admin_user.value' <<< "$json")" >> $GITHUB_ENV
           echo "DB_NAME=$(jq -r '.mysql_database_name.value' <<< "$json")" >> $GITHUB_ENV
@@ -98,8 +83,10 @@ jobs:
             echo "❌ Error: Missing required environment variables"
             echo "Debug info:"
             ls -la infra/
-            echo "File contents:"
-            cat infra/tf_outputs.json
+            if [ -f "infra/tf_outputs.json" ]; then
+              echo "File contents:"
+              cat infra/tf_outputs.json
+            fi
             exit 1
           fi
 
@@ -124,12 +111,12 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      - name: Run Deploy Script to Configure Ansible
+      - name: 🚀 Run Deploy Script to Configure Ansible
         run: |
           chmod +x ./ansible/deploy-ansible-from-local.sh
           ./ansible/deploy-ansible-from-local.sh
 
-      - name: Run Deploy Script to configure DB
+      - name: 🚀 Run Deploy Script to configure DB
         run: | 
           chmod +x ./ansible/deploy-db-from-local.sh
           ./ansible/deploy-db-from-local.sh
