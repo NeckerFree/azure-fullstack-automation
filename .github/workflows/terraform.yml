@@ -130,8 +130,8 @@ jobs:
       - name: 🚀 Upload Inventory to Jumpbox
         run: |
           # Get outputs from Terraform
-          CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip)
-          SSH_USER=$(terraform -chdir=infra output -raw ssh_user)
+          CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip | tail -n1)
+          SSH_USER=$(terraform -chdir=infra output -raw ssh_user | tail -n1)
 
           # Log and validate
           echo "CONTROL_IP: $CONTROL_IP"
