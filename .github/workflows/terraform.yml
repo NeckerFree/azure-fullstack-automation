@@ -116,7 +116,13 @@ jobs:
         run: |
           mkdir -p infra
           terraform -chdir=infra output -json > infra/tf_outputs.json
-          
+      
+      - name: 🔍 Verify artifact before upload
+        run: |
+          ls -la infra/
+          echo "File content:"
+          head -n 3 infra/tf_outputs.json
+    
       - name: 📦 Upload Terraform Outputs
         uses: actions/upload-artifact@v4
         with:
