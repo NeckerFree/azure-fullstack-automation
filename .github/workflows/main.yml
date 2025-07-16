@@ -19,39 +19,50 @@ jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: 🧾 Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: 📥 Download inventory.ini artifact
-        uses: dawidd6/action-download-artifact@v2
+      # Set up Terraform first
+      - name: 🛠️ Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_id: ${{ github.event.workflow_run.id }}
-          name: ansible-inventory
-          path: ./ansible
+          terraform_version: 1.5.0
 
-      - name: 📥 Download terraform-outputs artifact
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          run_id: ${{ github.event.workflow_run.id }}
-          name: terraform-outputs
-          path: ./infra
-
-      - name: 🕵️ Confirm inventory.ini exists
+      # Set up Azure credentials
+      - name: 🔐 Configure Azure Credentials
         run: |
-          if [ ! -f ./ansible/inventory.ini ]; then
-            echo "❌ ./ansible/inventory.ini not found!"
-            ls -la ./ansible
+          echo "ARM_CLIENT_ID=${{ secrets.ARM_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+
+      # Get Terraform outputs - reliable method
+      - name: 🛠️ Get Terraform Outputs
+        id: get-outputs
+        run: |
+          # Method 1: Try getting outputs directly (most reliable)
+          echo "Getting outputs directly from Terraform..."
+          terraform -chdir=infra init \
+            -backend-config="resource_group_name=soft-tfstate-rg" \
+            -backend-config="storage_account_name=softsastate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=terraform.tfstate"
+          
+          # Get raw output and clean it
+          terraform -chdir=infra output -json > infra/tf_outputs.raw
+          # Extract just the JSON part (remove command line if present)
+          grep -oP '\{.*\}' infra/tf_outputs.raw > infra/tf_outputs.json || cp infra/tf_outputs.raw infra/tf_outputs.json
+
+          # Parse outputs with validation
+          echo "Parsing outputs..."
+          json=$(cat infra/tf_outputs.json)
+          if ! jq -e '.mysql_fqdn.value' <<< "$json" >/dev/null; then
+            echo "❌ Error: Invalid JSON or missing required fields"
+            echo "File contents:"
+            cat infra/tf_outputs.json
             exit 1
           fi
-          cat ./ansible/inventory.ini
-
-      - name: ✅ Parse Terraform Outputs
-        run: |
-          json=$(cat infra/tf_outputs.json)
 
           echo "DB_HOST=$(jq -r '.mysql_fqdn.value' <<< "$json")" >> $GITHUB_ENV
           echo "DB_USER=$(jq -r '.mysql_admin_user.value' <<< "$json")" >> $GITHUB_ENV
@@ -60,13 +71,24 @@ jobs:
           echo "$(jq -r '.mysql_admin_pwd.value' <<< "$json")" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: 🔑 Configure SSH
+      # Verify outputs
+      - name: ✅ Verify Outputs
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
-          chmod 600 ~/.ssh/vm_ssh_key
-          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+          echo "Verifying infrastructure outputs..."
+          echo "DB_HOST: $DB_HOST"
+          echo "DB_USER: $DB_USER"
+          echo "DB_NAME: $DB_NAME"
+          
+          if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
+            echo "❌ Error: Missing required environment variables"
+            echo "Debug info:"
+            ls -la infra/
+            echo "File contents:"
+            cat infra/tf_outputs.json
+            exit 1
+          fi
 
+      # Rest of your steps...
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -80,6 +102,28 @@ jobs:
         run: npm test
         working-directory: src/movie-analyst-api
 
+      - name: 🔑 Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
+          chmod 600 ~/.ssh/vm_ssh_key
+          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
+      - name: 📥 Download inventory.ini artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ansible-inventory
+          path: ./ansible
+
+      - name: 🕵️ Confirm inventory.ini exists
+        run: |
+          if [ ! -f ./ansible/inventory.ini ]; then
+            echo "❌ ./ansible/inventory.ini not found!"
+            ls -la ./ansible
+            exit 1
+          fi
+          cat ./ansible/inventory.ini
+
       - name: 🚀 Run Deploy Script to Configure Ansible
         run: |
           chmod +x ./ansible/deploy-ansible-from-local.sh
@@ -89,7 +133,7 @@ jobs:
         run: | 
           chmod +x ./ansible/deploy-db-from-local.sh
           ./ansible/deploy-db-from-local.sh
-
+          
       - name: 🚀 Run remote deploy script to deploy api
         run: |
           export DB_HOST="${{ env.DB_HOST }}"
