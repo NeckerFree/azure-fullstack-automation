@@ -2,8 +2,6 @@
 - name: Configure infrastructure
   hosts: all
   gather_facts: false
-  vars:
-    ssh_home: "/home/{{ ADMIN_USER }}"
   tasks:
     - name: Ensure all nodes are in /etc/hosts
       become: yes
@@ -17,11 +15,11 @@
   hosts: control
   gather_facts: false
   vars:
-    ssh_private_key_path: "{{ ssh_home }}/.ssh/vm_ssh_key"
+    ssh_private_key_path: "/home/{{ ADMIN_USER }}/.ssh/vm_ssh_key"
   tasks:
     - name: Create ~/.ssh directory
       ansible.builtin.file:
-        path: "{{ ssh_home }}/.ssh"
+        path: "/home/{{ ADMIN_USER }}/.ssh"
         state: directory
         mode: "0700"
 
@@ -34,7 +32,7 @@
 
     - name: Update SSH config for node* hosts
       ansible.builtin.blockinfile:
-        path: "{{ ssh_home }}/.ssh/config"
+        path: "/home/{{ ADMIN_USER }}/.ssh/config"
         block: |
           Host node*
             User {{ ADMIN_USER }}
