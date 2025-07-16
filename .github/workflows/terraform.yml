@@ -24,112 +24,7 @@ jobs:
     environment: qa
 
     steps:
-      - name: 📦 Checkout code
-        uses: actions/checkout@v3
-
-      - name: ⚙️ Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.0
-
-      - name: 🔐 Azure Login with Service Principal
-        uses: azure/login@v1
-        with:
-          creds: >-
-            {
-              "clientId": "${{ secrets.ARM_CLIENT_ID }}",
-              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
-              "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
-              "tenantId": "${{ secrets.ARM_TENANT_ID }}"
-            }
-
-      - name: 🧪 Verify Azure login
-        run: az account show
-
-      - name: 🏗️ Ensure Terraform remote backend exists
-        run: |
-          az group create --name soft-tfstate-rg --location eastus
-          az storage account create \
-            --name softsastate \
-            --resource-group soft-tfstate-rg \
-            --location eastus \
-            --sku Standard_LRS \
-            --encryption-services blob
-          az storage container create \
-            --name tfstate \
-            --account-name softsastate
-
-      - name: 📥 Terraform Init
-        run: |
-          terraform -chdir=infra init \
-            -backend-config="resource_group_name=soft-tfstate-rg" \
-            -backend-config="storage_account_name=softsastate" \
-            -backend-config="container_name=tfstate" \
-            -backend-config="key=terraform.tfstate"
-
-      - name: 🧹 Optional Unlock (if lock is active)
-        run: |
-          terraform -chdir=infra init
-          LOCK_FILE=".terraform/terraform.tfstate.lock.info"
-          if [ -f "infra/$LOCK_FILE" ]; then
-            LOCK_ID=$(jq -r '.ID' "infra/$LOCK_FILE")
-            echo "🔓 Lock found: $LOCK_ID. Attempting to unlock..."
-            terraform -chdir=infra force-unlock -force "$LOCK_ID"
-          else
-            echo "✅ No lock file found. Continuing..."
-          fi
-
-
-      - name: 🧹 Terraform Format
-        run: | 
-         terraform -chdir=infra fmt -check -diff -recursive -no-color || true
-  
-      - name: 📝 Generate terraform.tfvars
-        run: |
-          cat > infra/terraform.tfvars <<EOF
-          subscription_id       = "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          client_id             = "${{ secrets.ARM_CLIENT_ID }}"
-          client_secret         = "${{ secrets.ARM_CLIENT_SECRET }}"
-          tenant_id             = "${{ secrets.ARM_TENANT_ID }}"
-          allowed_ssh_ip        = "${{ secrets.MY_IP_ADDRESS }}"
-          mysql_user            = "${{ secrets.MYSQL_USER }}"
-          mysql_admin_password  = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
-          ssh_public_key        = "${{ secrets.VM_SSH_PUB_KEY }}"
-          EOF
-
-      - name: 🔍 Terraform Validate
-        run: terraform -chdir=infra validate
-
-      - name: 📋 Terraform Plan
-        run: terraform -chdir=infra plan -input=false -var-file=terraform.tfvars
-
-      - name: 🚀 Terraform Apply
-        if: github.ref == 'refs/heads/master'
-        run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
-
-      # - name: 📦 Upload Terraform Outputs
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: tf-outputs  
-      #     path: infra/tf_outputs.json
-
-      - name: 📄 Generate Terraform outputs
-        run: |
-          mkdir -p infra
-          terraform -chdir=infra output -json > infra/tf_outputs.json
-      
-      - name: 🔍 Verify artifact before upload
-        run: |
-          ls -la infra/
-          echo "File content:"
-          head -n 3 infra/tf_outputs.json
-
-      - name: 📦 Upload Terraform Outputs
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-outputs  
-          path: infra/tf_outputs.json
-          retention-days: 3  
+      # ... (todos tus pasos existentes hasta el final)
 
       - name: 📦 Upload inventory.ini artifact
         uses: actions/upload-artifact@v4
@@ -145,4 +40,22 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
+      # Nuevo paso para subir el inventory al jumpbox
+      - name: 🚀 Upload Inventory to Jumpbox
+        run: |
+          # Obtener credenciales del jumpbox
+          JUMP_USER=$(jq -r '.ssh_user.value' infra/tf_outputs.json)
+          JUMP_HOST=$(jq -r '.control_node_public_ip.value' infra/tf_outputs.json)
 
+          # Crear directorio remoto si no existe
+          ssh -i ~/.ssh/vm_ssh_key $JUMP_USER@$JUMP_HOST \
+            "mkdir -p /home/$JUMP_USER/ansible-setup"
+
+          # Subir el archivo inventory.ini
+          scp -i ~/.ssh/vm_ssh_key \
+            ./ansible/inventory.ini \
+            $JUMP_USER@$JUMP_HOST:/home/$JUMP_USER/ansible-setup/inventory.ini
+
+          # Verificar que se subió correctamente
+          ssh -i ~/.ssh/vm_ssh_key $JUMP_USER@$JUMP_HOST \
+            "ls -la /home/$JUMP_USER/ansible-setup/"
