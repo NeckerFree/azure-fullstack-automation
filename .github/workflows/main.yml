@@ -41,6 +41,14 @@ jobs:
       # - name: 🐛 Debug Terraform Outputs
       #   run: terraform -chdir=infra output
 
+      - name: 📥 Terraform Init (Required for outputs)
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="resource_group_name=soft-tfstate-rg" \
+            -backend-config="storage_account_name=softsastate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=terraform.tfstate"
+
       - name: 📤 Export Terraform Outputs
         id: tf
         run: |

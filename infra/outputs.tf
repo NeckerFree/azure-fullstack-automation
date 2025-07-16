@@ -1,5 +1,6 @@
 output "mysql_fqdn" {
-  value = module.mysql-database.mysql_fqdn
+  value     = module.mysql-database.mysql_fqdn
+  sensitive = true
 }
 
 output "mysql_admin_user" {
@@ -13,19 +14,23 @@ output "mysql_admin_pwd" {
 }
 
 output "mysql_database_name" {
-  value = module.mysql-database.mysql_database_name
+  value     = module.mysql-database.mysql_database_name
+  sensitive = true
 }
 
 output "lb_api_url" {
-  value = module.load-balancer.lb_api_url
+  value     = module.load-balancer.lb_api_url
+  sensitive = true
 }
 
 output "control_node_public_ip" {
   description = "Jumpbox IP"
   value       = module.load-balancer.control_node_public_ip
+  sensitive   = true
 }
 
 output "ssh_user" {
   description = "SSH admin user for VMs"
   value       = var.admin_username
+  sensitive   = true
 }
