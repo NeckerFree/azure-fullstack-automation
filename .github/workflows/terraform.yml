@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   id-token: write
 
 env:
@@ -123,13 +124,20 @@ jobs:
           echo "File content:"
           head -n 3 infra/tf_outputs.json
     
+      # - name: 📦 Upload Terraform Outputs
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: terraform-outputs
+      #     path: infra/tf_outputs.json
+      #     if-no-files-found: error  
+      #     retention-days: 3 
+
       - name: 📦 Upload Terraform Outputs
         uses: actions/upload-artifact@v4
         with:
-          name: terraform-outputs
+          name: terraform-outputs-v1  
           path: infra/tf_outputs.json
-          if-no-files-found: error  
-          retention-days: 3 
+          retention-days: 1  
 
       - name: 📦 Upload inventory.ini as artifact
         uses: actions/upload-artifact@v4

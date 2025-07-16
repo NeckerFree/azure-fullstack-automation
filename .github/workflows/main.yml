@@ -2,26 +2,29 @@ name: Deploy API
 
 on:
   workflow_run:
-    workflows: ["Terraform CI/CD"]  # ⚠️ Nombre EXACTO del workflow de Terraform
+    workflows: ["Terraform CI/CD"]
     branches: [master]
-    types: 
-      - completed  # Espera a que el workflow de Terraform termine
+    types: [completed]
 
 env:
   NODE_VERSION: 16
 
 permissions:
   contents: read
+  actions: read  # Required for cross-workflow artifacts
   id-token: write
 
 jobs:
   deploy:
-    # ⚠️ Solo se ejecuta si Terraform CI/CD fue exitoso
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     
     steps:
       - uses: actions/checkout@v3
+
+      # Add delay to ensure artifact availability
+      - name: ⏳ Wait for artifact propagation
+        run: sleep 15
 
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
@@ -48,37 +51,47 @@ jobs:
         with:
           name: terraform-outputs
           path: infra/
-          pattern: tf_outputs.json  
+        continue-on-error: true  # Will fallback to direct method if fails
 
-      - name: 🔍 Verify Download
+      # Fallback method if artifact download fails
+      - name: 📤 Get Outputs Directly (Fallback)
+        if: ${{ failure() && steps.download.outcome == 'failure' }}
+        env:
+          TF_CLI_ARGS: "-chdir=infra"
         run: |
-          ls -la infra/
-          if [ -f "infra/terraform-outputs.json" ]; then
-            echo "✅ File downloaded successfully"
-            cat infra/terraform-outputs.json
-          else
-            echo "❌ File not found"
-            exit 1
-          fi
-      - name: 📤 Export Terraform Outputs (Versión usando el artifact)
-        id: tf
-        run: |
-          json=$(cat infra/tf_outputs.json)
-          echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
-          echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
-          echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
+          terraform init \
+            -backend-config="resource_group_name=soft-tfstate-rg" \
+            -backend-config="storage_account_name=softsastate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=terraform.tfstate"
+          
+          echo "DB_HOST=$(terraform output -raw mysql_fqdn)" >> $GITHUB_ENV
+          echo "DB_USER=$(terraform output -raw mysql_admin_user)" >> $GITHUB_ENV
+          echo "DB_NAME=$(terraform output -raw mysql_database_name)" >> $GITHUB_ENV
           echo "DB_PASS<<EOF" >> $GITHUB_ENV
-          echo "$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
+          echo "$(terraform output -raw mysql_admin_pwd)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      # ... (el resto de tus pasos permanecen igual)
-      - name: ✅ Validate Terraform Outputs
+      - name: 🔍 Verify Outputs
         run: |
-            if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
-            echo "❌ One or more Terraform outputs are missing"
+          echo "Verifying infrastructure outputs..."
+          if [ -f "infra/tf_outputs.json" ]; then
+            echo "✅ Using artifact file"
+            json=$(cat infra/tf_outputs.json)
+            echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
+            echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
+            echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
+            echo "DB_PASS<<EOF" >> $GITHUB_ENV
+            echo "$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+          
+          if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
+            echo "❌ Critical: Missing required environment variables"
             exit 1
-            fi
+          fi
 
+      # Rest of your steps remain unchanged
       - name: 🔑 Configure SSH
         run: |
           mkdir -p ~/.ssh
