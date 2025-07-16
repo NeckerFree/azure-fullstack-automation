@@ -139,11 +139,12 @@ jobs:
           path: infra/tf_outputs.json
           retention-days: 3  
 
-      - name: 📦 Upload inventory.ini as artifact
+      - name: 📦 Upload inventory.ini artifact
         uses: actions/upload-artifact@v4
         with:
-          name: inventory
-          path: ansible/inventory.ini
+          name: ansible-inventory
+          path: ./ansible/inventory.ini
+
 
       - name: 🔑 Configure SSH for jumpbox
         run: |

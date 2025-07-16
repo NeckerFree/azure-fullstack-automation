@@ -109,6 +109,12 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
+      - name: 📥 Download inventory.ini artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ansible-inventory
+          path: ./ansible
+
       - name: 🚀 Run Deploy Script to Configure Ansible
         run: |
           chmod +x ./ansible/deploy-ansible-from-local.sh
