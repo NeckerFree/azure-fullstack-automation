@@ -15,7 +15,7 @@
   hosts: control
   gather_facts: false
   vars:
-    ssh_private_key_path: "/home/adminuser/.ssh/id_rsa"  # ← Valor fijo
+    ssh_private_key_path: "/home/adminuser/.ssh/vm_ssh_key"
   tasks:
     - name: Create ~/.ssh directory
       ansible.builtin.file:
@@ -23,13 +23,18 @@
         state: directory
         mode: "0700"
 
+    - name: Copy SSH private key to ~/.ssh/vm_ssh_key
+      ansible.builtin.copy:
+        src: "{{ ssh_private_key_path }}"
+        dest: "{{ ssh_private_key_path }}"
+        mode: "0600"
+        remote_src: yes  # La clave ya está en la jumphost
+
     - name: Update SSH config for node* hosts
       ansible.builtin.blockinfile:
         path: ~/.ssh/config
         block: |
           Host node*
-            StrictHostKeyChecking no
-            UserKnownHostsFile /dev/null
             User adminuser
             IdentityFile {{ ssh_private_key_path }}
         marker: "# {mark} ANSIBLE MANAGED BLOCK - NODE CONFIG"
