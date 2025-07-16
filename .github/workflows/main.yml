@@ -46,15 +46,15 @@ jobs:
       - name: 📥 Download Terraform outputs (Alternativa opcional)
         uses: actions/download-artifact@v4
         with:
-          name: tf-outputs
+          name: terraform-outputs
           path: infra/
 
       - name: 🔍 Verify Download
         run: |
           ls -la infra/
-          if [ -f "infra/tf_outputs.json" ]; then
+          if [ -f "infra/terraform-outputs.json" ]; then
             echo "✅ File downloaded successfully"
-            cat infra/tf_outputs.json
+            cat infra/terraform-outputs.json
           else
             echo "❌ File not found"
             exit 1

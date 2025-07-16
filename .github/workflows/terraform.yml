@@ -119,9 +119,8 @@ jobs:
       - name: 📦 Upload Terraform Outputs
         uses: actions/upload-artifact@v4
         with:
-          name: tf-outputs
+          name: terraform-outputs  
           path: infra/tf_outputs.json
-          retention-days: 7  
 
       - name: 📦 Upload inventory.ini as artifact
         uses: actions/upload-artifact@v4
