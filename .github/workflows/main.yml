@@ -8,11 +8,10 @@ on:
 
 env:
   NODE_VERSION: 16
-  GH_TOKEN: ${{ github.token }}
 
 permissions:
   contents: read
-  actions: read
+  actions: read  # Necesario para descargar artifacts entre workflows
   id-token: write
 
 jobs:
@@ -23,72 +22,51 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Set up Terraform first
-      - name: 🛠️ Setup Terraform
+      # Descargar el inventory.ini del artifact
+      - name: 📥 Download Ansible Inventory
+        uses: actions/download-artifact@v4
+        with:
+          name: ansible-inventory
+          path: ./ansible/
+
+      # Verificar que el archivo existe
+      - name: 🔍 Verify Inventory
+        run: |
+          if [ ! -f "./ansible/inventory.ini" ]; then
+            echo "❌ Error: inventory.ini not found"
+            exit 1
+          fi
+          echo "Inventory contents:"
+          cat ./ansible/inventory.ini
+
+      # Configurar SSH
+      - name: 🔑 Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
+          chmod 600 ~/.ssh/vm_ssh_key
+          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
+      # Obtener outputs de Terraform para las variables de la API
+      - name: 🛠️ Get Terraform Outputs
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.0
 
-      # Set up Azure credentials
-      - name: 🔐 Configure Azure Credentials
+      - name: 📥 Terraform Init
         run: |
-          echo "ARM_CLIENT_ID=${{ secrets.ARM_CLIENT_ID }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}" >> $GITHUB_ENV
-          echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
-          echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
-
-      # Get Terraform outputs - reliable method
-      - name: 🛠️ Get Terraform Outputs
-        id: get-outputs
-        run: |
-          # Method 1: Try getting outputs directly (most reliable)
-          echo "Getting outputs directly from Terraform..."
           terraform -chdir=infra init \
             -backend-config="resource_group_name=soft-tfstate-rg" \
             -backend-config="storage_account_name=softsastate" \
             -backend-config="container_name=tfstate" \
             -backend-config="key=terraform.tfstate"
-          
-          # Get raw output and clean it
-          terraform -chdir=infra output -json > infra/tf_outputs.raw
-          # Extract just the JSON part (remove command line if present)
-          grep -oP '\{.*\}' infra/tf_outputs.raw > infra/tf_outputs.json || cp infra/tf_outputs.raw infra/tf_outputs.json
 
-          # Parse outputs with validation
-          echo "Parsing outputs..."
-          json=$(cat infra/tf_outputs.json)
-          if ! jq -e '.mysql_fqdn.value' <<< "$json" >/dev/null; then
-            echo "❌ Error: Invalid JSON or missing required fields"
-            echo "File contents:"
-            cat infra/tf_outputs.json
-            exit 1
-          fi
-
-          echo "DB_HOST=$(jq -r '.mysql_fqdn.value' <<< "$json")" >> $GITHUB_ENV
-          echo "DB_USER=$(jq -r '.mysql_admin_user.value' <<< "$json")" >> $GITHUB_ENV
-          echo "DB_NAME=$(jq -r '.mysql_database_name.value' <<< "$json")" >> $GITHUB_ENV
-          echo "DB_PASS<<EOF" >> $GITHUB_ENV
-          echo "$(jq -r '.mysql_admin_pwd.value' <<< "$json")" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      # Verify outputs
-      - name: ✅ Verify Outputs
+      # Ejecutar los scripts de despliegue
+      - name: 🚀 Deploy Ansible Configuration
         run: |
-          echo "Verifying infrastructure outputs..."
-          echo "DB_HOST: $DB_HOST"
-          echo "DB_USER: $DB_USER"
-          echo "DB_NAME: $DB_NAME"
-          
-          if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
-            echo "❌ Error: Missing required environment variables"
-            echo "Debug info:"
-            ls -la infra/
-            echo "File contents:"
-            cat infra/tf_outputs.json
-            exit 1
-          fi
+          chmod +x ./ansible/deploy-ansible-from-local.sh
+          ./ansible/deploy-ansible-from-local.sh
 
-      # Rest of your steps...
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -102,43 +80,16 @@ jobs:
         run: npm test
         working-directory: src/movie-analyst-api
 
-      - name: 🔑 Configure SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
-          chmod 600 ~/.ssh/vm_ssh_key
-          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-
-      - name: 📥 Download inventory.ini artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ansible-inventory
-          path: ./ansible
-
-      - name: 🕵️ Confirm inventory.ini exists
-        run: |
-          if [ ! -f ./ansible/inventory.ini ]; then
-            echo "❌ ./ansible/inventory.ini not found!"
-            ls -la ./ansible
-            exit 1
-          fi
-          cat ./ansible/inventory.ini
-
-      - name: 🚀 Run Deploy Script to Configure Ansible
-        run: |
-          chmod +x ./ansible/deploy-ansible-from-local.sh
-          ./ansible/deploy-ansible-from-local.sh
-
-      - name: 🚀 Run Deploy Script to configure DB
+      - name: 🗃️ Deploy Database
         run: | 
           chmod +x ./ansible/deploy-db-from-local.sh
           ./ansible/deploy-db-from-local.sh
           
-      - name: 🚀 Run remote deploy script to deploy api
+      - name: 🚀 Deploy API
         run: |
-          export DB_HOST="${{ env.DB_HOST }}"
-          export DB_USER="${{ env.DB_USER }}"
-          export DB_PASS="${{ env.DB_PASS }}"
-          export DB_NAME="${{ env.DB_NAME }}"
+          export DB_HOST="$(terraform -chdir=infra output -raw mysql_fqdn)"
+          export DB_USER="$(terraform -chdir=infra output -raw mysql_admin_user)"
+          export DB_PASS="$(terraform -chdir=infra output -raw mysql_admin_pwd)"
+          export DB_NAME="$(terraform -chdir=infra output -raw mysql_database_name)"
           chmod +x ./ansible/deploy-api-from-local.sh
           ./ansible/deploy-api-from-local.sh
