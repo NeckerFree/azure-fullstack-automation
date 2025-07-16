@@ -2,6 +2,8 @@
 - name: Configure infrastructure
   hosts: all
   gather_facts: false
+  vars:
+    ssh_home: "/home/{{ ADMIN_USER }}"
   tasks:
     - name: Ensure all nodes are in /etc/hosts
       become: yes
@@ -15,11 +17,11 @@
   hosts: control
   gather_facts: false
   vars:
-    ssh_private_key_path: "/home/adminuser/.ssh/vm_ssh_key"
+    ssh_private_key_path: "{{ ssh_home }}/.ssh/vm_ssh_key"
   tasks:
     - name: Create ~/.ssh directory
       ansible.builtin.file:
-        path: ~/.ssh
+        path: "{{ ssh_home }}/.ssh"
         state: directory
         mode: "0700"
 
@@ -28,14 +30,14 @@
         src: "{{ ssh_private_key_path }}"
         dest: "{{ ssh_private_key_path }}"
         mode: "0600"
-        remote_src: yes  # La clave ya está en la jumphost
+        remote_src: yes
 
     - name: Update SSH config for node* hosts
       ansible.builtin.blockinfile:
-        path: ~/.ssh/config
+        path: "{{ ssh_home }}/.ssh/config"
         block: |
           Host node*
-            User adminuser
+            User {{ ADMIN_USER }}
             IdentityFile {{ ssh_private_key_path }}
         marker: "# {mark} ANSIBLE MANAGED BLOCK - NODE CONFIG"
         create: yes
