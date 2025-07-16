@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Set up Terraform first since we might need it for fallback
+      # Set up Terraform first
       - name: 🛠️ Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -37,33 +37,44 @@ jobs:
           echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
 
-      # Get Terraform outputs
+      # Get Terraform outputs - reliable method
       - name: 🛠️ Get Terraform Outputs
         id: get-outputs
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
+          # Clean up any existing file
+          rm -f infra/tf_outputs.json
+          
           # Method 1: Try downloading artifact
           echo "Attempting to download artifact..."
-          if gh api repos/${{ github.repository }}/actions/artifacts | grep -q "terraform-outputs"; then
+          if curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+             https://api.github.com/repos/${{ github.repository }}/actions/artifacts | grep -q "terraform-outputs"; then
             echo "Artifact exists, downloading..."
             gh run download ${{ github.event.workflow_run.id }} -n terraform-outputs -D infra || echo "Download failed, will use fallback"
           fi
 
           # Method 2: Direct Terraform output (fallback)
           if [ ! -f "infra/tf_outputs.json" ]; then
-            echo "Using direct Terraform output fallback..."
+            echo "Using direct Terraform output..."
             terraform -chdir=infra init \
               -backend-config="resource_group_name=soft-tfstate-rg" \
               -backend-config="storage_account_name=softsastate" \
               -backend-config="container_name=tfstate" \
               -backend-config="key=terraform.tfstate"
-            terraform -chdir=infra output -json > infra/tf_outputs.json
+            terraform -chdir=infra output -json > infra/tf_outputs.raw
+            # Extract just the JSON part
+            grep -oP '^\{.*\}$' infra/tf_outputs.raw > infra/tf_outputs.json || cp infra/tf_outputs.raw infra/tf_outputs.json
           fi
 
           # Parse outputs with validation
           echo "Parsing outputs..."
           json=$(cat infra/tf_outputs.json)
+          if ! jq -e '.mysql_fqdn.value' <<< "$json" >/dev/null; then
+            echo "❌ Error: Invalid JSON or missing required fields"
+            echo "File contents:"
+            cat infra/tf_outputs.json
+            exit 1
+          fi
+
           echo "DB_HOST=$(jq -r '.mysql_fqdn.value' <<< "$json")" >> $GITHUB_ENV
           echo "DB_USER=$(jq -r '.mysql_admin_user.value' <<< "$json")" >> $GITHUB_ENV
           echo "DB_NAME=$(jq -r '.mysql_database_name.value' <<< "$json")" >> $GITHUB_ENV
@@ -83,10 +94,8 @@ jobs:
             echo "❌ Error: Missing required environment variables"
             echo "Debug info:"
             ls -la infra/
-            if [ -f "infra/tf_outputs.json" ]; then
-              echo "File contents:"
-              cat infra/tf_outputs.json
-            fi
+            echo "File contents:"
+            cat infra/tf_outputs.json
             exit 1
           fi
 
