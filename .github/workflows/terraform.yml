@@ -1,4 +1,4 @@
-name: Terraform CI/CD
+name: Terraform CI/CD 
 
 on:
   push:
@@ -19,7 +19,6 @@ env:
 
 jobs:
   terraform:
-    name: Terraform
     runs-on: ubuntu-latest
     environment: qa
 
@@ -67,90 +66,31 @@ jobs:
             -backend-config="container_name=tfstate" \
             -backend-config="key=terraform.tfstate"
 
-      - name: 🧹 Optional Unlock (if lock is active)
+      - name: 📋 Terraform Plan & Apply
         run: |
-          terraform -chdir=infra init
-          LOCK_FILE=".terraform/terraform.tfstate.lock.info"
-          if [ -f "infra/$LOCK_FILE" ]; then
-            LOCK_ID=$(jq -r '.ID' "infra/$LOCK_FILE")
-            echo "🔓 Lock found: $LOCK_ID. Attempting to unlock..."
-            terraform -chdir=infra force-unlock -force "$LOCK_ID"
-          else
-            echo "✅ No lock file found. Continuing..."
-          fi
-
-
-      - name: 🧹 Terraform Format
-        run: | 
-         terraform -chdir=infra fmt -check -diff -recursive -no-color || true
-  
-      - name: 📝 Generate terraform.tfvars
-        run: |
-          cat > infra/terraform.tfvars <<EOF
-          subscription_id       = "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          client_id             = "${{ secrets.ARM_CLIENT_ID }}"
-          client_secret         = "${{ secrets.ARM_CLIENT_SECRET }}"
-          tenant_id             = "${{ secrets.ARM_TENANT_ID }}"
-          allowed_ssh_ip        = "${{ secrets.MY_IP_ADDRESS }}"
-          mysql_user            = "${{ secrets.MYSQL_USER }}"
-          mysql_admin_password  = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
-          ssh_public_key        = "${{ secrets.VM_SSH_PUB_KEY }}"
-          EOF
-
-      - name: 🔍 Terraform Validate
-        run: terraform -chdir=infra validate
-
-      - name: 📋 Terraform Plan
-        run: terraform -chdir=infra plan -input=false -var-file=terraform.tfvars
-
-      - name: 🚀 Terraform Apply
-        if: github.ref == 'refs/heads/master'
-        run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
-
-      # - name: 📦 Upload Terraform Outputs
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: tf-outputs  
-      #     path: infra/tf_outputs.json
+          terraform -chdir=infra apply -auto-approve -input=false
 
       - name: 📄 Generate Terraform outputs
         run: |
-          mkdir -p infra
           terraform -chdir=infra output -json > infra/tf_outputs.json
-      
-      - name: 🔍 Verify artifact before upload
+
+      - name: ✅ Confirm inventory.ini exists
         run: |
-          ls -la infra/
-          echo "File content:"
-          head -n 3 infra/tf_outputs.json
-    
-      # - name: 📦 Upload Terraform Outputs
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: terraform-outputs
-      #     path: infra/tf_outputs.json
-      #     if-no-files-found: error  
-      #     retention-days: 3 
+          if [ ! -f ./ansible/inventory.ini ]; then
+            echo "❌ inventory.ini not found"
+            exit 1
+          fi
+          head ./ansible/inventory.ini
 
       - name: 📦 Upload Terraform Outputs
         uses: actions/upload-artifact@v4
         with:
-          name: terraform-outputs  
+          name: terraform-outputs
           path: infra/tf_outputs.json
-          retention-days: 3  
+          retention-days: 3
 
       - name: 📦 Upload inventory.ini artifact
         uses: actions/upload-artifact@v4
         with:
           name: ansible-inventory
           path: ./ansible/inventory.ini
-
-
-      - name: 🔑 Configure SSH for jumpbox
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
-          chmod 600 ~/.ssh/vm_ssh_key
-          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-
-
