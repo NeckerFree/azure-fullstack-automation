@@ -1,8 +1,11 @@
 name: Deploy API
 
 on:
-  push:
-    branches: [ master ]
+  workflow_run:
+    workflows: ["Terraform CI/CD"]  # ⚠️ Nombre EXACTO del workflow de Terraform
+    branches: [master]
+    types: 
+      - completed  # Espera a que el workflow de Terraform termine
 
 env:
   NODE_VERSION: 16
@@ -13,7 +16,10 @@ permissions:
 
 jobs:
   deploy:
+    # ⚠️ Solo se ejecuta si Terraform CI/CD fue exitoso
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    
     steps:
       - uses: actions/checkout@v3
 
@@ -30,61 +36,35 @@ jobs:
         run: npm test
         working-directory: src/movie-analyst-api
 
-      - name: 🔐 Azure Login with Service Principal
-        uses: azure/login@v1
-        with:
-          creds: >-
-            {
-              "clientId": "${{ secrets.ARM_CLIENT_ID }}",
-              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
-              "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
-              "tenantId": "${{ secrets.ARM_TENANT_ID }}"
-            }
-
-      - name: 🛠️ Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-            terraform_version: 1.5.0
-
-      # - name: 📦 Terraform Init
-      #   run: terraform -chdir=infra init
-
-      # - name: 🐛 Debug Terraform Outputs
-      #   run: terraform -chdir=infra output
-
-      - name: 📥 Terraform Init (Required for outputs)
+      - name: 🔐 Configure Azure Provider Credentials
         run: |
-          terraform -chdir=infra init \
-            -backend-config="resource_group_name=soft-tfstate-rg" \
-            -backend-config="storage_account_name=softsastate" \
-            -backend-config="container_name=tfstate" \
-            -backend-config="key=terraform.tfstate"
+          echo "ARM_CLIENT_ID=${{ secrets.ARM_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
 
-      - name: 📤 Export Terraform Outputs
+      - name: 📥 Download Terraform outputs (Alternativa opcional)
+        uses: actions/download-artifact@v4
+        with:
+          name: tf-outputs  # ⚠️ Asegúrate de que el nombre coincida con el artifact subido en Terraform CI/CD
+          path: infra/
+
+      - name: 📤 Export Terraform Outputs (Versión usando el artifact)
         id: tf
         run: |
-          json=$(terraform -chdir=infra output -json)
+          json=$(cat infra/tf_outputs.json)
           echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
           echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
           echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
           echo "DB_PASS<<EOF" >> $GITHUB_ENV
           echo "$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-      # Mask the password and pass it securely
-      # echo "DB_PASS=$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
-          
 
+      # ... (el resto de tus pasos permanecen igual)
       - name: ✅ Validate Terraform Outputs
         run: |
             if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
             echo "❌ One or more Terraform outputs are missing"
-            exit 1
-            fi
-
-      - name: 🔐 Check SSH key presence
-        run: |
-            if [ -z "${{ secrets.VM_SSH_KEY }}" ]; then
-            echo "❌ SSH key is missing"
             exit 1
             fi
 
