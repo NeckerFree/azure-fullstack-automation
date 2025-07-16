@@ -86,13 +86,13 @@
         mode: "0644"
       notify: restart movie-api
 
-    - name: 📦 Install dependencies
-      run: npm ci
-      working-directory: src/movie-analyst-api
+    # - name: 📦 Install dependencies
+    #   run: npm ci
+    #   working-directory: src/movie-analyst-api
 
-    - name: 🧪 Run tests
-      run: npm test
-      working-directory: src/movie-analyst-api
+    # - name: 🧪 Run tests
+    #   run: npm test
+    #   working-directory: src/movie-analyst-api
 
   handlers:
     - name: restart movie-api
