@@ -46,7 +46,7 @@ jobs:
       - name: 📥 Download Terraform outputs (Alternativa opcional)
         uses: actions/download-artifact@v4
         with:
-          name: tf-outputs  # ⚠️ Asegúrate de que el nombre coincida con el artifact subido en Terraform CI/CD
+          name: tf-outputs.json
           path: infra/
 
       - name: 📤 Export Terraform Outputs (Versión usando el artifact)

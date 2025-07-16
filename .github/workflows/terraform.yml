@@ -106,6 +106,12 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
 
+      - name: 📦 Upload Terraform Outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf-outputs  
+          path: infra/tf_outputs.json
+
       - name: 📄 Generate Terraform outputs
         run: |
           terraform -chdir=infra output -json > infra/tf_outputs.json
