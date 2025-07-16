@@ -49,6 +49,16 @@ jobs:
           name: tf-outputs
           path: infra/
 
+      - name: 🔍 Verify Download
+        run: |
+          ls -la infra/
+          if [ -f "infra/tf_outputs.json" ]; then
+            echo "✅ File downloaded successfully"
+            cat infra/tf_outputs.json
+          else
+            echo "❌ File not found"
+            exit 1
+          fi
       - name: 📤 Export Terraform Outputs (Versión usando el artifact)
         id: tf
         run: |
