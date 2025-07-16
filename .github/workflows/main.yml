@@ -39,6 +39,8 @@ jobs:
               "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
               "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
               "tenantId": "${{ secrets.ARM_TENANT_ID }}"
+            }
+
       - name: 🛠️ Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
