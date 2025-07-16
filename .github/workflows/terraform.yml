@@ -136,7 +136,7 @@ jobs:
         with:
           name: ansible-inventory
           path: ./ansible/inventory.ini
-
+          retention-days: 1
 
       - name: 🔑 Configure SSH for jumpbox
         run: |

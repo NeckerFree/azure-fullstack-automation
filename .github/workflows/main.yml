@@ -11,7 +11,7 @@ env:
 
 permissions:
   contents: read
-  actions: read  # Necesario para descargar artifacts entre workflows
+  actions: read
   id-token: write
 
 jobs:
@@ -22,14 +22,51 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Descargar el inventory.ini del artifact
-      - name: 📥 Download Ansible Inventory
+      # Configurar Terraform
+      - name: 🛠️ Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      # Intentar descargar el inventory existente
+      - name: 📥 Try Download Inventory Artifact
+        id: download-inventory
+        continue-on-error: true  # Continuar si falla
         uses: actions/download-artifact@v4
         with:
           name: ansible-inventory
           path: ./ansible/
 
-      # Verificar que el archivo existe
+      # Si la descarga falla, generar el inventory dinámicamente
+      - name: 📝 Generate Inventory (Fallback)
+        if: steps.download-inventory.outcome == 'failure'
+        run: |
+          CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip)
+          SSH_USER=$(terraform -chdir=infra output -raw ssh_user)
+          
+          mkdir -p ./ansible
+          cat > ./ansible/inventory.ini <<EOF
+          [control]
+          jumpbox ansible_host=$CONTROL_IP ansible_user=$SSH_USER ansible_ssh_private_key_file=/home/$SSH_USER/.ssh/vm_ssh_key
+
+          [nodes]
+          softdefault-vm-api-0 ansible_host=10.0.2.5 ansible_user=$SSH_USER ansible_ssh_private_key_file=/home/$SSH_USER/.ssh/vm_ssh_key ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+          softdefault-vm-api-1 ansible_host=10.0.2.6 ansible_user=$SSH_USER ansible_ssh_private_key_file=/home/$SSH_USER/.ssh/vm_ssh_key ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+          [mysql_server]
+          softdefault-vm-api-0
+          softdefault-vm-api-1
+
+          [all:vars]
+          ansible_connection=ssh
+          ansible_ssh_timeout=60
+          ansible_python_interpreter=/usr/bin/python3
+          EOF
+
+          echo "Generated inventory.ini:"
+          cat ./ansible/inventory.ini
+
+      # Verificar que el inventory existe
       - name: 🔍 Verify Inventory
         run: |
           if [ ! -f "./ansible/inventory.ini" ]; then
@@ -47,21 +84,7 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      # Obtener outputs de Terraform para las variables de la API
-      - name: 🛠️ Get Terraform Outputs
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.0
-
-      - name: 📥 Terraform Init
-        run: |
-          terraform -chdir=infra init \
-            -backend-config="resource_group_name=soft-tfstate-rg" \
-            -backend-config="storage_account_name=softsastate" \
-            -backend-config="container_name=tfstate" \
-            -backend-config="key=terraform.tfstate"
-
-      # Ejecutar los scripts de despliegue
+      # Resto de tus pasos...
       - name: 🚀 Deploy Ansible Configuration
         run: |
           chmod +x ./ansible/deploy-ansible-from-local.sh
