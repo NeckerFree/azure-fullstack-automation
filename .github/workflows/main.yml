@@ -30,6 +30,15 @@ jobs:
         run: npm test
         working-directory: src/movie-analyst-api
 
+      - name: 🔐 Azure Login with Service Principal
+        uses: azure/login@v1
+        with:
+          creds: >-
+            {
+              "clientId": "${{ secrets.ARM_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.ARM_TENANT_ID }}"
       - name: 🛠️ Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
