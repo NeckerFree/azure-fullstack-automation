@@ -24,6 +24,7 @@ echo "[2/3] Asegurando permisos de la clave SSH en la jumphost..."
 ssh -i ${SSH_KEY_LOCAL} ${JUMP_USER}@${JUMP_HOST} "chmod 600 ~/.ssh/vm_ssh_key"
 
 # === PASO 3: Ejecutar Ansible desde la jumphost ===
+SETUP_PLAYBOOK_FILE="setup-infra.yml"
 echo "[3/3] Ejecutando playbook desde la jumphost..."
 ssh -i ${SSH_KEY_LOCAL} ${JUMP_USER}@${JUMP_HOST} << EOF
   cd ${REMOTE_DIR}
