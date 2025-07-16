@@ -115,6 +115,15 @@ jobs:
           name: ansible-inventory
           path: ./ansible
 
+      - name: 🕵️ Confirm inventory.ini exists
+        run: |
+          if [ ! -f ./ansible/inventory.ini ]; then
+            echo "❌ ./ansible/inventory.ini not found!"
+            ls -la ./ansible
+            exit 1
+          fi
+          cat ./ansible/inventory.ini
+
       - name: 🚀 Run Deploy Script to Configure Ansible
         run: |
           chmod +x ./ansible/deploy-ansible-from-local.sh
