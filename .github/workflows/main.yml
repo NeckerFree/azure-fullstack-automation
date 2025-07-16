@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: 16
-  GH_TOKEN: ${{ github.token }}  # Required for GitHub CLI
+  GH_TOKEN: ${{ github.token }}
 
 permissions:
   contents: read
@@ -35,13 +35,13 @@ jobs:
       - name: 🛠️ Get Terraform Outputs
         id: get-outputs
         env:
-          GH_TOKEN: ${{ github.token }}  # Required for gh CLI
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # Method 1: Try downloading artifact using GitHub CLI
-          echo "Attempting to download artifact using GitHub CLI..."
-          if gh api repos/${{ github.repository }}/actions/artifacts | jq -e '.artifacts[] | select(.name == "terraform-outputs")' > /dev/null; then
+          # Method 1: Try downloading artifact
+          echo "Attempting to download artifact..."
+          if gh api repos/${{ github.repository }}/actions/artifacts | grep -q "terraform-outputs"; then
             echo "Artifact exists, downloading..."
-            gh run download ${{ github.event.workflow_run.id }} -n terraform-outputs -D infra
+            gh run download ${{ github.event.workflow_run.id }} -n terraform-outputs -D infra || echo "Download failed, using fallback"
           fi
 
           # Method 2: Direct Terraform output (fallback)
@@ -55,13 +55,35 @@ jobs:
             terraform -chdir=infra output -json > infra/tf_outputs.json
           fi
 
-          # Parse outputs
+          # Validate and fix JSON if needed
+          echo "Validating JSON file..."
+          if ! jq empty infra/tf_outputs.json 2>/dev/null; then
+            echo "Invalid JSON detected, attempting to fix..."
+            # Try to extract just the JSON portion
+            grep -oP '(?<=^\{).*(?=\}$)' infra/tf_outputs.json > infra/tf_outputs_fixed.json || true
+            if [ -s infra/tf_outputs_fixed.json ]; then
+              mv infra/tf_outputs_fixed.json infra/tf_outputs.json
+            else
+              echo "Unable to fix JSON, using direct output method"
+              terraform -chdir=infra output -json > infra/tf_outputs.json
+            fi
+          fi
+
+          # Parse outputs with strict validation
+          echo "Parsing outputs..."
           json=$(cat infra/tf_outputs.json)
-          echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
-          echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
-          echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
+          if ! jq -e '.mysql_fqdn.value' <<< "$json" >/dev/null; then
+            echo "❌ Error: Invalid or missing required fields in tf_outputs.json"
+            echo "File contents:"
+            cat infra/tf_outputs.json
+            exit 1
+          fi
+
+          echo "DB_HOST=$(jq -r '.mysql_fqdn.value' <<< "$json")" >> $GITHUB_ENV
+          echo "DB_USER=$(jq -r '.mysql_admin_user.value' <<< "$json")" >> $GITHUB_ENV
+          echo "DB_NAME=$(jq -r '.mysql_database_name.value' <<< "$json")" >> $GITHUB_ENV
           echo "DB_PASS<<EOF" >> $GITHUB_ENV
-          echo "$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
+          echo "$(jq -r '.mysql_admin_pwd.value' <<< "$json")" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       # Verify outputs
@@ -76,10 +98,8 @@ jobs:
             echo "❌ Error: Missing required environment variables"
             echo "Debug info:"
             ls -la infra/
-            if [ -f "infra/tf_outputs.json" ]; then
-              echo "File contents:"
-              jq '.' infra/tf_outputs.json
-            fi
+            echo "File contents:"
+            cat infra/tf_outputs.json
             exit 1
           fi
 
