@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: 16
+  GH_TOKEN: ${{ github.token }}  # Required for GitHub CLI
 
 permissions:
   contents: read
@@ -33,13 +34,13 @@ jobs:
       # Get Terraform outputs - reliable method
       - name: 🛠️ Get Terraform Outputs
         id: get-outputs
+        env:
+          GH_TOKEN: ${{ github.token }}  # Required for gh CLI
         run: |
-          # Method 1: Use official download-artifact action
-          echo "Attempting to download artifact..."
-          if curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-             https://api.github.com/repos/${{ github.repository }}/actions/artifacts | grep -q "terraform-outputs"; then
+          # Method 1: Try downloading artifact using GitHub CLI
+          echo "Attempting to download artifact using GitHub CLI..."
+          if gh api repos/${{ github.repository }}/actions/artifacts | jq -e '.artifacts[] | select(.name == "terraform-outputs")' > /dev/null; then
             echo "Artifact exists, downloading..."
-            mkdir -p infra
             gh run download ${{ github.event.workflow_run.id }} -n terraform-outputs -D infra
           fi
 
@@ -88,8 +89,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # ... (rest of your existing steps)
-
       - name: 📦 Install dependencies
         run: npm ci
         working-directory: src/movie-analyst-api
@@ -105,12 +104,12 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      - name: 🚀 Run Deploy Script to Configure Ansible
+      - name: Run Deploy Script to Configure Ansible
         run: |
           chmod +x ./ansible/deploy-ansible-from-local.sh
           ./ansible/deploy-ansible-from-local.sh
 
-      - name: 🚀 Run Deploy Script to configure DB
+      - name: Run Deploy Script to configure DB
         run: | 
           chmod +x ./ansible/deploy-db-from-local.sh
           ./ansible/deploy-db-from-local.sh
