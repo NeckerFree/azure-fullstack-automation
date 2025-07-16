@@ -1,0 +1,66 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch: # permite ejecutarlo manualmente desde la UI de GitHub
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+jobs:
+  destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: 🔐 Azure Login with Service Principal
+        uses: azure/login@v1
+        with:
+          creds: >-
+            {
+              "clientId": "${{ secrets.ARM_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.ARM_TENANT_ID }}"
+            }
+
+      - name: 🧪 Verify Azure login
+        run: az account show
+
+      - name: 📥 Terraform Init
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="resource_group_name=soft-tfstate-rg" \
+            -backend-config="storage_account_name=softsastate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=terraform.tfstate"
+
+      - name: 📝 Generate terraform.tfvars
+        run: |
+          cat > infra/terraform.tfvars <<EOF
+          subscription_id       = "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          client_id             = "${{ secrets.ARM_CLIENT_ID }}"
+          client_secret         = "${{ secrets.ARM_CLIENT_SECRET }}"
+          tenant_id             = "${{ secrets.ARM_TENANT_ID }}"
+          allowed_ssh_ip        = "${{ secrets.MY_IP_ADDRESS }}"
+          mysql_user            = "${{ secrets.MYSQL_USER }}"
+          mysql_admin_password  = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
+          ssh_public_key        = "${{ secrets.VM_SSH_PUB_KEY }}"
+          EOF
+
+      - name: ⚠️ Terraform Destroy
+        run: terraform -chdir=infra destroy -auto-approve -input=false -var-file=terraform.tfvars

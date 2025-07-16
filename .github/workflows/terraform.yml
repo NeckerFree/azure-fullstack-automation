@@ -147,12 +147,16 @@ jobs:
           ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${JUMP_USER}@${JUMP_HOST} \
             "mkdir -p /home/${JUMP_USER}/ansible-setup"
 
-          # Upload files and folders
+          # Upload files
           scp -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no \
             setup-infra.yml inventory.ini api-setup.yml db-setup.yml \
-            -r templates files \
             ${JUMP_USER}@${JUMP_HOST}:/home/${JUMP_USER}/ansible-setup/
 
+          # Upload folders
+          scp -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no -r \
+            templates files \
+            ${JUMP_USER}@${JUMP_HOST}:/home/${JUMP_USER}/ansible-setup/
+          
           # Verify upload
           ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${JUMP_USER}@${JUMP_HOST} \
             "ls -la /home/${JUMP_USER}/ansible-setup/"
