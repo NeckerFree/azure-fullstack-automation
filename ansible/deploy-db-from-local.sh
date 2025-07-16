@@ -36,6 +36,7 @@ ssh -i "$SSH_KEY_LOCAL" -p $SSH_PORT "$JUMP_USER@$JUMP_HOST" bash <<EOF
   sudo apt update -qq
   echo "Installing dependencies..."
   sudo apt install -y ansible mysql-client
+  cd "${REMOTE_DIR}"
   echo "Executing playbook..."
   ansible-playbook -i inventory.ini db-setup.yml \
     --extra-vars "db_user=$DB_USER db_password=$DB_PASS db_name=$DB_NAME db_host=$DB_HOST"
