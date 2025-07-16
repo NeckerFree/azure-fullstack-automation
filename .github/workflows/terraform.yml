@@ -131,7 +131,7 @@ jobs:
           JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
           JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
 
-          SSH_KEY_PATH=~/.ssh/vm_ssh_key
+          SSH_KEY_PATH=${{ secrets.VM_SSH_KEY }}
           ANSIBLE_DIR=./ansible
           REMOTE_DIR=/home/${JUMP_USER}/ansible-setup
           ./ansible/configure-jumpbox.sh "$JUMP_HOST" "$JUMP_USER" "$SSH_KEY_PATH" "$ANSIBLE_DIR" "$REMOTE_DIR"
