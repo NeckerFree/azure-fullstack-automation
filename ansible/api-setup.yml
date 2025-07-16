@@ -60,15 +60,15 @@
         owner: adminuser
         group: adminuser
 
-    - name: Synchronize API code
-      ansible.posix.synchronize:
-        src: "{{ api_source_path }}/"
-        dest: "{{ app_path }}"
-        recursive: yes
-        rsync_opts:
-          - "--rsh=ssh -i /home/adminuser/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
-          - "--exclude=node_modules"
-      delegate_to: localhost
+    # - name: Synchronize API code
+    #   ansible.posix.synchronize:
+    #     src: "{{ app_path }}/"
+    #     dest: "{{ app_path }}"
+    #     recursive: yes
+    #     rsync_opts:
+    #       - "--rsh=ssh -i /home/adminuser/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
+    #       - "--exclude=node_modules"
+    #   delegate_to: localhost
 
     - name: Install npm dependencies
       npm:
