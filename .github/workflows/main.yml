@@ -22,24 +22,30 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Configurar Terraform
+      # Configurar Terraform y autenticación con Azure
       - name: 🛠️ Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.0
 
-      # Intentar descargar el inventory existente
-      - name: 📥 Try Download Inventory Artifact
-        id: download-inventory
-        continue-on-error: true  # Continuar si falla
-        uses: actions/download-artifact@v4
-        with:
-          name: ansible-inventory
-          path: ./ansible/
+      - name: 🔐 Configure Azure Credentials
+        run: |
+          echo "ARM_CLIENT_ID=${{ secrets.ARM_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
 
-      # Si la descarga falla, generar el inventory dinámicamente
-      - name: 📝 Generate Inventory (Fallback)
-        if: steps.download-inventory.outcome == 'failure'
+      # Inicializar Terraform
+      - name: 📥 Terraform Init
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="resource_group_name=soft-tfstate-rg" \
+            -backend-config="storage_account_name=softsastate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=terraform.tfstate"
+
+      # Generar inventory.ini dinámicamente (solución definitiva)
+      - name: 📝 Generate Ansible Inventory
         run: |
           CONTROL_IP=$(terraform -chdir=infra output -raw control_node_public_ip)
           SSH_USER=$(terraform -chdir=infra output -raw ssh_user)
@@ -66,7 +72,15 @@ jobs:
           echo "Generated inventory.ini:"
           cat ./ansible/inventory.ini
 
-      # Verificar que el inventory existe
+      # Configurar SSH
+      - name: 🔑 Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
+          chmod 600 ~/.ssh/vm_ssh_key
+          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
+      # Verificar inventory
       - name: 🔍 Verify Inventory
         run: |
           if [ ! -f "./ansible/inventory.ini" ]; then
@@ -76,15 +90,7 @@ jobs:
           echo "Inventory contents:"
           cat ./ansible/inventory.ini
 
-      # Configurar SSH
-      - name: 🔑 Configure SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
-          chmod 600 ~/.ssh/vm_ssh_key
-          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-
-      # Resto de tus pasos...
+      # Resto de los pasos de despliegue...
       - name: 🚀 Deploy Ansible Configuration
         run: |
           chmod +x ./ansible/deploy-ansible-from-local.sh
