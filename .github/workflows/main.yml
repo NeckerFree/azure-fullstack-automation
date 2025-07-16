@@ -30,24 +30,22 @@ jobs:
           echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
 
-      # Try both methods to get outputs
+      # Get Terraform outputs - reliable method
       - name: 🛠️ Get Terraform Outputs
         id: get-outputs
         run: |
-          # Method 1: Try downloading artifact
+          # Method 1: Use official download-artifact action
+          echo "Attempting to download artifact..."
           if curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
              https://api.github.com/repos/${{ github.repository }}/actions/artifacts | grep -q "terraform-outputs"; then
-            echo "ℹ️ Artifact exists, attempting download..."
-            curl -L -o artifact.zip \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              https://api.github.com/repos/${{ github.repository }}/actions/artifacts/terraform-outputs/zip
-            unzip artifact.zip -d infra/
-            rm artifact.zip
+            echo "Artifact exists, downloading..."
+            mkdir -p infra
+            gh run download ${{ github.event.workflow_run.id }} -n terraform-outputs -D infra
           fi
 
           # Method 2: Direct Terraform output (fallback)
           if [ ! -f "infra/tf_outputs.json" ]; then
-            echo "⚠️ Artifact not found, using direct Terraform output..."
+            echo "Using direct Terraform output fallback..."
             terraform -chdir=infra init \
               -backend-config="resource_group_name=soft-tfstate-rg" \
               -backend-config="storage_account_name=softsastate" \
@@ -68,15 +66,18 @@ jobs:
       # Verify outputs
       - name: ✅ Verify Outputs
         run: |
+          echo "Verifying infrastructure outputs..."
           echo "DB_HOST: $DB_HOST"
           echo "DB_USER: $DB_USER"
           echo "DB_NAME: $DB_NAME"
+          
           if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
             echo "❌ Error: Missing required environment variables"
             echo "Debug info:"
             ls -la infra/
             if [ -f "infra/tf_outputs.json" ]; then
-              cat infra/tf_outputs.json
+              echo "File contents:"
+              jq '.' infra/tf_outputs.json
             fi
             exit 1
           fi
@@ -86,6 +87,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
+
+      # ... (rest of your existing steps)
 
       - name: 📦 Install dependencies
         run: npm ci
