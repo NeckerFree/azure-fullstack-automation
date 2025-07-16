@@ -43,11 +43,12 @@ jobs:
           echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
 
-      - name: 📥 Download Terraform outputs (Alternativa opcional)
+      - name: 📥 Download Terraform outputs
         uses: actions/download-artifact@v4
         with:
           name: terraform-outputs
           path: infra/
+          pattern: tf_outputs.json  
 
       - name: 🔍 Verify Download
         run: |

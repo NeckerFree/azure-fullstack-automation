@@ -120,8 +120,10 @@ jobs:
       - name: 📦 Upload Terraform Outputs
         uses: actions/upload-artifact@v4
         with:
-          name: terraform-outputs  
+          name: terraform-outputs
           path: infra/tf_outputs.json
+          if-no-files-found: error  
+          retention-days: 3 
 
       - name: 📦 Upload inventory.ini as artifact
         uses: actions/upload-artifact@v4
