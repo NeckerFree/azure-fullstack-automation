@@ -11,7 +11,7 @@ env:
 
 permissions:
   contents: read
-  actions: read  # Required for cross-workflow artifacts
+  actions: read
   id-token: write
 
 jobs:
@@ -22,10 +22,66 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Add delay to ensure artifact availability
-      - name: ⏳ Wait for artifact propagation
-        run: sleep 15
+      # Set up Azure credentials first
+      - name: 🔐 Configure Azure Credentials
+        run: |
+          echo "ARM_CLIENT_ID=${{ secrets.ARM_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
 
+      # Try both methods to get outputs
+      - name: 🛠️ Get Terraform Outputs
+        id: get-outputs
+        run: |
+          # Method 1: Try downloading artifact
+          if curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+             https://api.github.com/repos/${{ github.repository }}/actions/artifacts | grep -q "terraform-outputs"; then
+            echo "ℹ️ Artifact exists, attempting download..."
+            curl -L -o artifact.zip \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/repos/${{ github.repository }}/actions/artifacts/terraform-outputs/zip
+            unzip artifact.zip -d infra/
+            rm artifact.zip
+          fi
+
+          # Method 2: Direct Terraform output (fallback)
+          if [ ! -f "infra/tf_outputs.json" ]; then
+            echo "⚠️ Artifact not found, using direct Terraform output..."
+            terraform -chdir=infra init \
+              -backend-config="resource_group_name=soft-tfstate-rg" \
+              -backend-config="storage_account_name=softsastate" \
+              -backend-config="container_name=tfstate" \
+              -backend-config="key=terraform.tfstate"
+            terraform -chdir=infra output -json > infra/tf_outputs.json
+          fi
+
+          # Parse outputs
+          json=$(cat infra/tf_outputs.json)
+          echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
+          echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
+          echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
+          echo "DB_PASS<<EOF" >> $GITHUB_ENV
+          echo "$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      # Verify outputs
+      - name: ✅ Verify Outputs
+        run: |
+          echo "DB_HOST: $DB_HOST"
+          echo "DB_USER: $DB_USER"
+          echo "DB_NAME: $DB_NAME"
+          if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
+            echo "❌ Error: Missing required environment variables"
+            echo "Debug info:"
+            ls -la infra/
+            if [ -f "infra/tf_outputs.json" ]; then
+              cat infra/tf_outputs.json
+            fi
+            exit 1
+          fi
+
+      # Rest of your steps...
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -39,59 +95,6 @@ jobs:
         run: npm test
         working-directory: src/movie-analyst-api
 
-      - name: 🔐 Configure Azure Provider Credentials
-        run: |
-          echo "ARM_CLIENT_ID=${{ secrets.ARM_CLIENT_ID }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}" >> $GITHUB_ENV
-          echo "ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}" >> $GITHUB_ENV
-          echo "ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
-
-      - name: 📥 Download Terraform outputs
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-outputs
-          path: infra/
-        continue-on-error: true  # Will fallback to direct method if fails
-
-      # Fallback method if artifact download fails
-      - name: 📤 Get Outputs Directly (Fallback)
-        if: ${{ failure() && steps.download.outcome == 'failure' }}
-        env:
-          TF_CLI_ARGS: "-chdir=infra"
-        run: |
-          terraform init \
-            -backend-config="resource_group_name=soft-tfstate-rg" \
-            -backend-config="storage_account_name=softsastate" \
-            -backend-config="container_name=tfstate" \
-            -backend-config="key=terraform.tfstate"
-          
-          echo "DB_HOST=$(terraform output -raw mysql_fqdn)" >> $GITHUB_ENV
-          echo "DB_USER=$(terraform output -raw mysql_admin_user)" >> $GITHUB_ENV
-          echo "DB_NAME=$(terraform output -raw mysql_database_name)" >> $GITHUB_ENV
-          echo "DB_PASS<<EOF" >> $GITHUB_ENV
-          echo "$(terraform output -raw mysql_admin_pwd)" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: 🔍 Verify Outputs
-        run: |
-          echo "Verifying infrastructure outputs..."
-          if [ -f "infra/tf_outputs.json" ]; then
-            echo "✅ Using artifact file"
-            json=$(cat infra/tf_outputs.json)
-            echo "DB_HOST=$(echo $json | jq -r '.mysql_fqdn.value')" >> $GITHUB_ENV
-            echo "DB_USER=$(echo $json | jq -r '.mysql_admin_user.value')" >> $GITHUB_ENV
-            echo "DB_NAME=$(echo $json | jq -r '.mysql_database_name.value')" >> $GITHUB_ENV
-            echo "DB_PASS<<EOF" >> $GITHUB_ENV
-            echo "$(echo $json | jq -r '.mysql_admin_pwd.value')" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
-          fi
-          
-          if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
-            echo "❌ Critical: Missing required environment variables"
-            exit 1
-          fi
-
-      # Rest of your steps remain unchanged
       - name: 🔑 Configure SSH
         run: |
           mkdir -p ~/.ssh
@@ -99,12 +102,12 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      - name: Run Deploy Script to Configure Ansible
+      - name: 🚀 Run Deploy Script to Configure Ansible
         run: |
           chmod +x ./ansible/deploy-ansible-from-local.sh
           ./ansible/deploy-ansible-from-local.sh
 
-      - name: Run Deploy Script to configure DB
+      - name: 🚀 Run Deploy Script to configure DB
         run: | 
           chmod +x ./ansible/deploy-db-from-local.sh
           ./ansible/deploy-db-from-local.sh
