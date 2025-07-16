@@ -25,7 +25,8 @@ SSH_KEY_LOCAL="$HOME/.ssh/vm_ssh_key"
 # fi
 
 # echo "[1/4] Copying playbook, SQL script and inventory to the jumphost..."
-# scp -i "$SSH_KEY_LOCAL" -P $SSH_PORT "$PLAYBOOK" "$SQL_SCRIPT" "$INVENTORY" "$JUMP_USER@$JUMP_HOST:/home/$JUMP_USER/"
+scp -i "$SSH_KEY_LOCAL" -o StrictHostKeyChecking=no \
+  ./ansible/db-setup.yml "$JUMP_USER@$JUMP_HOST:/home/$JUMP_USER/ansible-setup/"
 
 # [2/4] Execute playbook from jumphost
 echo "[2/4] Running playbook from jumphost..."
