@@ -109,6 +109,14 @@ jobs:
           chmod 600 ~/.ssh/vm_ssh_key
           echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
+      - name: 🔁 Download artifacts from Terraform CI/CD run
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_id: ${{ github.event.workflow_run.id }}
+          name: ansible-inventory
+          path: ./ansible
+
       - name: 📥 Download inventory.ini artifact
         uses: actions/download-artifact@v4
         with:
