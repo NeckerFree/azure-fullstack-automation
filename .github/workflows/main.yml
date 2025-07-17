@@ -77,3 +77,4 @@
 #       #     export DB_NAME="$(terraform -chdir=infra output -raw mysql_database_name)"
 #       #     chmod +x ./ansible/deploy-api-from-local.sh
 #       #     ./ansible/deploy-api-from-local.sh
+
