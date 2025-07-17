@@ -135,6 +135,7 @@ jobs:
 
           # ✅ Ejecuta y guarda el resultado de terraform output
           DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn | tr -d '\r\n ')
+          echo ">>> DB_HOST='$DB_HOST'"
           DB_USER="${{ secrets.MYSQL_USER }}"
           DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
           DB_NAME="moviesdb"
@@ -149,6 +150,7 @@ jobs:
            chmod +x ./ansible/deploy-db-from-local.sh
             # ✅ Ejecuta y guarda el resultado de terraform output
             DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn | tr -d '\r\n ')
+            echo ">>> DB_HOST='$DB_HOST'"
             DB_USER="${{ secrets.MYSQL_USER }}"
             DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
             DB_NAME="moviesdb"
