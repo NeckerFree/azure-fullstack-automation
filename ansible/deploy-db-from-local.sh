@@ -29,6 +29,7 @@ scp -i "$SSH_KEY_LOCAL" -o StrictHostKeyChecking=no \
   ./ansible/db-setup.yml "$JUMP_USER@$JUMP_HOST:/home/$JUMP_USER/ansible-setup/"
 
 echo "[2/4] Running playbook from jumphost..."
+
 ssh -i "$SSH_KEY_LOCAL" -p "$SSH_PORT" "$JUMP_USER@$JUMP_HOST" bash <<EOF
   set -e
   echo "Updating packages..."
@@ -38,7 +39,15 @@ ssh -i "$SSH_KEY_LOCAL" -p "$SSH_PORT" "$JUMP_USER@$JUMP_HOST" bash <<EOF
   cd /home/$JUMP_USER/ansible-setup
   echo "Executing playbook..."
   ansible-playbook -i inventory.ini db-setup.yml \
-    --extra-vars "db_user='${DB_USER}' db_password='${DB_PASS}' db_name='${DB_NAME}' db_host='${DB_HOST}' jump_user=''${JUMP_USER}"
+    --extra-vars "db_user=${DB_USER} db_password=${DB_PASS} db_name=${DB_NAME} db_host=${DB_HOST} jump_user=${JUMP_USER}"
+EOF
+
+ssh -i "$SSH_KEY_LOCAL" "$JUMP_USER@$JUMP_HOST" <<EOF
+  set -e
+  cd "${REMOTE_DIR}"
+  echo "Executing playbook with DB_HOST=$DB_HOST"
+  ansible-playbook -i inventory.ini db-setup.yml \
+    --extra-vars "db_host='$DB_HOST' db_user='$DB_USER' db_password='$DB_PASS' db_name='$DB_NAME'"
 EOF
 
 echo "[3/4] Playbook executed successfully!"

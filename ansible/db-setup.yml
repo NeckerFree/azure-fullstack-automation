@@ -53,6 +53,7 @@
       changed_when: false
       register: db_load_result
 
+
     - name: Verify database initialization
       run_once: true
       shell: |
