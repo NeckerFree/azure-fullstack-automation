@@ -134,7 +134,7 @@ jobs:
           chmod +x ./ansible/deploy-api-to-jumpbox.sh
 
           # ✅ Ejecuta y guarda el resultado de terraform output
-          DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn | tr -d '\r\n ')
+          DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -Eo '^[a-zA-Z0-9\.\-]+$' | tail -n 1)
           echo ">>> DB_HOST='$DB_HOST'"
           DB_USER="${{ secrets.MYSQL_USER }}"
           DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
@@ -149,7 +149,7 @@ jobs:
         run: |
            chmod +x ./ansible/deploy-db-from-local.sh
             # ✅ Ejecuta y guarda el resultado de terraform output
-            DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn | tr -d '\r\n ')
+           DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -Eo '^[a-zA-Z0-9\.\-]+$' | tail -n 1)
             echo ">>> DB_HOST='$DB_HOST'"
             DB_USER="${{ secrets.MYSQL_USER }}"
             DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
