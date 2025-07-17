@@ -65,10 +65,11 @@
     - name: Verify database initialization
       run_once: true
       shell: |
-        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} -e "SHOW TABLES;"
+        mysql -h "{{ db_host }}" -u"{{ db_user }}" -p"{{ db_password }}" "{{ db_name }}" -e "SHOW TABLES;"
       register: db_check
       changed_when: false
       when: db_load_result.rc == 0
+
 
     - name: Fail if database initialization failed
       run_once: true
