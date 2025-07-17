@@ -46,11 +46,11 @@
 
     - name: Create MySQL database
       command: >
-        mysql -h "{{ db_host }}" -u "{{ db_user }}" -p'{{ db_pass }}'
+        mysql -h "{{ db_host }}" -u "{{ db_user }}" -p "{{ db_pass }}"
         -e "CREATE DATABASE IF NOT EXISTS {{ db_name }}"
       no_log: true
       register: create_db
-      changed_when: "'already exists' not in create_db.stderr
+      changed_when: "'already exists' not in create_db.stderr"
 
     - name: Load MySQL initialization script (run once)
       run_once: true
@@ -61,7 +61,6 @@
       changed_when: false
       register: db_load_result
 
-
     - name: Verify database initialization
       run_once: true
       shell: |
@@ -69,7 +68,6 @@
       register: db_check
       changed_when: false
       when: db_load_result.rc == 0
-
 
     - name: Fail if database initialization failed
       run_once: true
