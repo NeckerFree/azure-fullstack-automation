@@ -45,12 +45,29 @@
         mode: "0644"
 
     - name: Create MySQL database
-      command: >
-        mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
-        -e "CREATE DATABASE IF NOT EXISTS {{ db_name }}"
-      no_log: true
-      register: create_db
-      changed_when: "'already exists' not in create_db.stderr"
+      block:
+        - name: Attempt to create database
+          command: >
+            mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
+            -e "CREATE DATABASE IF NOT EXISTS {{ db_name }};"
+          args:
+            warn: false  # Suprime warnings sobre el módulo command
+          register: create_db
+          no_log: true
+          ignore_errors: yes
+          changed_when: 
+            - "'already exists' not in create_db.stderr"
+            - "'database exists' not in create_db.stderr"  # Algunas versiones usan este mensaje
+
+        - name: Validate database creation
+          fail:
+            msg: "Failed to create database. MySQL error: {{ create_db.stderr | default('Unknown error') }}"
+          when: 
+            - create_db is failed
+            - "'already exists' not in create_db.stderr"
+            - "'database exists' not in create_db.stderr"
+          no_log: false  # Muestra el error real para diagnóstico
+
 
     - name: Load MySQL initialization script (run once)
       run_once: true
