@@ -46,7 +46,7 @@
 
     - name: Create MySQL database
       command: >
-        mysql -h "{{ db_host }}" -u "{{ db_user }}" -p "{{ db_pass }}"
+        mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
         -e "CREATE DATABASE IF NOT EXISTS {{ db_name }}"
       no_log: true
       register: create_db
