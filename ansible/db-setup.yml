@@ -44,30 +44,40 @@
         group: root
         mode: "0644"
 
-    - name: Create MySQL database
+
+    - name: Handle MySQL database creation
       block:
         - name: Attempt to create database
           command: >
             mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
-            -e "CREATE DATABASE IF NOT EXISTS {{ db_name }};"
-          args:
-            warn: false  # Suprime warnings sobre el módulo command
+            -e "CREATE DATABASE IF NOT EXISTS {{ db_name }}; SELECT 'success' as status;"
           register: create_db
           no_log: true
           ignore_errors: yes
-          changed_when: 
-            - "'already exists' not in create_db.stderr"
-            - "'database exists' not in create_db.stderr"  # Algunas versiones usan este mensaje
+          changed_when: false  # We'll handle changes manually
+
+        - name: Check if database exists
+          command: >
+            mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
+            -e "SHOW DATABASES LIKE '{{ db_name }}';"
+          register: db_check
+          no_log: true
+          ignore_errors: yes
+          changed_when: false
 
         - name: Validate database creation
           fail:
-            msg: "Failed to create database. MySQL error: {{ create_db.stderr | default('Unknown error') }}"
-          when: 
-            - create_db is failed
-            - "'already exists' not in create_db.stderr"
-            - "'database exists' not in create_db.stderr"
-          no_log: false  # Muestra el error real para diagnóstico
+            msg: "Failed to create database '{{ db_name }}'. Connection or permissions issue."
+          when: >
+            "'success' not in create_db.stdout" and
+            db_check.stdout.find(db_name) == -1
+          no_log: false
 
+      rescue:
+        - name: Display database creation error
+          debug:
+            msg: "Database creation error: {{ create_db.stderr | default('Unknown error') }}"
+          no_log: false
 
     - name: Load MySQL initialization script (run once)
       run_once: true
