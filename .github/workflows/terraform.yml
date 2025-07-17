@@ -150,22 +150,29 @@ jobs:
         run: |
           chmod +x ./ansible/deploy-api-to-jumpbox.sh
 
-          # Install jq if not present
-          sudo apt-get update && sudo apt-get install -y jq
-          
-          # Get outputs as JSON and parse with jq
-          terraform -chdir=infra output -json > tf_output.json
-          DB_HOST=$(jq -r '.mysql_fqdn.value' tf_output.json | tr -d '\r\n')
-          JUMP_HOST=$(jq -r '.control_node_public_ip.value' tf_output.json | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
-          JUMP_USER=$(jq -r '.ssh_user.value' tf_output.json | head -n1 | tr -d '\r\n')
-
+          # Get clean DB_HOST - Most reliable method
+          DB_HOST=$(terraform -chdir=infra output mysql_fqdn | sed -n 's/^.* = "\([^"]*\)"/\1/p' | tr -d '\r\n')
           echo "DB_HOST='$DB_HOST'"
-          echo "JUMP_HOST='$JUMP_HOST'"
-          echo "JUMP_USER='$JUMP_USER'"
+          
+          # Strict validation
+          if [[ ! "$DB_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]; then
+            echo "ERROR: Invalid DB_HOST format: '$DB_HOST'"
+            echo "Expected format: hostname.domain.tld"
+            exit 1
+          fi
+
+          # Get jump host IP (alternative method)
+          JUMP_HOST=$(terraform -chdir=infra output control_node_public_ip | sed -n 's/^.* = "\([^"]*\)"/\1/p' | tr -d '\r\n')
+          JUMP_USER=$(terraform -chdir=infra output ssh_user | sed -n 's/^.* = "\([^"]*\)"/\1/p' | tr -d '\r\n')
 
           DB_USER="${{ secrets.MYSQL_USER }}"
           DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
           DB_NAME="moviesdb"
+
+          echo "=== Final Variables ==="
+          echo "DB_HOST: $DB_HOST"
+          echo "JUMP_HOST: $JUMP_HOST"
+          echo "JUMP_USER: $JUMP_USER"
 
           ./ansible/deploy-api-to-jumpbox.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
                   
