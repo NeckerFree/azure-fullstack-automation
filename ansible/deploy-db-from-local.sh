@@ -47,7 +47,7 @@ ssh -i "$SSH_KEY_LOCAL" "$JUMP_USER@$JUMP_HOST" <<EOF
   cd "${REMOTE_DIR}"
   echo "Executing playbook with DB_HOST=$DB_HOST"
   ansible-playbook -i inventory.ini db-setup.yml \
-    --extra-vars "db_host='$DB_HOST' db_user='$DB_USER' db_password='$DB_PASS' db_name='$DB_NAME'"
+    --extra-vars "db_host=${DB_HOST} db_user=${DB_USER} db_password=${DB_PASS} db_name=${DB_NAME}"
 EOF
 
 echo "[3/4] Playbook executed successfully!"
