@@ -187,8 +187,23 @@ jobs:
         run: |
            chmod +x ./ansible/deploy-db-from-local.sh
             # ✅ Ejecuta y guarda el resultado de terraform output
-           DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>/dev/null | tr -d '\r\n ')
-            echo ">>> DB_HOST='$DB_HOST'"
+                     # Get clean DB_HOST - Ultimate reliable method
+            DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+            echo "Extracted DB_HOST='$DB_HOST'"
+            
+            # Fallback if raw output fails
+            if [ -z "$DB_HOST" ]; then
+              DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+              echo "Fallback extracted DB_HOST='$DB_HOST'"
+            fi
+
+            # Final validation
+            if [[ ! "$DB_HOST" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+              echo "ERROR: Could not extract valid DB_HOST"
+              echo "Raw terraform output:"
+              terraform -chdir=infra output mysql_fqdn
+              exit 1
+            fi
             DB_USER="${{ secrets.MYSQL_USER }}"
             DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
             DB_NAME="moviesdb"
