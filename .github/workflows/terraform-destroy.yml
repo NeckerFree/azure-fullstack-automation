@@ -1,7 +1,11 @@
 name: Terraform Destroy
 
 on:
-  workflow_dispatch: # permite ejecutarlo manualmente desde la UI de GitHub
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: "⚠️ Type 'YES' to confirm destroying the infrastructure"
+        required: true
 
 permissions:
   contents: read
@@ -19,6 +23,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: 🛑 Validate confirmation input
+        if: ${{ github.event.inputs.confirm_destroy != 'YES' }}
+        run: |
+          echo "You must type YES to proceed with destroy."
+          exit 1
+
       - name: 📦 Checkout code
         uses: actions/checkout@v3
 
@@ -49,18 +59,14 @@ jobs:
             -backend-config="container_name=tfstate" \
             -backend-config="key=terraform.tfstate"
 
-      - name: 📝 Generate terraform.tfvars
-        run: |
-          cat > infra/terraform.tfvars <<EOF
-          subscription_id       = "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          client_id             = "${{ secrets.ARM_CLIENT_ID }}"
-          client_secret         = "${{ secrets.ARM_CLIENT_SECRET }}"
-          tenant_id             = "${{ secrets.ARM_TENANT_ID }}"
-          allowed_ssh_ip        = "${{ secrets.MY_IP_ADDRESS }}"
-          mysql_user            = "${{ secrets.MYSQL_USER }}"
-          mysql_admin_password  = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
-          ssh_public_key        = "${{ secrets.VM_SSH_PUB_KEY }}"
-          EOF
-
       - name: ⚠️ Terraform Destroy
-        run: terraform -chdir=infra destroy -auto-approve -input=false -var-file=terraform.tfvars
+        run: |
+          terraform -chdir=infra destroy -auto-approve -input=false \
+            -var="subscription_id=${{ secrets.ARM_SUBSCRIPTION_ID }}" \
+            -var="client_id=${{ secrets.ARM_CLIENT_ID }}" \
+            -var="client_secret=${{ secrets.ARM_CLIENT_SECRET }}" \
+            -var="tenant_id=${{ secrets.ARM_TENANT_ID }}" \
+            -var="allowed_ssh_ip=${{ secrets.MY_IP_ADDRESS }}" \
+            -var="mysql_user=${{ secrets.MYSQL_USER }}" \
+            -var="mysql_admin_password=${{ secrets.MYSQL_ADMIN_PASSWORD }}" \
+            -var="ssh_public_key=${{ secrets.VM_SSH_PUB_KEY }}"
