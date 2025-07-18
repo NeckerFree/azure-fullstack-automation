@@ -52,7 +52,7 @@
             mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
             -e "CREATE DATABASE IF NOT EXISTS {{ db_name }}; SELECT 'success' as status;"
           register: create_db
-          no_log: true
+          no_log: false
           ignore_errors: yes
           changed_when: false  # We'll handle changes manually
 
@@ -61,7 +61,7 @@
             mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
             -e "SHOW DATABASES LIKE '{{ db_name }}';"
           register: db_check
-          no_log: true
+          no_log: false
           ignore_errors: yes
           changed_when: false
 
