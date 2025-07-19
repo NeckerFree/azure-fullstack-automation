@@ -56,7 +56,7 @@
           ignore_errors: yes
           changed_when: false  # We'll handle changes manually
 
-        - name: Check if database exists
+        - name: Check if MySQL database exists
           command: >
             mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
             -e "SHOW DATABASES LIKE '{{ db_name }}';"
