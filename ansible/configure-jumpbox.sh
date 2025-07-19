@@ -13,8 +13,8 @@ REMOTE_DIR="$5"
 
 SSH_KEY_PATH="$HOME/.ssh/vm_ssh_key"
 
-echo "📡 Conectando al Jumpbox $JUMP_USER@$JUMP_HOST"
-echo "📁 Subiendo archivos desde $ANSIBLE_DIR a $REMOTE_DIR"
+# echo "📡 Conectando al Jumpbox $JUMP_USER@$JUMP_HOST"
+# echo "📁 Subiendo archivos desde $ANSIBLE_DIR a $REMOTE_DIR"
 
 # === 1. Configurar SSH localmente con contenido del secreto ===
 echo "🔑 Escribiendo la clave SSH localmente..."

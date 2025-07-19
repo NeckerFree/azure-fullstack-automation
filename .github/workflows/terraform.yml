@@ -1,287 +1,198 @@
-name: Terraform CI/CD
+# name: Terraform CI/CD
 
-on:
-  push:
-    branches: [ simplify ]
-  pull_request:
-    branches: [ simplify ]
+# on:
+#   push:
+#     branches: [ simplify ]
+#   pull_request:
+#     branches: [ simplify ]
 
-permissions:
-  contents: read
-  id-token: write
+# permissions:
+#   contents: read
+#   id-token: write
 
-env:
-  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+# env:
+#   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+#   ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+#   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+#   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
 
-jobs:
-  terraform:
-    name: Terraform
-    runs-on: ubuntu-latest
-    environment: qa
+# jobs:
+#   terraform:
+#     name: Terraform
+#     runs-on: ubuntu-latest
+#     environment: qa
 
-    steps:
-      - name: 📦 Checkout code
-        uses: actions/checkout@v3
+#     steps:
+#       - name: 📦 Checkout code
+#         uses: actions/checkout@v3
 
-      - name: ⚙️ Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.0
+#       - name: ⚙️ Setup Terraform
+#         uses: hashicorp/setup-terraform@v2
+#         with:
+#           terraform_version: 1.5.0
 
-      - name: 🔐 Azure Login with Service Principal
-        uses: azure/login@v1
-        with:
-          creds: >-
-            {
-              "clientId": "${{ secrets.ARM_CLIENT_ID }}",
-              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
-              "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
-              "tenantId": "${{ secrets.ARM_TENANT_ID }}"
-            }
+#       - name: 🔐 Azure Login with Service Principal
+#         uses: azure/login@v1
+#         with:
+#           creds: >-
+#             {
+#               "clientId": "${{ secrets.ARM_CLIENT_ID }}",
+#               "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
+#               "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
+#               "tenantId": "${{ secrets.ARM_TENANT_ID }}"
+#             }
 
-      - name: 🧪 Verify Azure login
-        run: az account show
+#       - name: 🧪 Verify Azure login
+#         run: az account show
 
-      - name: 🏗️ Ensure Terraform remote backend exists
-        run: |
-          az group create --name soft-tfstate-rg --location eastus
-          az storage account create \
-            --name softsastate \
-            --resource-group soft-tfstate-rg \
-            --location eastus \
-            --sku Standard_LRS \
-            --encryption-services blob
-          az storage container create \
-            --name tfstate \
-            --account-name softsastate
+#       - name: 🏗️ Ensure Terraform remote backend exists
+#         run: |
+#           az group create --name soft-tfstate-rg --location eastus
+#           az storage account create \
+#             --name softsastate \
+#             --resource-group soft-tfstate-rg \
+#             --location eastus \
+#             --sku Standard_LRS \
+#             --encryption-services blob
+#           az storage container create \
+#             --name tfstate \
+#             --account-name softsastate
 
-      - name: 📥 Terraform Init
-        run: |
-          terraform -chdir=infra init \
-            -backend-config="resource_group_name=soft-tfstate-rg" \
-            -backend-config="storage_account_name=softsastate" \
-            -backend-config="container_name=tfstate" \
-            -backend-config="key=terraform.tfstate"
+#       - name: 📥 Terraform Init
+#         run: |
+#           terraform -chdir=infra init \
+#             -backend-config="resource_group_name=soft-tfstate-rg" \
+#             -backend-config="storage_account_name=softsastate" \
+#             -backend-config="container_name=tfstate" \
+#             -backend-config="key=terraform.tfstate"
 
-      - name: 🧹 Optional Unlock (if lock is active)
-        run: |
-          terraform -chdir=infra init
-          LOCK_FILE=".terraform/terraform.tfstate.lock.info"
-          if [ -f "infra/$LOCK_FILE" ]; then
-            LOCK_ID=$(jq -r '.ID' "infra/$LOCK_FILE")
-            echo "🔓 Lock found: $LOCK_ID. Attempting to unlock..."
-            terraform -chdir=infra force-unlock -force "$LOCK_ID"
-          else
-            echo "✅ No lock file found. Continuing..."
-          fi
+#       - name: 🧹 Optional Unlock (if lock is active)
+#         run: |
+#           terraform -chdir=infra init
+#           LOCK_FILE=".terraform/terraform.tfstate.lock.info"
+#           if [ -f "infra/$LOCK_FILE" ]; then
+#             LOCK_ID=$(jq -r '.ID' "infra/$LOCK_FILE")
+#             echo "🔓 Lock found: $LOCK_ID. Attempting to unlock..."
+#             terraform -chdir=infra force-unlock -force "$LOCK_ID"
+#           else
+#             echo "✅ No lock file found. Continuing..."
+#           fi
 
 
-      - name: 🧹 Terraform Format
-        run: | 
-         terraform -chdir=infra fmt -check -diff -recursive -no-color || true
+#       - name: 🧹 Terraform Format
+#         run: | 
+#          terraform -chdir=infra fmt -check -diff -recursive -no-color || true
   
-      - name: 📝 Generate terraform.tfvars
-        run: |
-          cat > infra/terraform.tfvars <<EOF
-          subscription_id       = "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          client_id             = "${{ secrets.ARM_CLIENT_ID }}"
-          client_secret         = "${{ secrets.ARM_CLIENT_SECRET }}"
-          tenant_id             = "${{ secrets.ARM_TENANT_ID }}"
-          allowed_ssh_ip        = "${{ secrets.MY_IP_ADDRESS }}"
-          mysql_user            = "${{ secrets.MYSQL_USER }}"
-          mysql_admin_password  = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
-          ssh_public_key        = "${{ secrets.VM_SSH_PUB_KEY }}"
-          EOF
+#       - name: 📝 Generate terraform.tfvars
+#         run: |
+#           cat > infra/terraform.tfvars <<EOF
+#           subscription_id       = "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+#           client_id             = "${{ secrets.ARM_CLIENT_ID }}"
+#           client_secret         = "${{ secrets.ARM_CLIENT_SECRET }}"
+#           tenant_id             = "${{ secrets.ARM_TENANT_ID }}"
+#           allowed_ssh_ip        = "${{ secrets.MY_IP_ADDRESS }}"
+#           mysql_user            = "${{ secrets.MYSQL_USER }}"
+#           mysql_admin_password  = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
+#           ssh_public_key        = "${{ secrets.VM_SSH_PUB_KEY }}"
+#           EOF
 
-      - name: 🔍 Terraform Validate
-        run: terraform -chdir=infra validate
+#       - name: 🔍 Terraform Validate
+#         run: terraform -chdir=infra validate
 
-      - name: 📋 Terraform Plan
-        run: terraform -chdir=infra plan -input=false -var-file=terraform.tfvars
+#       - name: 📋 Terraform Plan
+#         run: terraform -chdir=infra plan -input=false -var-file=terraform.tfvars
 
-      - name: 🚀 Terraform Apply
-        if: github.ref == 'refs/heads/simplify'
-        run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
+#       - name: 🚀 Terraform Apply
+#         if: github.ref == 'refs/heads/simplify'
+#         run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
 
-      - name: 📄 Generate Terraform outputs
-        run: |
-          terraform -chdir=infra output -json > infra/tf_outputs.json
+#       - name: 📄 Generate Terraform outputs
+#         run: |
+#           terraform -chdir=infra output -json > infra/tf_outputs.json
 
-      - name: 📦 Upload inventory.ini as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: inventory
-          path: ansible/inventory.ini
+#       - name: 📦 Upload inventory.ini as artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: inventory
+#           path: ansible/inventory.ini
 
-      - name: 🗃️ Run Script Configure Jumpbox 
-        run: | 
-          chmod +x ./ansible/configure-jumpbox.sh
+#       - name: 🗃️ Run Script Configure Jumpbox 
+#         run: | 
+#           chmod +x ./ansible/configure-jumpbox.sh
 
-          # Get outputs from Terraform
-          JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
-          JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
+#           # Get outputs from Terraform
+#           JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
+#           JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
 
-          SSH_KEY_CONTENT="${{ secrets.VM_SSH_KEY }}"
-          ANSIBLE_DIR=./ansible
-          REMOTE_DIR=/home/${JUMP_USER}/ansible-setup
-          ./ansible/configure-jumpbox.sh "$JUMP_HOST" "$JUMP_USER" "$SSH_KEY_CONTENT" "$ANSIBLE_DIR" "$REMOTE_DIR"
-    
-      # - name: 🧩 Run Script Deploy API to Jumbox
-      #   run: |
-      #     chmod +x ./ansible/deploy-api-to-jumpbox.sh
+#           SSH_KEY_CONTENT="${{ secrets.VM_SSH_KEY }}"
+#           ANSIBLE_DIR=./ansible
+#           REMOTE_DIR=/home/${JUMP_USER}/ansible-setup
+#           ./ansible/configure-jumpbox.sh "$JUMP_HOST" "$JUMP_USER" "$SSH_KEY_CONTENT" "$ANSIBLE_DIR" "$REMOTE_DIR"
 
-      #     # ✅ Ejecuta y guarda el resultado de terraform output
-      #     DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>/dev/null | tr -d '\r\n ')
-      #     echo ">>> DB_HOST='$DB_HOST'"
-      #     DB_USER="${{ secrets.MYSQL_USER }}"
-      #     DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
-      #     DB_NAME="movie_analyst"
+#       - name: 🛢️ Run Script Deploy Database
+#         run: |
+#            chmod +x ./ansible/deploy-db-from-local.sh
+#             # ✅ Ejecuta y guarda el resultado de terraform output
+#                      # Get clean DB_HOST - Ultimate reliable method
+#             DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+#             echo "Extracted DB_HOST='$DB_HOST'"
+            
+#             # Fallback if raw output fails
+#             if [ -z "$DB_HOST" ]; then
+#               DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+#               echo "Fallback extracted DB_HOST='$DB_HOST'"
+#             fi
 
-      #     JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
-      #     JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
+#             # Final validation
+#             if [[ ! "$DB_HOST" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+#               echo "ERROR: Could not extract valid DB_HOST"
+#               echo "Raw terraform output:"
+#               terraform -chdir=infra output mysql_fqdn
+#               exit 1
+#             fi
+#             DB_USER="${{ secrets.MYSQL_USER }}"
+#             DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
+#             DB_NAME="movie_analyst"
 
-      #     ./ansible/deploy-api-to-jumpbox.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
-    
-      
-      - name: 🧩 Run Script Deploy API to Jumpbox
-        run: |
-          chmod +x ./ansible/deploy-api-to-jumpbox.sh
+#             JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
+#             JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
 
-          # Get clean DB_HOST - Ultimate reliable method
-          DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
-          echo "Extracted DB_HOST='$DB_HOST'"
+#             ./ansible/deploy-db-from-local.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
+                   
+#       - name: 🧩 Run Script Deploy API to Jumpbox
+#         run: |
+#           chmod +x ./ansible/deploy-api-to-jumpbox.sh
+
+#           # Get clean DB_HOST - Ultimate reliable method
+#           DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+#           echo "Extracted DB_HOST='$DB_HOST'"
           
-          # Fallback if raw output fails
-          if [ -z "$DB_HOST" ]; then
-            DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
-            echo "Fallback extracted DB_HOST='$DB_HOST'"
-          fi
+#           # Fallback if raw output fails
+#           if [ -z "$DB_HOST" ]; then
+#             DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+#             echo "Fallback extracted DB_HOST='$DB_HOST'"
+#           fi
 
-          # Final validation
-          if [[ ! "$DB_HOST" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
-            echo "ERROR: Could not extract valid DB_HOST"
-            echo "Raw terraform output:"
-            terraform -chdir=infra output mysql_fqdn
-            exit 1
-          fi
+#           # Final validation
+#           if [[ ! "$DB_HOST" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+#             echo "ERROR: Could not extract valid DB_HOST"
+#             echo "Raw terraform output:"
+#             terraform -chdir=infra output mysql_fqdn
+#             exit 1
+#           fi
 
-          JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
-          JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
+#           JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
+#           JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
 
 
-          DB_USER="${{ secrets.MYSQL_USER }}"
-          DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
-          DB_NAME="movie_analyst"
+#           DB_USER="${{ secrets.MYSQL_USER }}"
+#           DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
+#           DB_NAME="movie_analyst"
 
-          echo "=== Final Variables ==="
-          echo "DB_HOST: $DB_HOST"
-          echo "JUMP_HOST: $JUMP_HOST"
-          echo "JUMP_USER: $JUMP_USER"
+#           echo "=== Final Variables ==="
+#           echo "DB_HOST: $DB_HOST"
+#           echo "JUMP_HOST: $JUMP_HOST"
+#           echo "JUMP_USER: $JUMP_USER"
 
-          ./ansible/deploy-api-to-jumpbox.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
+#           ./ansible/deploy-api-to-jumpbox.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
                         
-      - name: 🛢️ Run Script Deploy Database
-        run: |
-           chmod +x ./ansible/deploy-db-from-local.sh
-            # ✅ Ejecuta y guarda el resultado de terraform output
-                     # Get clean DB_HOST - Ultimate reliable method
-            DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
-            echo "Extracted DB_HOST='$DB_HOST'"
-            
-            # Fallback if raw output fails
-            if [ -z "$DB_HOST" ]; then
-              DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
-              echo "Fallback extracted DB_HOST='$DB_HOST'"
-            fi
-
-            # Final validation
-            if [[ ! "$DB_HOST" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
-              echo "ERROR: Could not extract valid DB_HOST"
-              echo "Raw terraform output:"
-              terraform -chdir=infra output mysql_fqdn
-              exit 1
-            fi
-            DB_USER="${{ secrets.MYSQL_USER }}"
-            DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
-            DB_NAME="movie_analyst"
-
-            JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
-            JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
-
-            ./ansible/deploy-db-from-local.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
-            
-      # - name: 🔑 Configure SSH for jumpbox
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
-      #     chmod 600 ~/.ssh/vm_ssh_key
-      #     echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config  
-
-      # - name: 🚀 Upload Ansible files to Jumpbox
-      #   run: |
-      #     cd ./ansible/
-
-      #     # Get outputs from Terraform
-      #     JUMP_HOST=$(terraform -chdir=../infra output -raw control_node_public_ip 2>/dev/null | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
-      #     JUMP_USER=$(terraform -chdir=../infra output -raw ssh_user 2>/dev/null | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
-
-      #     # Create remote directory
-      #     ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${JUMP_USER}@${JUMP_HOST} \
-      #       "mkdir -p /home/${JUMP_USER}/ansible-setup"
-
-      #     # Upload files
-      #     scp -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no \
-      #       setup-infra.yml inventory.ini api-setup.yml db-setup.yml \
-      #       ${JUMP_USER}@${JUMP_HOST}:/home/${JUMP_USER}/ansible-setup/
-
-      #     # Upload folders
-      #     scp -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no -r \
-      #       templates files \
-      #       ${JUMP_USER}@${JUMP_HOST}:/home/${JUMP_USER}/ansible-setup/
-          
-      #     # Verify upload
-      #     ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${JUMP_USER}@${JUMP_HOST} \
-      #       "ls -la /home/${JUMP_USER}/ansible-setup/"
-
-      # - name: 🔐 Upload SSH private key to Jumpbox
-      #   run: |
-      #     # Get outputs from Terraform
-      #     JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip 2>/dev/null | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
-      #     JUMP_USER=$(terraform -chdir=infra output -raw ssh_user 2>/dev/null | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
-
-      #     # Prepare local private key file
-      #     mkdir -p ~/.ssh
-      #     echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
-      #     chmod 600 ~/.ssh/vm_ssh_key
-
-      #     # Upload the private key to the jumpbox
-      #     scp -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no \
-      #       ~/.ssh/vm_ssh_key \
-      #       ${JUMP_USER}@${JUMP_HOST}:/home/${JUMP_USER}/.ssh/vm_ssh_key
-
-      #     # Fix permissions on the jumpbox
-      #     ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${JUMP_USER}@${JUMP_HOST} \
-      #       "chmod 600 /home/${JUMP_USER}/.ssh/vm_ssh_key"
-            
-      # - name: ⚙️ Run Ansible playbook from Jumpbox
-      #   run: |
-      #     # Get outputs from Terraform
-      #     JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip 2>/dev/null | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
-      #     JUMP_USER=$(terraform -chdir=infra output -raw ssh_user 2>/dev/null | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
-
-      #     REMOTE_DIR="/home/${JUMP_USER}/ansible-setup"
-      #     PLAYBOOK_FILE="setup-infra.yml"
-
-      #     # Run the playbook from the jumpbox
-      #     ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${JUMP_USER}@${JUMP_HOST} << EOF
-      #       cd ${REMOTE_DIR}
-      #       if ! command -v ansible-playbook &> /dev/null; then
-      #         echo "🔧 Installing Ansible..."
-      #         sudo apt update && sudo apt install ansible -y
-      #       fi
-      #       echo "🚀 Running playbook..."
-      #       ansible-playbook -i inventory.ini ${PLAYBOOK_FILE} -e "ADMIN_USER={JUMP_USER}"
-      #     EOF

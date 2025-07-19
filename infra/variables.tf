@@ -38,7 +38,7 @@ variable "mysql_user" {
 }
 
 variable "admin_username" {
-  default   = "adminuser"
+  default   = "necker"
   sensitive = true
 }
 

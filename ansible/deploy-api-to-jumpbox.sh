@@ -57,10 +57,10 @@ fi
 # === STEP 4: Execute playbook remotely ===
 echo "[4/4] Executing playbook from the jump host..."
 echo "🔎 Verificando envs en jumpbox:"
-echo "DB_HOST=${DB_HOST}"
-echo "DB_USER=${DB_USER}"
-echo "DB_PASS=${DB_PASS}"
-echo "DB_NAME=${DB_NAME}"
+# echo "DB_HOST=${DB_HOST}"
+# echo "DB_USER=${DB_USER}"
+# echo "DB_PASS=${DB_PASS}"
+# echo "DB_NAME=${DB_NAME}"
 
 ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" <<EOF
   set -e
@@ -69,8 +69,8 @@ ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" <<EOF
   export DB_PASS="${DB_PASS}"
   export DB_NAME="${DB_NAME}"
 
-  echo "🔍 [jumpbox] DB_HOST=\$DB_HOST"
-  echo "🔍 [jumpbox] DB_USER=\$DB_USER"
+  # echo "🔍 [jumpbox] DB_HOST=\$DB_HOST"
+  # echo "🔍 [jumpbox] DB_USER=\$DB_USER"
 
   cd "${REMOTE_DIR}"
   ansible-playbook -i inventory.ini api-setup.yml \
@@ -79,7 +79,9 @@ ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" <<EOF
   -e "db_host='${DB_HOST}'" \
   -e "db_user='${DB_USER}'" \
   -e "db_password='${DB_PASS}'" \
-  -e "db_name='${DB_NAME}'"  
+  -e "db_name='${DB_NAME}'" \
+  -e "admin_user='${JUMP_USER}'"
+  admin_user 
 EOF
 
 

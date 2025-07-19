@@ -3,7 +3,7 @@
   hosts: mysql_server
   become: yes
   vars:
-    mysql_script_path: "/home/adminuser/movie_db.sql"
+    mysql_script_path: "/home/{{ admin_user }}/movie_db.sql"
     remote_mysql_script_path: "/etc/ansible/mysql/movie_db.sql"
 
   tasks:
@@ -102,3 +102,12 @@
       fail:
         msg: "Database initialization failed with exit code {{ db_load_result.rc }}. Check the SQL script for errors."
       when: db_load_result.rc != 0 or db_check is skipped
+
+    - name: Validate that 'movies' table exists and has rows
+      run_once: true
+      shell: |
+        mysql -h "{{ db_host }}" -u"{{ db_user }}" -p"{{ db_pass }}" "{{ db_name }}" -e \
+        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='{{ db_name }}' AND table_name='movies'; \
+        SELECT COUNT(*) FROM movies;"
+      register: movies_table_check
+      changed_when: false
