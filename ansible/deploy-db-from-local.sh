@@ -43,7 +43,7 @@ ssh -i "$SSH_KEY_LOCAL" -p "$SSH_PORT" "$JUMP_USER@$JUMP_HOST" bash <<EOF
   echo "Executing playbook with DB_HOST=${DB_HOST}"
   
   ansible-playbook -i inventory.ini db-setup.yml \
-    --extra-vars "db_user=${DB_USER} db_password=${DB_PASS} db_name=${DB_NAME} db_host=${DB_HOST} jump_user=${JUMP_USER}"
+    --extra-vars "db_user=${DB_USER} db_pass=${DB_PASS} db_name=${DB_NAME} db_host=${DB_HOST} jump_user=${JUMP_USER}"
 EOF
 
 
