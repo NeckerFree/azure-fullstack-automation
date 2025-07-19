@@ -26,7 +26,7 @@
         - { key: "DB_USER", value: "{{ db_user }}" }
         - { key: "DB_PASS", value: "{{ db_pass }}" }
         - { key: "DB_NAME", value: "{{ db_name }}" }
-      no_log: true
+      no_log: false
 
     - name: Ensure MySQL directory exists
       file:
