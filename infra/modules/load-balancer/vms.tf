@@ -130,7 +130,7 @@ resource "local_file" "ansible_inventory" {
         ip   = azurerm_linux_virtual_machine.backend[1].private_ip_address
       }
     ]
-    ssh_user = var.admin_username
+    admin_user = var.admin_username
   })
   filename = abspath("${path.module}/../../../ansible/inventory.ini")
 }
