@@ -62,10 +62,9 @@
 
     - name: Synchronize API code from localhost to remote
       ansible.posix.synchronize:
-        src: "{{ app_path }}/"
-        dest: "{{ app_path }}"
+        src: "/home/{{ admin_user }}/ansible-setup/src/movie-analyst-api/"
+        dest: "/home/{{ admin_user }}/ansible-setup/src/movie-analyst-api"
         recursive: yes
-        rsync_path: "sudo rsync"
         rsync_opts:
           - "--rsh=ssh -i /home/{{ admin_user }}/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
           - "--exclude=node_modules"
