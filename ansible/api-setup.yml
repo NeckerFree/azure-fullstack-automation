@@ -38,23 +38,38 @@
         state: present
         update_cache: yes
 
+    - name: Remove old Node.js and npm if installed
+      apt:
+        name:
+          - nodejs
+          - npm
+        state: absent
+      ignore_errors: yes
+
     - name: Add NodeSource GPG key
       apt_key:
         url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
         state: present
 
-    - name: Add NodeSource repository
+    - name: Add Node.js 16.x repo
       apt_repository:
-        repo: "deb https://deb.nodesource.com/node_16.x {{ ansible_distribution_release }} main"
+        repo: "deb https://deb.nodesource.com/node_16.x {{ ansible_distribution_release | lower }} main"
         state: present
         filename: nodesource
-        update_cache: yes
 
-    - name: Install Node.js
+    - name: Install Node.js 16 and npm
       apt:
         name: nodejs
         state: present
         update_cache: yes
+
+    - name: Check installed Node and npm versions
+      shell: "node -v && npm -v"
+      register: node_versions
+
+    - name: Show versions
+      debug:
+        var: node_versions.stdout_lines
 
     - name: Ensure app directory exists
       file:
