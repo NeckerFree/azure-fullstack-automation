@@ -57,8 +57,8 @@
         path: "{{ app_path }}"
         state: directory
         mode: "0755"
-        owner: {{ admin_user }}
-        group: {{ admin_user }}
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
 
     - name: Synchronize API code
       ansible.posix.synchronize:
