@@ -3,7 +3,7 @@
   hosts: nodes
   become: yes
   vars:
-    admin_user: necker  # Override with --extra-vars or inventory
+    admin_user: necker  # Can be overridden with --extra-vars
     ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ConnectTimeout=30"
     ansible_ssh_retries: 3
     ansible_ssh_private_key_file: "~/.ssh/vm_ssh_key"
@@ -34,7 +34,7 @@
           - curl
           - gnupg
           - ca-certificates
-          - npm
+          - rsync
         state: present
         update_cache: yes
 
@@ -79,28 +79,15 @@
         owner: "{{ admin_user }}"
         group: "{{ admin_user }}"
 
-    - name: Copy API code
-      copy:
+    - name: Synchronize API code from localhost to remote
+      ansible.posix.synchronize:
         src: "{{ app_path }}/"
         dest: "{{ app_path }}"
-        owner: "{{ admin_user }}"
-        group: "{{ admin_user }}"
-        mode: "0755"
-
-    - name: Install npm dependencies
-      npm:
-        path: "{{ app_path }}"
-        state: present
-        production: yes
-
-    - name: Deploy systemd service
-      template:
-        src: "{{ playbook_dir }}/templates/movie-api.service.j2"
-        dest: /etc/systemd/system/movie-api.service
-        owner: root
-        group: root
-        mode: "0644"
-      notify: restart movie-api
+        recursive: yes
+        rsync_opts:
+          - "--exclude=node_modules"
+          - "--rsh=ssh -i /home/{{ admin_user }}/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
+      delegate_to: localhost
 
     - name: 📦 Install dependencies with npm ci
       command: npm ci
@@ -111,6 +98,15 @@
       command: npm test
       args:
         chdir: "{{ app_path }}"
+
+    - name: Deploy systemd service
+      template:
+        src: "{{ playbook_dir }}/templates/movie-api.service.j2"
+        dest: /etc/systemd/system/movie-api.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: restart movie-api
 
   handlers:
     - name: restart movie-api
