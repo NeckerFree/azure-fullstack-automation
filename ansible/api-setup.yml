@@ -60,39 +60,41 @@
         owner: "{{ admin_user }}"
         group: "{{ admin_user }}"
 
-- name: Synchronize API code
-  ansible.posix.synchronize:
-    src: "{{ app_path }}/"
-    dest: "{{ app_path }}"
-    recursive: yes
-    rsync_path: "sudo rsync"  # runs rsync with sudo on the remote (optional)
-    rsync_opts:
-      - "--rsh=ssh -i /home/{{ admin_user }}/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
-      - "--exclude=node_modules"
-  delegate_to: localhost
+    - name: Synchronize API code from localhost to remote
+      ansible.posix.synchronize:
+        src: "{{ app_path }}/"
+        dest: "{{ app_path }}"
+        recursive: yes
+        rsync_path: "sudo rsync"
+        rsync_opts:
+          - "--rsh=ssh -i /home/{{ admin_user }}/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
+          - "--exclude=node_modules"
+      delegate_to: localhost
 
-- name: Install npm dependencies
-  npm:
-    path: "{{ app_path }}"
-    state: present
-    production: yes
+    - name: Install npm dependencies
+      npm:
+        path: "{{ app_path }}"
+        state: present
+        production: yes
 
-- name: Deploy systemd service
-  template:
-    src: "{{ playbook_dir }}/templates/movie-api.service.j2"
-    dest: /etc/systemd/system/movie-api.service
-    owner: root
-    group: root
-    mode: "0644"
-  notify: restart movie-api
+    - name: Deploy systemd service
+      template:
+        src: "{{ playbook_dir }}/templates/movie-api.service.j2"
+        dest: /etc/systemd/system/movie-api.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: restart movie-api
 
-    # - name: 📦 Install dependencies
-    #   run: npm ci
-    #   working-directory: src/movie-analyst-api
+    - name: 📦 Install dependencies with npm ci
+      shell: npm ci
+      args:
+        chdir: "{{ app_path }}"
 
-    # - name: 🧪 Run tests
-    #   run: npm test
-    #   working-directory: src/movie-analyst-api
+    - name: 🧪 Run tests with npm test
+      shell: npm test
+      args:
+        chdir: "{{ app_path }}"
 
   handlers:
     - name: restart movie-api
@@ -101,3 +103,4 @@
         state: restarted
         enabled: yes
         daemon_reload: yes
+
