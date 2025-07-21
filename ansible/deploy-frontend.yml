@@ -3,27 +3,23 @@
   hosts: localhost
   connection: local
   vars:
-    app_service_name: ""
-    resource_group_name: ""
-    lb_api_url: ""
+    app_service_name: "{{ lookup('env', 'APP_SERVICE_NAME') }}"
+    resource_group_name: "{{ lookup('env', 'RESOURCE_GROUP_NAME') }}"
+    lb_api_url: "{{ lookup('env', 'LB_API_URL') }}"
     node_version: "16-lts"
 
   tasks:
-    - name: Validate variables
+    - name: Validate environment variables
       fail:
         msg: |
-          Invalid variables detected!
-          - App Service: {{ app_service_name }}
-          - Resource Group: {{ resource_group_name }}
-          - API URL: {{ lb_api_url }}
-          Check GitHub Actions workflow for proper output handling.
+          Missing required environment variables!
+          - APP_SERVICE_NAME: {{ lookup('env', 'APP_SERVICE_NAME') }}
+          - RESOURCE_GROUP_NAME: {{ lookup('env', 'RESOURCE_GROUP_NAME') }}
+          - LB_API_URL: {{ lookup('env', 'LB_API_URL') }}
       when: >
-        not app_service_name or
-        not resource_group_name or
-        not lb_api_url or
-        '[' in app_service_name or
-        '[' in resource_group_name or
-        '[' in lb_api_url
+        not lookup('env', 'APP_SERVICE_NAME') or
+        not lookup('env', 'RESOURCE_GROUP_NAME') or
+        not lookup('env', 'LB_API_URL')
 
     - name: Show deployment configuration
       debug:

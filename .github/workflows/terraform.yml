@@ -200,19 +200,42 @@ jobs:
         id: tf
         run: |
           cd infra
-          # Get all outputs as JSON
-          terraform output -json > outputs.json
           
-          # Parse JSON and set outputs
-          APP_NAME=$(jq -r '.app_service_name.value' outputs.json)
-          RG_NAME=$(jq -r '.resource_group_name.value' outputs.json)
-          API_URL=$(jq -r '.lb_api_url.value' outputs.json)
+          # Get raw JSON output (with error handling)
+          if ! terraform output -json > outputs.json; then
+            echo "::error::Terraform output command failed"
+            exit 1
+          fi
+          
+          # Verify JSON is valid
+          if ! jq empty outputs.json; then
+            echo "::error::Invalid JSON output from Terraform"
+            cat outputs.json
+            exit 1
+          fi
+          
+          # Extract values with strict validation
+          APP_NAME=$(jq -r '.app_service_name.value // empty' outputs.json)
+          RG_NAME=$(jq -r '.resource_group_name.value // empty' outputs.json)
+          API_URL=$(jq -r '.lb_api_url.value // empty' outputs.json)
+          
+          # Verify all values exist
+          if [[ -z "$APP_NAME" || -z "$RG_NAME" || -z "$API_URL" ]]; then
+            echo "::error::Missing required outputs from Terraform"
+            jq . outputs.json
+            exit 1
+          fi
+          
+          # Sanitize values (remove any special characters)
+          APP_NAME=$(echo "$APP_NAME" | tr -cd '[:alnum:]-_')
+          RG_NAME=$(echo "$RG_NAME" | tr -cd '[:alnum:]-_')
+          API_URL=$(echo "$API_URL" | tr -cd '[:alnum:]:/.')
           
           echo "webapp_name=${APP_NAME}" >> $GITHUB_OUTPUT
           echo "resource_group=${RG_NAME}" >> $GITHUB_OUTPUT
           echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
           
-          echo "Verified outputs:"
+          echo "✅ Verified outputs:"
           echo "APP: ${APP_NAME}"
           echo "RG: ${RG_NAME}"
           echo "API: ${API_URL}"
