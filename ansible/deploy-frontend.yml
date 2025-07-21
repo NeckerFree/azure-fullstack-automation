@@ -5,7 +5,7 @@
   vars:
     frontend_src: "{{ frontend_src_dir | default('src/movie-analyst-ui') }}"
     node_version: "16-lts"  # Updated to Node.js 16
-    azure_api_version: "2023-01-01"  # Explicit API version
+    azure_api_version: "2025-04-01"  # Explicit API version
 
   tasks:
     # --- Validate source directory ---
