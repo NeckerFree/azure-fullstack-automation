@@ -1,14 +1,8 @@
 ---
-- name: Deploy Express.js Frontend to Azure App Service
+- name: Deploy Frontend to Azure App Service
   hosts: localhost
   connection: local
   vars:
-    # Variables received from workflow call
-    # - lb_api_url (required)
-    # - app_service_name (required)
-    # - resource_group_name (required)
-
-    # Internal variables
     frontend_src: "./src/movie-analyst-ui"
     node_version: "14-lts"
 
@@ -16,9 +10,9 @@
     - name: Validate required variables
       assert:
         that:
-          - lb_api_url is defined and lb_api_url != ""
-          - app_service_name is defined and app_service_name != ""
-          - resource_group_name is defined and resource_group_name != ""
+          - lb_api_url is defined
+          - app_service_name is defined
+          - resource_group_name is defined
         msg: "Required variables (lb_api_url, app_service_name, resource_group_name) must be provided"
 
     - name: Show deployment configuration
@@ -53,18 +47,12 @@
           linux_fx_version: "NODE|{{ node_version }}"
           app_settings:
             NODE_ENV: "production"
-            WEBSITES_PORT: 3030 # Matches your server.js default port
-            BACKEND_URL: "{{ lb_api_url }}:8080" # Injected directly as env var
+            WEBSITES_PORT: 3000
+            BACKEND_URL: "{{ lb_api_url }}:8080"
             WEBSITES_ENABLE_APP_SERVICE_STORAGE: "true"
           always_on: false
         deployment_source:
           package: "./frontend-deploy.zip"
-
-    - name: Configure startup command
-      azure.azcollection.azure_rm_webappconfiguration:
-        resource_group: "{{ resource_group_name }}"
-        name: "{{ app_service_name }}"
-        startup_file: "node server.js" # Directly starts your server.js
 
     - name: Verify deployment
       uri:
@@ -72,16 +60,12 @@
         return_content: yes
         status_code: 200
       register: deployment_check
-      until: deployment_check.status == 200
       retries: 5
       delay: 30
+      until: deployment_check.status == 200
       ignore_errors: yes
 
-    - name: Final deployment status
+    - name: Show deployment result
       debug:
-        msg: |
-          Frontend Deployment Result:
-          - URL: https://{{ app_service_name }}.azurewebsites.net
-          - Status: {% if deployment_check.status == 200 %}SUCCESS{% else %}FAILED{% endif %}
-          - Backend API: {{ lb_api_url }}:8080
-      failed_when: false
+        msg: "Frontend successfully deployed to https://{{ app_service_name }}.azurewebsites.net"
+      when: deployment_check.status == 200
