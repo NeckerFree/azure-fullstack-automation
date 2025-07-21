@@ -34,3 +34,11 @@ output "ssh_user" {
   value       = var.admin_username
   sensitive   = true
 }
+
+output "app_service_name" {
+  value = module.app-service.app_service_name
+}
+
+output "resource_group_name" {
+  value = local.resource_group_name
+}

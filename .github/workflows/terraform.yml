@@ -135,12 +135,12 @@ jobs:
             # ✅ Ejecuta y guarda el resultado de terraform output
                      # Get clean DB_HOST - Ultimate reliable method
             DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
-            echo "Extracted DB_HOST='$DB_HOST'"
+            # echo "Extracted DB_HOST='$DB_HOST'"
             
             # Fallback if raw output fails
             if [ -z "$DB_HOST" ]; then
               DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
-              echo "Fallback extracted DB_HOST='$DB_HOST'"
+              # echo "Fallback extracted DB_HOST='$DB_HOST'"
             fi
 
             # Final validation
@@ -165,12 +165,12 @@ jobs:
 
           # Get clean DB_HOST - Ultimate reliable method
           DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
-          echo "Extracted DB_HOST='$DB_HOST'"
+          # echo "Extracted DB_HOST='$DB_HOST'"
           
           # Fallback if raw output fails
           if [ -z "$DB_HOST" ]; then
             DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
-            echo "Fallback extracted DB_HOST='$DB_HOST'"
+            # echo "Fallback extracted DB_HOST='$DB_HOST'"
           fi
 
           # Final validation
@@ -189,10 +189,31 @@ jobs:
           DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
           DB_NAME="movie_analyst"
 
-          echo "=== Final Variables ==="
-          echo "DB_HOST: $DB_HOST"
-          echo "JUMP_HOST: $JUMP_HOST"
-          echo "JUMP_USER: $JUMP_USER"
+          # echo "=== Final Variables ==="
+          # echo "DB_HOST: $DB_HOST"
+          # echo "JUMP_HOST: $JUMP_HOST"
+          # echo "JUMP_USER: $JUMP_USER"
 
           ./ansible/deploy-api-jumpbox-to-vms.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
                         
+      # ... (previous steps remain the same) ...
+
+      - name: 🎨 Deploy Frontend
+        id: deploy_frontend
+        run: |
+          chmod +x ./ansible/deploy-frontend.yml
+          # Extract required values from Terraform outputs
+          LB_API_URL=$(terraform -chdir=infra output -raw lb_api_url)
+          APP_SERVICE_NAME=$(terraform -chdir=infra output -raw app_service_name)
+          RESOURCE_GROUP=$(terraform -chdir=infra output -raw resource_group_name)
+          
+          echo "Extracted values:"
+          echo "LB_API_URL: $LB_API_URL"
+          echo "APP_SERVICE_NAME: $APP_SERVICE_NAME"
+          echo "RESOURCE_GROUP: $RESOURCE_GROUP"
+
+          # Run Ansible playbook with extracted values
+          ansible-playbook ./ansible/deploy-frontend.yml \
+            -e "lb_api_url=$LB_API_URL" \
+            -e "app_service_name=$APP_SERVICE_NAME" \
+            -e "resource_group_name=$RESOURCE_GROUP"

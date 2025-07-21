@@ -92,6 +92,24 @@
       args:
         chdir: "{{ app_path }}"
 
+    - name: 🛠️ Run database connectivity test
+      command: >
+        DB_HOST={{ db_host }} DB_USER={{ db_user }} 
+        DB_PASS={{ db_password }} DB_NAME={{ db_name }} 
+        node db-test.js
+      args:
+        chdir: "{{ app_path }}"
+      register: db_test_result
+      ignore_errors: yes
+
+    - name: Show database test results
+      debug:
+        var: db_test_result
+
+    - name: Fail if database test failed
+      fail:
+        msg: "Database connectivity test failed"
+      when: db_test_result.rc != 0
     - name: Stop movie-api service before running tests
       systemd:
         name: movie-api
