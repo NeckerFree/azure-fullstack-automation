@@ -45,8 +45,3 @@ output "resource_group_name" {
   sensitive = false
 }
 
-output "lb_api_url" {
-  value       = "http://${azurerm_public_ip.example.ip_address}" # Or your actual LB URL
-  description = "Backend API URL"
-  sensitive   = false
-}
