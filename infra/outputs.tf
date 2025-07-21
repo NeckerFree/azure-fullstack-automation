@@ -31,8 +31,6 @@ output "ssh_user" {
   sensitive   = true
 }
 
-
-*******************
 output "app_service_name" {
   value     = module.app-service.app_service_name
   sensitive = false
