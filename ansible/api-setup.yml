@@ -92,10 +92,11 @@
       args:
         chdir: "{{ app_path }}"
 
-    # - name: Stop movie-api before running tests
-    #   systemd:
-    #     name: movie-api
-    #     state: stopped
+    - name: Stop movie-api service before running tests
+      systemd:
+        name: movie-api
+        state: stopped
+      ignore_errors: yes  # In case service doesn't exist yet
 
     - name: Deploy systemd service
       template:
@@ -110,7 +111,20 @@
       command: npm test
       args:
         chdir: "{{ app_path }}"
-        
+      register: test_results
+      ignore_errors: yes  # Continue even if tests fail to ensure service is restarted
+
+    - name: Show test results
+      debug:
+        var: test_results
+
+    - name: Ensure movie-api service is running after tests
+      systemd:
+        name: movie-api
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
   handlers:
     - name: restart movie-api
       systemd:
