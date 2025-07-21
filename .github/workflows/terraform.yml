@@ -197,6 +197,20 @@ jobs:
           ./ansible/deploy-api-jumpbox-to-vms.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
                         
       # ... (previous steps remain the same) ...
+      - name: Get Terraform outputs
+        id: tf
+        run: |
+          echo "webapp_name=$(terraform output -raw app_service_name)" >> $GITHUB_OUTPUT
+          echo "resource_group=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+          echo "api_url=$(terraform output -raw lb_api_url)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Run Ansible
+        run: |
+          ansible-playbook deploy.yml \
+            -e "app_service_name=${{ steps.tf.outputs.webapp_name }}" \
+            -e "resource_group_name=${{ steps.tf.outputs.resource_group }}" \
+            -e "lb_api_url=${{ steps.tf.outputs.api_url }}"
 
       - name: 🎨 Deploy Frontend
         id: deploy_frontend
