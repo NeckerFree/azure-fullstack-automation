@@ -36,9 +36,11 @@ output "ssh_user" {
 }
 
 output "app_service_name" {
-  value = module.app-service.app_service_name
+  value     = module.app-service.app_service_name
+  sensitive = false
 }
 
 output "resource_group_name" {
-  value = local.resource_group_name
+  value     = local.resource_group_name
+  sensitive = false
 }
