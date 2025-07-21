@@ -3,10 +3,20 @@
   hosts: localhost
   connection: local
   vars:
-    frontend_src: "./src/movie-analyst-ui"
+    frontend_src: "{{ github_workspace }}/src/movie-analyst-ui"
     node_version: "14-lts"
 
   tasks:
+    - name: Verify frontend directory exists
+      stat:
+        path: "{{ frontend_src }}"
+      register: frontend_dir
+
+    - name: Fail if frontend directory missing
+      fail:
+        msg: "Frontend source directory not found at {{ frontend_src }}"
+      when: not frontend_dir.stat.exists
+
     - name: Validate required variables
       assert:
         that:
