@@ -194,5 +194,5 @@ jobs:
           echo "JUMP_HOST: $JUMP_HOST"
           echo "JUMP_USER: $JUMP_USER"
 
-          ./ansible/deploy-api-to-jumpbox.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
+          ./ansible/deploy-api-jumpbox-to-vms.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
                         
