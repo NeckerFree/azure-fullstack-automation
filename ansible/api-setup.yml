@@ -79,15 +79,13 @@
         owner: "{{ admin_user }}"
         group: "{{ admin_user }}"
 
-    - name: Synchronize API code from localhost to remote
-      ansible.posix.synchronize:
+    - name: Copy API code
+      copy:
         src: "{{ app_path }}/"
         dest: "{{ app_path }}"
-        recursive: yes
-        rsync_opts:
-          - "--exclude=node_modules"
-          - "--rsh=ssh -i /home/{{ admin_user }}/.ssh/vm_ssh_key -o StrictHostKeyChecking=no"
-      delegate_to: localhost
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0755"
 
     - name: 📦 Install dependencies with npm ci
       command: npm ci
