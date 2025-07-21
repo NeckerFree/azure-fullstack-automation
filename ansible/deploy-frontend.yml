@@ -3,23 +3,17 @@
   hosts: localhost
   connection: local
   vars:
-    app_service_name: "{{ lookup('env', 'APP_SERVICE_NAME') }}"
-    resource_group_name: "{{ lookup('env', 'RESOURCE_GROUP_NAME') }}"
-    lb_api_url: "{{ lookup('env', 'LB_API_URL') }}"
     node_version: "16-lts"
 
   tasks:
-    - name: Validate environment variables
-      fail:
-        msg: |
-          Missing required environment variables!
-          - APP_SERVICE_NAME: {{ lookup('env', 'APP_SERVICE_NAME') }}
-          - RESOURCE_GROUP_NAME: {{ lookup('env', 'RESOURCE_GROUP_NAME') }}
-          - LB_API_URL: {{ lookup('env', 'LB_API_URL') }}
-      when: >
-        not lookup('env', 'APP_SERVICE_NAME') or
-        not lookup('env', 'RESOURCE_GROUP_NAME') or
-        not lookup('env', 'LB_API_URL')
+    - name: Validate required variables
+      assert:
+        that:
+          - app_service_name is defined
+          - resource_group_name is defined
+          - lb_api_url is defined
+        fail_msg: "Missing required variables from GitHub Actions"
+        success_msg: "All required variables present"
 
     - name: Show deployment configuration
       debug:
