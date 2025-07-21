@@ -80,8 +80,7 @@ ssh -i "${SSH_KEY_LOCAL}" "${JUMP_USER}@${JUMP_HOST}" <<EOF
   -e "db_user='${DB_USER}'" \
   -e "db_password='${DB_PASS}'" \
   -e "db_name='${DB_NAME}'" \
-  -e "admin_user='${JUMP_USER}'"
-  admin_user 
+  -e "admin_user='${JUMP_USER}'" 
 EOF
 
 

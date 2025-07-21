@@ -159,9 +159,9 @@ jobs:
 
             ./ansible/deploy-db-from-local.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
                    
-      - name: 🧩 Run Script Deploy API to Jumpbox
+      - name: 🧩 Run Script Deploy API from Jumpbox to VMs
         run: |
-          chmod +x ./ansible/deploy-api-to-jumpbox.sh
+          chmod +x ./ansible/deploy-api-jumpbox-to-vms.sh
 
           # Get clean DB_HOST - Ultimate reliable method
           DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
