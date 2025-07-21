@@ -1,12 +1,13 @@
 ---
-- name: Deploy Frontend to Azure App Service
+- name: Deploy Frontend to Existing Azure App Service
   hosts: localhost
   connection: local
   vars:
     frontend_src: "{{ frontend_src_dir | default('src/movie-analyst-ui') }}"
-    node_version: "14-lts"
+    node_version: "14-lts"  # Node.js version
 
   tasks:
+    # --- Validate source directory ---
     - name: Verify frontend directory exists
       stat:
         path: "{{ frontend_src }}"
@@ -17,17 +18,18 @@
         msg: "Frontend source directory not found at {{ frontend_src }}"
       when: not frontend_dir.stat.exists
 
+    # --- Show deployment info ---
     - name: Show deployment configuration
       debug:
         msg: |
-          Deployment Configuration:
-          - Backend API URL: {{ lb_api_url }}:8080
-          - App Service: {{ app_service_name }}
+          Deployment Target:
+          - WebApp: {{ app_service_name }}
           - Resource Group: {{ resource_group_name }}
-          - Source Directory: {{ frontend_src }}
+          - Backend API: {{ lb_api_url }}:8080
 
-    - name: Install qa dependencies
-      command: npm install --qa
+    # --- Build frontend ---
+    - name: Install dependencies
+      command: npm install
       args:
         chdir: "{{ frontend_src }}"
 
@@ -37,27 +39,41 @@
         dest: "./frontend-deploy.zip"
         format: zip
         exclude_path:
-          - "{{ frontend_src }}/node_modules/.cache/"
-          - "{{ frontend_src }}/test/"
-          - "{{ frontend_src }}/.git/"
+          - "node_modules/.cache/"
+          - "test/"
+          - ".git/"
 
-    - name: Deploy to Azure App Service
-      azure.azcollection.azure_rm_webapp:
-        resource_group: "{{ resource_group_name }}"
-        name: "{{ app_service_name }}"
-        state: present
-        configuration:
-          linux_fx_version: "NODE|{{ node_version }}"
-          app_settings:
-            NODE_ENV: "qa"
-            WEBSITES_PORT: 3000
-            BACKEND_URL: "{{ lb_api_url }}:8080"
-            WEBSITES_ENABLE_APP_SERVICE_STORAGE: "true"
-          always_on: false
-        deployment_source:
-          package: "./frontend-deploy.zip"
+    # --- Configure & Deploy (Azure CLI) ---
+    - name: Update Node.js runtime version
+      command: |
+        az webapp config set \
+          --resource-group "{{ resource_group_name }}" \
+          --name "{{ app_service_name }}" \
+          --linux-fx-version "NODE|{{ node_version }}" \
+          --output none
 
-    - name: Verify deployment
+    - name: Set app settings (environment variables)
+      command: |
+        az webapp config appsettings set \
+          --resource-group "{{ resource_group_name }}" \
+          --name "{{ app_service_name }}" \
+          --settings \
+            NODE_ENV=production \
+            WEBSITES_PORT=3000 \
+            BACKEND_URL="{{ lb_api_url }}:8080" \
+            WEBSITES_ENABLE_APP_SERVICE_STORAGE=true \
+          --output none
+
+    - name: Deploy ZIP package
+      command: |
+        az webapp deployment source config-zip \
+          --resource-group "{{ resource_group_name }}" \
+          --name "{{ app_service_name }}" \
+          --src "./frontend-deploy.zip" \
+          --output none
+
+    # --- Verify deployment ---
+    - name: Check if application is reachable
       uri:
         url: "https://{{ app_service_name }}.azurewebsites.net"
         return_content: yes
@@ -70,5 +86,5 @@
 
     - name: Show deployment result
       debug:
-        msg: "Frontend successfully deployed to https://{{ app_service_name }}.azurewebsites.net"
+        msg: "✅ Frontend deployed successfully: https://{{ app_service_name }}.azurewebsites.net"
       when: deployment_check.status == 200
