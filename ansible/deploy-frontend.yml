@@ -1,35 +1,21 @@
 ---
-- name: Deploy Frontend to Existing Azure App Service
+- name: Deploy Frontend to Azure App Service
   hosts: localhost
   connection: local
   vars:
     frontend_src: "{{ frontend_src_dir | default('src/movie-analyst-ui') }}"
-    node_version: "16-lts"  # Updated to Node.js 16
-    azure_api_version: "2025-04-01"  # Explicit API version
-
+    node_version: "16-lts"
+    
   tasks:
-    # --- Validate source directory ---
-    - name: Verify frontend directory exists
-      stat:
-        path: "{{ frontend_src }}"
-      register: frontend_dir
-
-    - name: Fail if frontend directory missing
-      fail:
-        msg: "Frontend source directory not found at {{ frontend_src }}"
-      when: not frontend_dir.stat.exists
-
-    # --- Show deployment info ---
-    - name: Show deployment configuration
+    # --- Debug variables first ---
+    - name: Verify Azure resource variables
       debug:
         msg: |
-          Deployment Target:
-          - WebApp: {{ app_service_name }}
-          - Resource Group: {{ resource_group_name }}
-          - Backend API: {{ lb_api_url }}:8080
-          - Node.js Version: {{ node_version }}
+          RESOURCE_GROUP: {{ resource_group_name }}
+          APP_NAME: {{ app_service_name }}
+          BACKEND_URL: {{ lb_api_url }}
 
-    # --- Build frontend ---
+    # --- Build steps ---
     - name: Install dependencies
       command: npm install
       args:
@@ -45,43 +31,61 @@
           - "test/"
           - ".git/"
 
-    # --- Configure & Deploy (Azure CLI) ---
-    - name: Update Node.js runtime version
-      command: |
-        az webapp config set \
-          --resource-group "{{ resource_group_name }}" \
-          --name "{{ app_service_name }}" \
-          --linux-fx-version "NODE|{{ node_version }}" \
-          --output none
+    # --- Azure Deployment with API Version Fix ---
+    - name: Get latest supported API version
+      command: >
+        az provider show --namespace Microsoft.Web
+        --query "resourceTypes[?resourceType=='sites'].apiVersions[0]"
+        --output tsv
+      register: api_version_check
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Set actual API version
+      set_fact:
+        azure_api_version: >-
+          {% if api_version_check is succeeded %}
+            {{ api_version_check.stdout }}
+          {% else %}
+            2024-11-01  # Fallback version
+          {% endif %}
+
+    - name: Update Node.js runtime
+      command: >
+        az webapp config set
+        --resource-group "{{ resource_group_name }}"
+        --name "{{ app_service_name }}"
+        --linux-fx-version "NODE|{{ node_version }}"
+        --output none
       environment:
         AZURE_CLI_DEFAULT_API_VERSION: "{{ azure_api_version }}"
 
     - name: Set app settings
-      command: |
-        az webapp config appsettings set \
-          --resource-group "{{ resource_group_name }}" \
-          --name "{{ app_service_name }}" \
-          --settings \
-            NODE_ENV=production \
-            WEBSITES_PORT=3000 \
-            BACKEND_URL="{{ lb_api_url }}:8080" \
-            WEBSITES_ENABLE_APP_SERVICE_STORAGE=true \
-          --output none
+      command: >
+        az webapp config appsettings set
+        --resource-group "{{ resource_group_name }}"
+        --name "{{ app_service_name }}"
+        --settings >-
+          NODE_ENV=production
+          WEBSITES_PORT=3000
+          BACKEND_URL="{{ lb_api_url }}:8080"
+          WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
+        --output none
       environment:
         AZURE_CLI_DEFAULT_API_VERSION: "{{ azure_api_version }}"
 
     - name: Deploy ZIP package
-      command: |
-        az webapp deployment source config-zip \
-          --resource-group "{{ resource_group_name }}" \
-          --name "{{ app_service_name }}" \
-          --src "./frontend-deploy.zip" \
-          --output none
+      command: >
+        az webapp deployment source config-zip
+        --resource-group "{{ resource_group_name }}"
+        --name "{{ app_service_name }}"
+        --src "./frontend-deploy.zip"
+        --output none
       environment:
         AZURE_CLI_DEFAULT_API_VERSION: "{{ azure_api_version }}"
 
-    # --- Verify deployment ---
-    - name: Check if application is reachable
+    # --- Verification ---
+    - name: Verify deployment
       uri:
         url: "https://{{ app_service_name }}.azurewebsites.net"
         return_content: yes
@@ -94,5 +98,5 @@
 
     - name: Show deployment result
       debug:
-        msg: "✅ Frontend deployed successfully: https://{{ app_service_name }}.azurewebsites.net"
+        msg: "✅ Successfully deployed to https://{{ app_service_name }}.azurewebsites.net"
       when: deployment_check.status == 200
