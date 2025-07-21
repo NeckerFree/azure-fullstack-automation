@@ -11,7 +11,7 @@ output "backend_vm_ips" {
 # Output: URL del Load Balancer para acceder a la API
 output "lb_api_url" {
   description = "URL pública para acceder a la API a través del Load Balancer"
-  value       = "http://${azurerm_public_ip.lb.ip_address}" # Correct reference
+  value       = "http://${azurerm_public_ip.lb.ip_address}"
 }
 
 output "control_node_public_ip" {

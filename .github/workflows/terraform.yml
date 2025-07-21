@@ -200,19 +200,19 @@ jobs:
         id: tf
         run: |
           cd infra  # Change to your Terraform directory
-          APP_NAME=$(terraform output -raw app_service_name)
-          RG_NAME=$(terraform output -raw resource_group_name)
+          # Get and sanitize outputs
+          APP_NAME=$(terraform output -raw app_service_name | tr -d '\n' | sed 's/::debug::.*//')
+          RG_NAME=$(terraform output -raw resource_group_name | tr -d '\n' | sed 's/::debug::.*//')
+          API_URL=$(terraform output -raw lb_api_url | tr -d '\n' | sed 's/::debug::.*//')
           
-          # Sanitize outputs (remove any debug info)
-          APP_NAME=$(echo "$APP_NAME" | head -n1 | sed 's/::debug::.*//')
-          RG_NAME=$(echo "$RG_NAME" | head -n1 | sed 's/::debug::.*//')
+          echo "webapp_name=${APP_NAME}" >> $GITHUB_OUTPUT
+          echo "resource_group=${RG_NAME}" >> $GITHUB_OUTPUT
+          echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
           
-          echo "Clean outputs:"
-          echo "APP: $APP_NAME"
-          echo "RG: $RG_NAME"
-          
-          echo "webapp_name=$APP_NAME" >> $GITHUB_OUTPUT
-          echo "resource_group=$RG_NAME" >> $GITHUB_OUTPUT
+          echo "Sanitized outputs:"
+          echo "APP: ${APP_NAME}"
+          echo "RG: ${RG_NAME}"
+          echo "API: ${API_URL}"
         shell: bash
 
       - name: Deploy Frontend
@@ -220,4 +220,5 @@ jobs:
           ansible-playbook ./ansible/deploy-frontend.yml \
             -e "app_service_name=${{ steps.tf.outputs.webapp_name }}" \
             -e "resource_group_name=${{ steps.tf.outputs.resource_group }}" \
+            -e "lb_api_url=${{ steps.tf.outputs.api_url }}" \
             -e "frontend_src_dir=$GITHUB_WORKSPACE/src/movie-analyst-ui"

@@ -20,7 +20,7 @@ output "mysql_database_name" {
 
 output "lb_api_url" {
   value     = module.load-balancer.lb_api_url
-  sensitive = true
+  sensitive = false
 }
 
 output "control_node_public_ip" {
@@ -43,4 +43,10 @@ output "app_service_name" {
 output "resource_group_name" {
   value     = local.resource_group_name
   sensitive = false
+}
+
+output "lb_api_url" {
+  value       = "http://${azurerm_public_ip.example.ip_address}" # Or your actual LB URL
+  description = "Backend API URL"
+  sensitive   = false
 }
