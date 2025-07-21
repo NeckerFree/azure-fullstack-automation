@@ -3,52 +3,36 @@
   hosts: localhost
   connection: local
   vars:
-    frontend_src: "{{ frontend_src_dir | default('src/movie-analyst-ui') }}"
+    app_service_name: ""
+    resource_group_name: ""
+    lb_api_url: ""
     node_version: "16-lts"
-    
+
   tasks:
-    # --- Debug variables first ---
-    - name: Verify Azure resource variables
+    - name: Validate variables
+      fail:
+        msg: |
+          Invalid variables detected!
+          - App Service: {{ app_service_name }}
+          - Resource Group: {{ resource_group_name }}
+          - API URL: {{ lb_api_url }}
+          Check GitHub Actions workflow for proper output handling.
+      when: >
+        not app_service_name or
+        not resource_group_name or
+        not lb_api_url or
+        '[' in app_service_name or
+        '[' in resource_group_name or
+        '[' in lb_api_url
+
+    - name: Show deployment configuration
       debug:
         msg: |
-          RESOURCE_GROUP: {{ resource_group_name }}
-          APP_NAME: {{ app_service_name }}
-          BACKEND_URL: {{ lb_api_url }}
-
-    # --- Build steps ---
-    - name: Install dependencies
-      command: npm install
-      args:
-        chdir: "{{ frontend_src }}"
-
-    - name: Zip frontend application
-      archive:
-        path: "{{ frontend_src }}/"
-        dest: "./frontend-deploy.zip"
-        format: zip
-        exclude_path:
-          - "node_modules/.cache/"
-          - "test/"
-          - ".git/"
-
-    # --- Azure Deployment with API Version Fix ---
-    - name: Get latest supported API version
-      command: >
-        az provider show --namespace Microsoft.Web
-        --query "resourceTypes[?resourceType=='sites'].apiVersions[0]"
-        --output tsv
-      register: api_version_check
-      changed_when: false
-      ignore_errors: yes
-
-    - name: Set actual API version
-      set_fact:
-        azure_api_version: >-
-          {% if api_version_check is succeeded %}
-            {{ api_version_check.stdout }}
-          {% else %}
-            2024-11-01  # Fallback version
-          {% endif %}
+          Deployment Configuration:
+          - App Service: {{ app_service_name }}
+          - Resource Group: {{ resource_group_name }}
+          - API URL: {{ lb_api_url }}
+          - Node Version: {{ node_version }}
 
     - name: Update Node.js runtime
       command: >
@@ -58,7 +42,7 @@
         --linux-fx-version "NODE|{{ node_version }}"
         --output none
       environment:
-        AZURE_CLI_DEFAULT_API_VERSION: "{{ azure_api_version }}"
+        AZURE_CLI_DEFAULT_API_VERSION: "2025-04-01"
 
     - name: Set app settings
       command: >

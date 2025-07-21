@@ -200,15 +200,13 @@ jobs:
         id: tf
         run: |
           cd infra
-          # Get raw outputs first
-          APP_NAME=$(terraform output app_service_name)
-          RG_NAME=$(terraform output resource_group_name)
-          API_URL=$(terraform output lb_api_url)
+          # Get all outputs as JSON
+          terraform output -json > outputs.json
           
-          # Extract just the values (remove Terraform formatting)
-          APP_NAME=$(echo "$APP_NAME" | sed 's/.*= "\(.*\)"/\1/' | tr -d '\n" ')
-          RG_NAME=$(echo "$RG_NAME" | sed 's/.*= "\(.*\)"/\1/' | tr -d '\n" ')
-          API_URL=$(echo "$API_URL" | sed 's/.*= "\(.*\)"/\1/' | tr -d '\n" ')
+          # Parse JSON and set outputs
+          APP_NAME=$(jq -r '.app_service_name.value' outputs.json)
+          RG_NAME=$(jq -r '.resource_group_name.value' outputs.json)
+          API_URL=$(jq -r '.lb_api_url.value' outputs.json)
           
           echo "webapp_name=${APP_NAME}" >> $GITHUB_OUTPUT
           echo "resource_group=${RG_NAME}" >> $GITHUB_OUTPUT
