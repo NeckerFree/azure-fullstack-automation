@@ -3,7 +3,7 @@
   hosts: localhost
   connection: local
   vars:
-    frontend_src: "{{ github_workspace }}/src/movie-analyst-ui"
+    frontend_src: "{{ frontend_src_dir | default('src/movie-analyst-ui') }}"
     node_version: "14-lts"
 
   tasks:
@@ -17,14 +17,6 @@
         msg: "Frontend source directory not found at {{ frontend_src }}"
       when: not frontend_dir.stat.exists
 
-    - name: Validate required variables
-      assert:
-        that:
-          - lb_api_url is defined
-          - app_service_name is defined
-          - resource_group_name is defined
-        msg: "Required variables (lb_api_url, app_service_name, resource_group_name) must be provided"
-
     - name: Show deployment configuration
       debug:
         msg: |
@@ -32,6 +24,7 @@
           - Backend API URL: {{ lb_api_url }}:8080
           - App Service: {{ app_service_name }}
           - Resource Group: {{ resource_group_name }}
+          - Source Directory: {{ frontend_src }}
 
     - name: Install qa dependencies
       command: npm install --qa

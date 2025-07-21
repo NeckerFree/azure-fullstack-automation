@@ -202,19 +202,19 @@ jobs:
         id: deploy_frontend
         run: |
           chmod +x ./ansible/deploy-frontend.yml
-          # Extract required values from Terraform outputs
-          # Extract and clean Terraform outputs
-          LB_API_URL=$(terraform -chdir=infra output -raw lb_api_url | grep -Eo 'http://[^[:space:]]+' | head -n1)
-          APP_SERVICE_NAME=$(terraform -chdir=infra output -raw app_service_name | grep -Eo '^[^[:space:]]+' | head -n1)
-          RESOURCE_GROUP=$(terraform -chdir=infra output -raw resource_group_name | grep -Eo '^[^[:space:]]+' | head -n1)
+          # Clean Terraform outputs
+          LB_API_URL=$(terraform -chdir=infra output -raw lb_api_url | head -n1 | sed 's/::debug::.*//')
+          APP_SERVICE_NAME=$(terraform -chdir=infra output -raw app_service_name | head -n1)
+          RESOURCE_GROUP=$(terraform -chdir=infra output -raw resource_group_name | head -n1)
           
-          echo "Extracted values:"
+          echo "Clean values:"
           echo "LB_API_URL: $LB_API_URL"
           echo "APP_SERVICE_NAME: $APP_SERVICE_NAME"
           echo "RESOURCE_GROUP: $RESOURCE_GROUP"
 
-          # Run Ansible playbook with extracted values
+          # Run Ansible playbook with all required variables
           ansible-playbook ./ansible/deploy-frontend.yml \
             -e "lb_api_url=$LB_API_URL" \
             -e "app_service_name=$APP_SERVICE_NAME" \
-            -e "resource_group_name=$RESOURCE_GROUP"
+            -e "resource_group_name=$RESOURCE_GROUP" \
+            -e "frontend_src_dir=$GITHUB_WORKSPACE/src/movie-analyst-ui"
