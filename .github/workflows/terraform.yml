@@ -195,40 +195,31 @@ jobs:
           # echo "JUMP_USER: $JUMP_USER"
 
           ./ansible/deploy-api-jumpbox-to-vms.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
-                        
-      # ... (previous steps remain the same) ...
+ 
       - name: Get Terraform outputs
         id: tf
         run: |
-          echo "webapp_name=$(terraform output -raw app_service_name)" >> $GITHUB_OUTPUT
-          echo "resource_group=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
-          echo "api_url=$(terraform output -raw lb_api_url)" >> $GITHUB_OUTPUT
+          # Get and sanitize outputs
+          APP_NAME=$(terraform -chdir=infra output -raw app_service_name | tr -d '\n')
+          RG_NAME=$(terraform -chdir=infra output -raw resource_group_name | tr -d '\n')
+          API_URL=$(terraform -chdir=infra output -raw lb_api_url | tr -d '\n')
+          
+          # Verify outputs
+          echo "Sanitized outputs:"
+          echo "APP: $APP_NAME"
+          echo "RG: $RG_NAME"
+          echo "API: $API_URL"
+          
+          # Set outputs
+          echo "webapp_name=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "resource_group=$RG_NAME" >> $GITHUB_OUTPUT
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Run Ansible
+      - name: Deploy Frontend
         run: |
-          ansible-playbook deploy.yml \
+          ansible-playbook ./ansible/deploy-frontend.yml \
             -e "app_service_name=${{ steps.tf.outputs.webapp_name }}" \
             -e "resource_group_name=${{ steps.tf.outputs.resource_group }}" \
-            -e "lb_api_url=${{ steps.tf.outputs.api_url }}"
-
-      - name: 🎨 Deploy Frontend
-        id: deploy_frontend
-        run: |
-          chmod +x ./ansible/deploy-frontend.yml
-          # Clean Terraform outputs
-          LB_API_URL=$(terraform -chdir=infra output -raw lb_api_url | head -n1 | sed 's/::debug::.*//')
-          APP_SERVICE_NAME=$(terraform -chdir=infra output -raw app_service_name | head -n1)
-          RESOURCE_GROUP=$(terraform -chdir=infra output -raw resource_group_name | head -n1)
-          
-          echo "Clean values:"
-          echo "LB_API_URL: $LB_API_URL"
-          echo "APP_SERVICE_NAME: $APP_SERVICE_NAME"
-          echo "RESOURCE_GROUP: $RESOURCE_GROUP"
-
-          # Run Ansible playbook with all required variables
-          ansible-playbook ./ansible/deploy-frontend.yml \
-            -e "lb_api_url=$LB_API_URL" \
-            -e "app_service_name=$APP_SERVICE_NAME" \
-            -e "resource_group_name=$RESOURCE_GROUP" \
+            -e "lb_api_url=${{ steps.tf.outputs.api_url }}" \
             -e "frontend_src_dir=$GITHUB_WORKSPACE/src/movie-analyst-ui"
