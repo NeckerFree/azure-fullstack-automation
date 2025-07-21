@@ -203,9 +203,9 @@ jobs:
         run: |
           chmod +x ./ansible/deploy-frontend.yml
           # Extract required values from Terraform outputs
-          LB_API_URL=$(terraform -chdir=infra output -raw lb_api_url)
-          APP_SERVICE_NAME=$(terraform -chdir=infra output -raw app_service_name)
-          RESOURCE_GROUP=$(terraform -chdir=infra output -raw resource_group_name)
+          LB_API_URL=$(terraform -chdir=infra output -raw lb_api_url | grep -Eo 'http://[^[:space:]]+' | head -n1)
+          APP_SERVICE_NAME=$(terraform -chdir=infra output -raw app_service_name | head -n1)
+          RESOURCE_GROUP=$(terraform -chdir=infra output -raw resource_group_name | head -n1)
           
           echo "Extracted values:"
           echo "LB_API_URL: $LB_API_URL"

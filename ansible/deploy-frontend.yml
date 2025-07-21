@@ -23,8 +23,8 @@
           - App Service: {{ app_service_name }}
           - Resource Group: {{ resource_group_name }}
 
-    - name: Install production dependencies
-      command: npm install --production
+    - name: Install qa dependencies
+      command: npm install --qa
       args:
         chdir: "{{ frontend_src }}"
 
@@ -46,7 +46,7 @@
         configuration:
           linux_fx_version: "NODE|{{ node_version }}"
           app_settings:
-            NODE_ENV: "production"
+            NODE_ENV: "qa"
             WEBSITES_PORT: 3000
             BACKEND_URL: "{{ lb_api_url }}:8080"
             WEBSITES_ENABLE_APP_SERVICE_STORAGE: "true"
