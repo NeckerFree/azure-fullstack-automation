@@ -4,7 +4,8 @@
   connection: local
   vars:
     frontend_src: "{{ frontend_src_dir | default('src/movie-analyst-ui') }}"
-    node_version: "14-lts"  # Node.js version
+    node_version: "16-lts"  # Updated to Node.js 16
+    azure_api_version: "2023-01-01"  # Explicit API version
 
   tasks:
     # --- Validate source directory ---
@@ -26,6 +27,7 @@
           - WebApp: {{ app_service_name }}
           - Resource Group: {{ resource_group_name }}
           - Backend API: {{ lb_api_url }}:8080
+          - Node.js Version: {{ node_version }}
 
     # --- Build frontend ---
     - name: Install dependencies
@@ -51,8 +53,10 @@
           --name "{{ app_service_name }}" \
           --linux-fx-version "NODE|{{ node_version }}" \
           --output none
+      environment:
+        AZURE_CLI_DEFAULT_API_VERSION: "{{ azure_api_version }}"
 
-    - name: Set app settings (environment variables)
+    - name: Set app settings
       command: |
         az webapp config appsettings set \
           --resource-group "{{ resource_group_name }}" \
@@ -63,6 +67,8 @@
             BACKEND_URL="{{ lb_api_url }}:8080" \
             WEBSITES_ENABLE_APP_SERVICE_STORAGE=true \
           --output none
+      environment:
+        AZURE_CLI_DEFAULT_API_VERSION: "{{ azure_api_version }}"
 
     - name: Deploy ZIP package
       command: |
@@ -71,6 +77,8 @@
           --name "{{ app_service_name }}" \
           --src "./frontend-deploy.zip" \
           --output none
+      environment:
+        AZURE_CLI_DEFAULT_API_VERSION: "{{ azure_api_version }}"
 
     # --- Verify deployment ---
     - name: Check if application is reachable
