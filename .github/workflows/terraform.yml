@@ -106,10 +106,15 @@ jobs:
         if: github.ref == 'refs/heads/simplify'
         run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
 
+      # - name: 📄 Generate Terraform outputs
+      #   run: |
+      #     terraform -chdir=infra output -json > infra/tf_outputs.json
+      #     echo "✅ tf_outputs.json generated"
+      
       - name: 📄 Generate Terraform outputs
         run: |
-          terraform -chdir=infra output -json > infra/tf_outputs.json
-          echo "✅ tf_outputs.json generated"
+          "$TERRAFORM_CLI_PATH/terraform-bin" -chdir=infra output -json > infra/tf_outputs.json
+
 
       - name: 🐛 Debug Terraform outputs
         run: |
