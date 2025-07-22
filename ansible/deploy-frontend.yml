@@ -1,5 +1,5 @@
 ---
-- name: Deploy Frontend to Azure Web App
+- name: Deploy EJS Frontend to Azure Web App (Node.js)
   hosts: localhost
   connection: local
   gather_facts: no
@@ -7,10 +7,11 @@
     APP_SERVICE_NAME: "{{ lookup('env', 'APP_SERVICE_NAME') }}"
     RESOURCE_GROUP_NAME: "{{ lookup('env', 'RESOURCE_GROUP_NAME') }}"
     FRONTEND_PATH: "../src/movie-analyst-ui"
+    ZIP_PATH: "/tmp/frontend.zip"
     BACKEND_URL: "{{ lookup('env', 'LB_API_URL') }}"
 
   tasks:
-    - name: Enable Oryx build (SCM_DO_BUILD_DURING_DEPLOYMENT=true)
+    - name: Enable Oryx build
       shell: |
         az webapp config appsettings set \
           --resource-group {{ RESOURCE_GROUP_NAME }} \
@@ -23,10 +24,22 @@
         content: |
           BACKEND_URL={{ BACKEND_URL }}
 
-    - name: Deploy app folder to Azure Web App (modern Oryx build)
+    - name: Ensure zip is installed
+      package:
+        name: zip
+        state: present
+      become: yes
+
+    - name: Create zip package for deployment (excluding node_modules)
+      shell: |
+        zip -r {{ ZIP_PATH }} . -x "node_modules/*"
+      args:
+        chdir: "{{ FRONTEND_PATH }}"
+
+    - name: Deploy zip to Azure Web App using modern CLI
       shell: |
         az webapp deploy \
           --resource-group {{ RESOURCE_GROUP_NAME }} \
           --name {{ APP_SERVICE_NAME }} \
-          --src-path "{{ FRONTEND_PATH }}" \
-          --type code
+          --src-path {{ ZIP_PATH }} \
+          --type zip
