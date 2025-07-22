@@ -18,19 +18,13 @@
         state: present
       become: yes
 
-    - name: Install Node.js dependencies
-      shell: |
-        npm install
-      args:
-        chdir: "{{ FRONTEND_PATH }}"
-
-    - name: Set BACKEND_URL in .env file (optional)
+    - name: Set BACKEND_URL in .env file
       copy:
         dest: "{{ FRONTEND_PATH }}/.env"
         content: |
           BACKEND_URL={{ BACKEND_URL }}
 
-    - name: Create zip package for deployment
+    - name: Create zip package for deployment (excluding node_modules)
       shell: |
         zip -r {{ ZIP_PATH }} . -x "node_modules/*"
       args:
@@ -49,3 +43,10 @@
           --resource-group {{ RESOURCE_GROUP_NAME }} \
           --name {{ APP_SERVICE_NAME }} \
           --startup-file "npm start"
+
+    - name: Enable Oryx build by setting SCM_DO_BUILD_DURING_DEPLOYMENT=true
+      shell: |
+        az webapp config appsettings set \
+          --resource-group {{ RESOURCE_GROUP_NAME }} \
+          --name {{ APP_SERVICE_NAME }} \
+          --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
