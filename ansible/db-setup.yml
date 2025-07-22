@@ -3,7 +3,7 @@
   hosts: mysql_server
   become: yes
   vars:
-    mysql_script_path: "/home/adminuser/movie_db.sql"
+    mysql_script_path: "/home/{{ admin_user }}/movie_db.sql"
     remote_mysql_script_path: "/etc/ansible/mysql/movie_db.sql"
 
   tasks:
@@ -24,26 +24,66 @@
       loop:
         - { key: "DB_HOST", value: "{{ db_host }}" }
         - { key: "DB_USER", value: "{{ db_user }}" }
-        - { key: "DB_PASS", value: "{{ db_password }}" }
+        - { key: "DB_PASS", value: "{{ db_pass }}" }
         - { key: "DB_NAME", value: "{{ db_name }}" }
-      no_log: true
+      no_log: false
 
-    - name: Ensure MySQL scripts directory exists
+    - name: Ensure MySQL directory exists
       file:
-        path: "/etc/ansible/mysql"
+        path: /etc/ansible/mysql
         state: directory
+        owner: root
+        group: root
         mode: "0755"
 
     - name: Copy SQL script to MySQL directory
       copy:
-        src: "{{ mysql_script_path }}"
-        dest: "{{ remote_mysql_script_path }}"
+        src: "{{ playbook_dir }}/files/mysql/movie_db.sql"
+        dest: /etc/ansible/mysql/movie_db.sql
+        owner: root
+        group: root
         mode: "0644"
+
+
+    - name: Handle MySQL database creation
+      block:
+        - name: Attempt to create database
+          command: >
+            mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
+            -e "CREATE DATABASE IF NOT EXISTS {{ db_name }}; SELECT 'success' as status;"
+          register: create_db
+          no_log: false
+          ignore_errors: yes
+          changed_when: false  # We'll handle changes manually
+
+        - name: Check if MySQL database exists
+          command: >
+            mysql -h "{{ db_host }}" -u "{{ db_user }}" -p"{{ db_pass }}"
+            -e "SHOW DATABASES LIKE '{{ db_name }}';"
+          register: db_check
+          no_log: false
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Validate database creation
+          fail:
+            msg: "Failed to create database '{{ db_name }}'. Connection or permissions issue."
+          when: >
+            create_db is defined and db_check is defined and
+            ('success' not in (create_db.stdout | default(''))) and
+            ((db_check.stdout | default('')).find(db_name) == -1)
+          no_log: false
+
+      rescue:
+        - name: Display database creation error
+          debug:
+            msg: "Database creation error: {{ create_db.stderr | default('Unknown error') }}"
+          no_log: false
 
     - name: Load MySQL initialization script (run once)
       run_once: true
       shell: |
-        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} < {{ remote_mysql_script_path }}
+        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_pass }}' {{ db_name }} < {{ remote_mysql_script_path }}
       args:
         executable: /bin/bash
       changed_when: false
@@ -52,7 +92,7 @@
     - name: Verify database initialization
       run_once: true
       shell: |
-        mysql -h {{ db_host }} -u{{ db_user }} -p'{{ db_password }}' {{ db_name }} -e "SHOW TABLES;"
+        mysql -h "{{ db_host }}" -u"{{ db_user }}" -p"{{ db_pass }}" "{{ db_name }}" -e "SHOW TABLES;"
       register: db_check
       changed_when: false
       when: db_load_result.rc == 0
@@ -62,3 +102,12 @@
       fail:
         msg: "Database initialization failed with exit code {{ db_load_result.rc }}. Check the SQL script for errors."
       when: db_load_result.rc != 0 or db_check is skipped
+
+    - name: Validate that 'movies' table exists and has rows
+      run_once: true
+      shell: |
+        mysql -h "{{ db_host }}" -u"{{ db_user }}" -p"{{ db_pass }}" "{{ db_name }}" -e \
+        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='{{ db_name }}' AND table_name='movies'; \
+        SELECT COUNT(*) FROM movies;"
+      register: movies_table_check
+      changed_when: false

@@ -1,18 +1,13 @@
 <a name="readme-top"></a>
 
 <div align="center">
-  
-   # Azure Full Stack Automation
+  <img src="azure_logo.png" alt="Azure Cloud Logo" width="120" />
+  <h3><b>Cloud Web App Deployment on Azure</b></h3>
 </div>
-
-<!-- TABLE OF CONTENTS -->
 
 # 📗 Table of Contents
 
 - [📖 About the Project](#about-project)
-  - [🌦️ Cloud Diagram](#cloud-diagram)
-  - [🌦️ Azure Deployment](#azure-deployment)
-  - [🌦️ Estimated Cost](#estimated-cost)
   - [🛠 Built With](#built-with)
     - [Tech Stack](#tech-stack)
     - [Key Features](#key-features)
@@ -20,535 +15,281 @@
 - [💻 Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Setup](#setup)
-  - [Install](#install)
-  - [Usage](#usage)
-  - [Run tests](#run-tests)
+  - [Provision Infrastructure (Terraform)](#terraform)
+  - [Configure Services (Ansible)](#ansible)
   - [Deployment](#deployment)
+- [🔧 Customizing Variables](#custom-variables)
+- [☁️ Remote Terraform State in Azure](#️remote-terraform-state-in-azure)
 - [👥 Authors](#authors)
 - [🔭 Future Features](#future-features)
 - [🤝 Contributing](#contributing)
-- [⭐️ show your support](#support)
+- [⭐️ Show your support](#support)
 - [🙏 Acknowledgements](#acknowledgements)
 - [❓ FAQ](#faq)
 - [📝 License](#license)
 
-<!-- PROJECT DESCRIPTION -->
+---
 
-# 📖 Azure Full Stack Automation <a name="about-project"></a>
+# 📖 Azure Cloud Web App Deployment <a name="about-project"></a>
 
-**Azure Full Stack Automation** is a project to deploy a full stack application (frontend and backend) to Azure using Terraform for infrastructure provisioning, Ansible for configuration management, and CI/CD pipelines for automated deployment.
-
-## 🌦️ Cloud Diagram <a name="cloud-diagram"></a>
-![architecture diagram](https://github.com/user-attachments/assets/2133893e-3ed1-4f2f-b36f-73754dbdfc31)
-
-## Azure Deployment <a name="azure-deployment"></a>
-![Recursos 1](https://github.com/user-attachments/assets/04af5b7b-5872-432d-8289-10d62402f937)
-
-![Recursos 2](https://github.com/user-attachments/assets/2f3a0567-e8d2-4e05-86e9-4486ddfa3a9d)
-
-## Azure Monthly Estimated Cost <a name="estimated-cost"></a>
-
-![monthly cost](https://github.com/user-attachments/assets/d64b68ee-6dc5-40c5-85f3-34e761b437bc)
-
-
+This project automates the provisioning and deployment of a scalable cloud application on Microsoft Azure. It uses **Terraform** to create infrastructure, and **Ansible** to configure services like a backend API running on 2 VMs behind a Load Balancer, connected to an **Azure MySQL** database, along with a frontend deployed on **Azure Web App**.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ## 🛠 Built With <a name="built-with"></a>
+
+### Tech Stack <a name="tech-stack"></a>
+
 <details>
   <summary>Infrastructure as Code</summary>
   <ul>
-    <li>Terraform</li>
+    <li><a href="https://www.terraform.io/">Terraform</a></li>
   </ul>
 </details>
+
 <details>
   <summary>Configuration Management</summary>
   <ul>
-    <li>Ansible</li>
+    <li><a href="https://www.ansible.com/">Ansible</a></li>
+    <li><a href="https://github.com/ansible-collections/azure">azure.azcollection</a></li>
   </ul>
 </details>
+
 <details>
-  <summary>CI/CD</summary>
+  <summary>Cloud Platform</summary>
   <ul>
-    <li>GH Actions</li>
+    <li><a href="https://azure.microsoft.com/">Microsoft Azure</a></li>
   </ul>
 </details>
 
-## 🛠 Terraform Modules Overview <a name="terraform-modules"></a>
-This project uses a modular Terraform architecture with the following components:
-
-<details>
-  <summary> Network Module (`./modules/mysql-database`)</summary>
-
-#### Virtual Network (VNet)
-- **CIDR Block**: `10.0.0.0/16`
-- **Subnets**:
-  - **Backend Subnet** (`10.0.2.0/24`):
-    - Hosts application servers
-    - Associated with backend NSG
-    - Connected to NAT Gateway
-  - **Database Subnet** (`10.0.3.0/24`):
-    - Isolated subnet for database services
-    - Microsoft.Storage service endpoints enabled
-    - Restricted access to backend subnet only
-
-
-#### Network Security Groups (NSGs)
-- **Backend NSG**:
-  - Allows SSH access from any IP (port 22)
-  - Permits internal HTTP traffic on port 8080
-  - Default Azure rules for outbound traffic
-- **Database NSG**:
-  - Restricts MySQL access (port 3306) to backend subnet only
-  - Explicitly denies all other inbound traffic
-  - Implements zero-trust model for database layer
-
-#### NAT Gateway (Standard SKU)
-- **Features**:
-  - Provides outbound internet connectivity for backend resources
-  - Uses static public IP address
-  - Deployed in availability zone 1
-  - 4-minute idle timeout (minimum for cost optimization)
-- **Environment Awareness**:
-  - Currently deployed in all environments (commented conditional logic available)
-
-</details>
-
-<details>
-  <summary>MySQL Database Module (`./modules/mysql-database`)</summary>
-
- #### MySQL Flexible Server
-- **Environment-Aware Configuration**:
-  - **Production**: GP_Standard_D2ds_v4 SKU with 256GB storage
-  - **Non-Production**: B_Standard_B1ms SKU with 20GB storage (free-tier eligible)
-- **Authentication**:
-  - Custom administrator username/password
-  - MySQL 8.0.21 version
-- **Storage**:
-  - UTF8MB4 charset with Unicode collation
-  - Auto-growing storage (up to 16TB)
-
-#### Database Instance
-- Pre-configured `movie_analyst` database
-- Optimized character set for multilingual content
-- Proper collation for case-insensitive searches
-
-#### Network Integration
-- Private Endpoint connectivity
-- Isolated within database subnet
-- DNS integration via Private DNS Zone
-</details>
-
-<details>
-  <summary>Load Balancer Module (`./modules/load-balancer`)</summary>
-
-#### Azure Load Balancer (Standard SKU)
-- **Frontend Configuration**:
-  - Static public IP address (Standard SKU)
-  - Listens on port 80 for HTTP traffic
-- **Backend Pool**:
-  - Contains 2 backend VMs for high availability
-  - Auto-registers VM network interfaces
-- **Health Probes**:
-  - HTTP probe checking `/health` endpoint on port 8080
-  - 15-second interval for responsiveness
-- **Load Balancing Rules**:
-  - Port 80 → 8080 forwarding
-  - TCP protocol for optimal performance
-  - Health probe integration
-
-#### Virtual Machine Infrastructure
-- **Backend VMs**:
-  - 2 Ubuntu 18.04 LTS instances (Standard_B1ls)
-  - Each with:
-    - Dynamic private IP in backend subnet
-    - Basic SKU public IP (dynamic)
-    - 30GB standard OS disk
-- **Control VM**:
-  - Ubuntu 22.04 LTS instance
-  - Static public IP (Standard SKU)
-  - Used for management/administration
-</details>
-
-<details>
-  <summary>Monitoring Module (`./modules/monitoring`)</summary>
-
-#### Log Analytics Workspace
-- **SKU**: PerGB2018 (First 5GB/month free)
-- **Retention**: 30 days (free tier maximum)
-- **Features**:
-  - Centralized log collection
-  - Basic metrics storage
-  - Resource-agnostic logging
-
-#### Diagnostic Settings
-- **Free Tier Configuration**:
-  - Minimal metrics collection
-  - Load balancer basic health metrics
-  - No additional storage costs
-- **Enhanced Configuration**:
-  - Full metrics collection
-  - Comprehensive log capture
-  - All categories enabled
-</details>
-
-<details>
-  <summary>App Service Module (`./modules/app-service`)</summary>
-
-#### App Service Plan
-- **Tier**: Free (F1 SKU)
-- **OS**: Linux
-- **Scaling**: Manual (single instance)
-- **Compute**: Shared infrastructure
-
-#### Web Application
-- **Runtime**: Node.js 14 LTS
-- **Configuration**:
-  - AlwaysOn disabled (Free tier limitation)
-  - System-assigned managed identity
-  - Custom application settings
-- **Networking**:
-  - Integrated with Load Balancer backend
-  - Automatic HTTPS redirection
-</details>
-
-### Tech Stack <a name="tech-stack"></a>
 <details>
 <summary>Database</summary>
   <ul>
-    <li><a href="https://www.mysql.com/">MySQL</a></li>
+    <li><a href="https://learn.microsoft.com/en-us/azure/mysql/">Azure Database for MySQL</a></li>
   </ul>
 </details>
 
 <details>
-<summary>Infrastructure</summary>
+  <summary>Deployment Targets</summary>
   <ul>
-    <li><a href="https://www.terraform.io/">Terraform</a></li>
-    <li><a href="https://docs.microsoft.com/en-us/azure/">Azure Cloud</a></li>
-    <li><a href="https://www.ansible.com/">Ansible</a></li>
+    <li>Azure Virtual Machines</li>
+    <li>Azure Load Balancer</li>
+    <li>Azure App Service (Web App)</li>
   </ul>
 </details>
 
-<!-- Features -->
-
 ### Key Features <a name="key-features"></a>
 
-- **Infrastructure as Code**: Entire Azure infrastructure defined and managed using Terraform
-- **Team remote State**: Terraform State Management in Azure
-- **Modular Architecture**: Separate Terraform modules for networking, database, load balancing, and monitoring
-- **Environment Separation**: Support for multiple environments (dev, qa, staging, prod) using Terraform workspaces
-- **CI/CD Pipeline**: Automated deployment process for both frontend and backend components
-- **Monitoring Integration**: Built-in Azure monitoring for the deployed application
-- **Configuration Management**: Use of Ansible for automated configuration and deployment.
+- 🔧 Automated infrastructure provisioning with Terraform  
+- 📦 Service configuration and app deployment using Ansible  
+- 🐘 MySQL database initialized via Ansible using `ansible/files/mysql/movie_db.sql`
+- 🌐 Scalable API on 2 Azure VMs behind a Load Balancer  
+- 💾 Managed Azure MySQL integration  
+- 🚀 Web frontend deployed using Azure Web App  
+- 🔐 Service Principal authentication using Client Secret  
+- ⚙️ Fully automated deployment workflow with CI/CD integration  
+- 🏗️ End-to-end Terraform deployment from scratch included in workflow  
+- 🧹 Automated environment teardown using `terraform-destroy.yml`  
+- 💸 Uses Azure Web App **F1 Free Tier** for cost-effective deployment  
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<!-- LIVE DEMO -->
+---
 
 ## 🚀 Live Demo <a name="live-demo"></a>
 
-- [Live Demo Link](https://your-azure-app-url.azurewebsites.net)
+- [Frontend Web App](https://softdefault-movies-app.azurewebsites.net/)
+- [API Endpoint (behind Load Balancer)](http://your-lb-ip-or-dns)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
 
 ## 💻 Getting Started <a name="getting-started"></a>
 
-To get a local copy up and running, follow these steps.
+To get a local copy up and running, follow these instructions.
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed:
-- Terraform (>= 1.0.0)
-- Azure CLI
-- Ansible (>= 2.9)
+Most dependencies are installed automatically in the GitHub Actions workflow. However, for local development or debugging, ensure you have the following:
 
-## Ansible Configuration <a name="ansible-configuration"></a>
+- 🖥️ Azure CLI (`az`)
+- 📦 Terraform ≥ 1.5
+- ⚙️ Ansible ≥ 2.15
+- 🔐 SSH key pair for accessing virtual machines
+- 📦 Node.js ≥ 14 and npm (required for both frontend and backend)
+- 📚 `zip` utility (used to package the frontend app)
+- ☁️ Azure Service Principal credentials (used by the workflow):
+  - `ARM_CLIENT_ID`
+  - `ARM_CLIENT_SECRET`
+  - `ARM_TENANT_ID`
+  - `ARM_SUBSCRIPTION_ID`
+- 💡 *(Optional)* GitHub CLI (`gh`) – useful for managing secrets or manually triggering workflows
 
-This project uses Ansible for automated configuration management and application deployment across all infrastructure components.
 
-### Playbook Structure
+### 🔧 Setup
 
-#### 1. Infrastructure Setup (`setup-infra.yml`)
-- **Hosts**: All nodes (control + backend)
-- **Purpose**: Baseline system configuration
-- **Key Tasks**:
-  - Updates `/etc/hosts` for all nodes
-  - Configures ssh  access from control node
-  - Sets up passwordless authentication
-  - Disables strict host checking for internal nodes
-
-#### 2. API Deployment (`deploy-api.yml`)
-- **Hosts**: Backend nodes
-- **Purpose**: Full application deployment
-- **Key Tasks**:
-  - Installs system dependencies (Node.js, npm, MySQL client)
-  - Clones application repository
-  - Configures database connection
-  - Initializes MySQL database schema
-  - Sets up PM2 process manager
-  - Creates systemd service for automatic startup
-
-### Configuration Highlights
-
-1. **Secure Deployment**:
-   - Database credentials injected via variables
-   - Limited file permissions (config.js: 0640)
-   - No-log for sensitive database operations
-   - ssh  strict host checking disabled only for internal nodes
-
-2. **Idempotent Operations**:
-   - Conditional database initialization
-   - Changed-when clauses for accurate reporting
-   - Atomic file operations
-
-3. **Environment Variables**:
-   ```yaml
-   mysql_config:
-     host: "{{ mysql_host }}"
-     user: "{{ mysql_user }}"
-     password: "{{ mysql_password }}"
-     database: "{{ mysql_database }}"
-     port: 3306
-Execution Workflow
-First-Time Setup:
-
-```
-ansible-playbook -i inventory.ini setup-infra.yml
-```
-API Deployment:
-
-```
-ansible-playbook -i inventory.ini deploy-api.yml \
-  -e mysql_host=softqa-mysql-eastus \
-  -e mysql_user=adminuser \
-  -e mysql_password=$DB_PASSWORD \
-  -e mysql_database=movie_analyst
-```
-Verification:
-
-```
-ansible nodes -i inventory.ini -m 
-shell -a "systemctl status movie-api"
+```bash
+# Clone this repository
+git clone https://github.com/NeckerFree/azure-fullstack-automation.git
+cd azure-fullstack-automation
 ```
 
-File Structure
+## 📦 Provision Infrastructure (Terraform) <a name="terraform"></a>
 
-```
-ansible/
-├── inventory.ini            # Generated by Terraform
-├── vm_ssh_key               # Auto-generated SSH key
-├── files/
-│   └── mysql/
-│       └── movie_db.sql     # Database schema
-├── templates/
-│   ├── config.js.j2         # DB config template
-│   └── movie-api.service.j2 # Systemd template
-├── deploy-api.yml           # Main deployment playbook
-└── setup-infra.yml          # Infrastructure setup
-```
+Infrastructure provisioning is fully automated and triggered via **GitHub Actions** on every push or pull request to the `main` branch.
 
+- Terraform is initialized and executed within the workflow using predefined variables.
+- The deployment includes:
+  - A MySQL database on Azure
+  - A Load Balancer with 2 backend VMs
+  - Network and security resources
+- The entire infrastructure is provisioned from scratch via `terraform.yml`.
 
-Best Practices
-Secret Management:
+## ⚙️ Configure Services (Ansible) <a name="ansible"></a>
 
-```
-ansible-vault encrypt_string '$DB_PASSWORD' --name 'mysql_password'
-```
-Dry-Run Verification:
+Once the infrastructure is up, **Ansible playbooks** are automatically triggered within the same CI/CD workflow to:
 
-```
-ansible-playbook -i inventory.ini deploy-api.yml --check --diff
-```
-Tagged Execution:
+- Configure the VMs with the required packages
+- Deploy the Node.js API to both backend nodes
+- Apply application settings
+- Validate MySQL schema creation and data population
 
-```
-ansible-playbook -i inventory.ini deploy-api.yml --tags "db,config"
-```
+This configuration is handled through the `deploy-api.yml` GitHub Actions workflow.
 
-## Ansible Inventory Generation <a name="ansible-inventory"></a>
+## 🚢 Deployment <a name="deployment"></a>
 
-This project automatically generates an Ansible inventory file (`inventory.ini`) from Terraform outputs, enabling seamless configuration management of provisioned VMs.
-
-### Inventory Generation Process
-
-The system creates a dynamic inventory using:
-1. **Terraform Template File** (`inventory.tmpl`):
-   ```ini
-   [control]
-   ${control.name} ansible_host=${control.ip} ansible_user=${ssh _user} 
-
-   [nodes]
-   %{for node in nodes ~}
-   ${node.name} ansible_host=${node.ip} ansible_user=${ssh _user} 
-   %{endfor ~}
-
-   [all:vars]
-   ansible_ssh _common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
-   ansible_ssh _private_key_file=${ssh _private_key_path}
-   
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-### Setup
-
-1. Clone the repository:
-sh
-git clone https://github.com/aljoveza/devops-rampup.git
-cd devops-rampup
-
-Initialize Terraform:
-
-```sh 
-terraform init
-```
-Create a Terraform workspace (for example, for QA environment):
-
-```sh 
-terraform workspace new qa
-```
-Install
-Install Azure CLI and login:
-
-```sh 
-az login
-```
-Install required Ansible roles:
-
-```sh 
-ansible-galaxy install -r ansible/requirements.yml
-```
-Usage
-Plan the Terraform deployment:
-
-```sh 
-terraform plan -var-file=environments/qa.tfvars
-```
-Apply the changes:
-
-```sh 
-terraform apply -var-file=environments/qa.tfvars
-```
-Run Ansible playbook to configure servers:
-
-```sh 
-ansible-playbook ansible/setup.yml -i ansible/inventory/qa
-```
-Run tests
-Run infrastructure tests:
-
-```sh 
-terraform validate
-```
-Run application tests:
-
-```sh 
-cd frontend && npm test
-cd ../backend && npm test
-```
+- 🎯 **Trigger**: Every push or pull request to `main` kicks off a full deployment pipeline.
+- 🌐 **API** is publicly reachable via the Load Balancer’s IP address.
+- 💻 **Frontend** is deployed to Azure Web App using the **F1 Free Tier**.
+- 🔐 **Secure integration** between services via environment variables and Azure-managed credentials.
+- 🧨 A separate `terraform-destroy.yml` workflow is available to automatically destroy all infrastructure when needed.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<!-- AUTHORS -->
+---
+## 🔧 Customizing Variables <a name="custom-variables"></a>
+
+You can modify the following variables to adapt the deployment to your needs. These are defined in the Terraform configuration files:
+
+## `infra/terraform.tfvars`
+
+```hcl
+allowed_ssh_ip        = "186.155.19.140/32"         # IP allowed to access VMs via SSH
+mysql_user            = "mysqladmin"                # MySQL admin user
+mysql_admin_password  = "Sec#reP@ssword123!"        # MySQL admin password
+
+variable "location" {
+  default = "westus2"                               # Azure region to deploy resources
+}
+
+variable "admin_username" {
+  default = "myadminuser"                                # Admin username for virtual machines
+}
+
+variable "lb_api_port" {
+  default = 8080                                    # API port exposed by Load Balancer
+}
+```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+---
+
+## ☁️ Remote Terraform State in Azure <a name="remote-state"></a>
+
+Terraform uses remote state storage to persist infrastructure state across executions and team members.
+
+This project stores the Terraform state file (`terraform.tfstate`) securely in an **Azure Storage Account** using a backend configuration like the following:
+
+```hcl
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "my-resource-group"
+    storage_account_name = "myterraformstate"
+    container_name       = "tfstate"
+    key                  = "infrastructure.tfstate"
+  }
+}
+```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+---
 
 ## 👥 Authors <a name="authors"></a>
+
 👤 **Elio Cortés**
 
 - GitHub: [@NeckerFree](https://github.com/NeckerFree)
 - Twitter: [@ElioCortesM](https://twitter.com/ElioCortesM)
 - LinkedIn: [elionelsoncortes](https://www.linkedin.com/in/elionelsoncortes/)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p><!-- FUTURE FEATURES -->
-🔭 Future Features <a name="future-features"></a>
-Auto-scaling: Implement auto-scaling for both frontend and backend components
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-Blue-Green Deployment: Add support for blue-green deployments
+---
 
-Enhanced Monitoring: Integrate Application Insights for deeper performance monitoring
+## 🔭 Future Features <a name="future-features"></a>
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p><!-- CONTRIBUTING -->
-
-## 🤝 Contributing <a name="contributing"></a>
-Contributions, issues, and feature requests are welcome!
-
-Feel free to check the issues page.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p><!-- SUPPORT -->
-⭐️ show your support <a name="support"></a>
-If you like this project, please give it a ⭐️ on GitHub!
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p><!-- ACKNOWLEDGEMENTS -->
-
-## 🙏 Acknowledgements <a name="acknowledgements"></a>
-Hat tip to anyone whose code was used
-
-Inspiration
-
-etc
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p><!-- FAQ -->
-
-## ❓FAQ <a name="faq"></a>
-How do I switch between environments?
-
-Use Terraform workspaces: terraform workspace select qa or terraform workspace select prod
-
-Where are the database credentials stored?
-
-Database credentials are managed through Azure Key Vault and injected as environment variables during deployment.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p><!-- LICENSE -->
-
-## 📝 License <a name="license"></a>
-This project is MIT licensed.
+- [ ] Add CI/CD pipeline with GitHub Actions
+- [ ] Enable autoscaling for the API tier
+- [ ] Implement managed identity-based DB auth
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-Deploy Azure resources:
-/infra/> terraform plan
-/infra/> terraform apply
+---
 
-when deploy completed:
-Replace JUMPBOX_HOST with the value of jumpbox ansible_host in generated inventory.ini
+## 🤝 Contributing <a name="contributing"></a>
 
-To validate jumbox folders or files connect from Powershell as admin an run:
-ssh -i "$HOME/.ssh/vm_ssh_key" adminuser@4.154.243.88
+Contributions, issues, and feature requests are welcome!
 
-In root folder bash run:
- chmod +x deploy-ansible-from-local.sh
- chmod +x deploy-db-from-local.sh
- chmod +x deploy-api-from-local.sh 
+Feel free to open an issue, or request features.
 
-# Copy files, install and configure ansible jumpbox
-./ansible/deploy-ansible-from-local.sh 
-accept fingerprint (yes)
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-expected:
-PLAY RECAP *********************************************************************
-softqa-vm-api-0            : ok=1    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-softqa-vm-api-1            : ok=1    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-localhost                  : ok=3    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-Playbook executed successfully!
+---
 
-Executed in GH main.yml workflow
-<!-- # Copy files, install and configure VMs nodes to deploy API
- ./ansible/deploy-api-from-local.sh
+## ⭐️ Show your support <a name="support"></a>
 
- expected:
- PLAY RECAP *********************************************************************
-softqa-vm-api-0            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-softqa-vm-api-1            : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-Playbook executed successfully! -->
+If you like this project, please ⭐️ the repository and share it with others!
 
-# Copy files, install and configure database in VMs nodes
-./ansible/deploy-db-from-local.sh
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-expected:
-PLAY RECAP *********************************************************************
-softqa-vm-api-0            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-softqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-softqa-vm-api-0            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-softqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-softqa-vm-api-1            : ok=7    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-Playbook executed successfully!
+---
 
-After execute GH actions workflow 
-execute \infra> terraform output
-to get api URL:
-lb_api_url = "http://4.155.207.109"
+## 🙏 Acknowledgements <a name="acknowledgements"></a>
 
-and test it browser, postman or using curl
+- [Microsoft Azure documentation](https://learn.microsoft.com/en-us/azure/)
+- [Ansible Azure Collection](https://galaxy.ansible.com/azure/azcollection) contributors
+- [HashiCorp Terraform Modules](https://registry.terraform.io/)
+- [devops-rampup](https://github.com/aljoveza/devops-rampup) — Backend & frontend prototype used as base for this project
+- [EPAM DevOps Campus](https://campus.epam.com/en/training) — Cloud and DevOps learning program
+- [ChatGPT](https://chatgpt.com/) — Assistance in automation, CI/CD, and documentation
+- [DeepSeek](https://chat.deepseek.com/) — Assistance in automation, CI/CD, and documentation
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## ❓ FAQ <a name="faq"></a>
+
+### 🔐 Where are secrets like passwords and keys stored?
+Secrets are securely stored as GitHub Actions secrets and injected at runtime into the workflows.
+
+### 🧪 Can I test changes before deploying to Azure?
+Yes! You can test locally using `terraform plan` and `ansible-playbook` in dry-run mode before committing changes.
+
+### 🌎 Where is the infrastructure deployed?
+By default, all resources are deployed to the `westus2` Azure region. You can change this in `infra/variables.tf`.
+
+### 🛠 What if I want to destroy all resources?
+You can run the `terraform-destroy.yml` GitHub Actions workflow to safely destroy the provisioned infrastructure.
+
+### 🐘 How is the database created?
+The Azure MySQL database is provisioned with Terraform and initialized using `movie_db.sql` from Ansible.
+
+### 🌐 What is the default URL for the frontend?
+The frontend is hosted on Azure Web App. The exact URL depends on the generated Azure App Service name. Check the Azure Portal or output logs.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## 📝 License <a name="license"></a>
+
+This project is licensed under the [MIT License](./LICENSE).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>

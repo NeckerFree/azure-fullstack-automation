@@ -65,3 +65,4 @@ infra/.terraform.lock.hcl
 *node_modules/*
 docs/query.txt
 infra/import-resources.bat
+docs/tests.txt

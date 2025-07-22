@@ -4,6 +4,8 @@ resource "azurerm_public_ip" "lb" {
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
+
+  domain_name_label = var.lb_dns_name
 }
 
 resource "azurerm_lb" "main" {
@@ -34,7 +36,7 @@ resource "azurerm_lb_backend_address_pool" "api_pool" {
 resource "azurerm_lb_probe" "http" {
   loadbalancer_id     = azurerm_lb.main.id
   name                = "HTTP-Probe"
-  port                = 80
+  port                = var.lb_api_port
   protocol            = "Http"
   request_path        = "/"
   interval_in_seconds = 15
@@ -44,7 +46,7 @@ resource "azurerm_lb_probe" "http" {
 resource "azurerm_lb_probe" "api" {
   loadbalancer_id     = azurerm_lb.main.id
   name                = "API-Probe"
-  port                = 8080
+  port                = var.lb_api_port
   protocol            = "Http"
   request_path        = "/health"
   interval_in_seconds = 15
@@ -55,8 +57,8 @@ resource "azurerm_lb_rule" "movie_api" {
   name                           = "MovieAPIRule"
   loadbalancer_id                = azurerm_lb.main.id
   protocol                       = "Tcp"
-  frontend_port                  = 8080
-  backend_port                   = 8080
+  frontend_port                  = var.lb_api_port
+  backend_port                   = var.lb_api_port
   frontend_ip_configuration_name = "LBFrontend"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.api_pool.id]
   probe_id                       = azurerm_lb_probe.api.id

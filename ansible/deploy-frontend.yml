@@ -1,0 +1,68 @@
+---
+- name: Deploy EJS Frontend to Azure Web App (Node.js)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    APP_SERVICE_NAME: "{{ lookup('env', 'APP_SERVICE_NAME') }}"
+    RESOURCE_GROUP_NAME: "{{ lookup('env', 'RESOURCE_GROUP_NAME') }}"
+    FRONTEND_PATH: "../src/movie-analyst-ui"
+    ZIP_PATH: "/tmp/frontend.zip"
+    BACKEND_URL: "{{ lookup('env', 'LB_API_URL') }}"
+
+  tasks:
+    - name: Enable Oryx build
+      shell: |
+        az webapp config appsettings set \
+          --resource-group {{ RESOURCE_GROUP_NAME }} \
+          --name {{ APP_SERVICE_NAME }} \
+          --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
+
+    - name: Set BACKEND_URL in .env file
+      copy:
+        dest: "{{ FRONTEND_PATH }}/.env"
+        content: |
+          BACKEND_URL={{ BACKEND_URL }}
+
+    - name: Install Node.js dependencies using npm ci
+      shell: npm ci
+      args:
+        chdir: "{{ FRONTEND_PATH }}"
+
+    - name: Set startup file command (npm start)
+      shell: |
+        az webapp config set \
+          --resource-group {{ RESOURCE_GROUP_NAME }} \
+          --name {{ APP_SERVICE_NAME }} \
+          --startup-file "npm start"
+
+    - name: Ensure zip is installed
+      package:
+        name: zip
+        state: present
+      become: yes
+
+    - name: Create zip package for deployment (excluding node_modules)
+      shell: |
+        zip -r {{ ZIP_PATH }} . -x "node_modules/*"
+      args:
+        chdir: "{{ FRONTEND_PATH }}"
+
+    - name: Deploy zip to Azure Web App
+      shell: |
+        az webapp deploy \
+          --resource-group {{ RESOURCE_GROUP_NAME }} \
+          --name {{ APP_SERVICE_NAME }} \
+          --src-path {{ ZIP_PATH }} \
+          --type zip 
+
+    - name: Wait for frontend to become available
+      uri:
+        url: "https://{{ APP_SERVICE_NAME }}.azurewebsites.net"
+        status_code: 200
+        timeout: 30
+        validate_certs: no
+      register: frontend_status
+      retries: 10
+      delay: 5
+      until: frontend_status.status == 200

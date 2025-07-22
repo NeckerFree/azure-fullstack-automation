@@ -69,6 +69,7 @@ module "load-balancer" {
   mysql_fqdn              = module.mysql-database.mysql_fqdn
   admin_username          = var.admin_username
   ssh_public_key          = var.ssh_public_key
+  lb_dns_name             = var.lb_dns_name
 }
 
 

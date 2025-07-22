@@ -38,7 +38,7 @@ variable "mysql_user" {
 }
 
 variable "admin_username" {
-  default   = "adminuser"
+  default   = "necker"
   sensitive = true
 }
 
@@ -51,3 +51,9 @@ variable "ssh_public_key" {
   type      = string
   sensitive = true
 }
+
+variable "lb_dns_name" {
+  description = "DNS label for the public IP"
+  type        = string
+}
+

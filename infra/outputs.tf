@@ -18,10 +18,6 @@ output "mysql_database_name" {
   sensitive = true
 }
 
-output "lb_api_url" {
-  value     = module.load-balancer.lb_api_url
-  sensitive = true
-}
 
 output "control_node_public_ip" {
   description = "Jumpbox IP"
@@ -33,4 +29,24 @@ output "ssh_user" {
   description = "SSH admin user for VMs"
   value       = var.admin_username
   sensitive   = true
+}
+
+output "app_service_name" {
+  value     = module.app-service.app_service_name
+  sensitive = false
+}
+
+output "resource_group_name" {
+  value     = local.resource_group_name
+  sensitive = false
+}
+
+output "lb_api_url" {
+  value     = module.load-balancer.lb_api_url
+  sensitive = false
+}
+
+output "api_public_port" {
+  description = "Puerto expuesto del Load Balancer para el API"
+  value       = module.load-balancer.api_port
 }

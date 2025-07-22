@@ -1,0 +1,72 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: "⚠️ Type 'YES' to confirm destroying the infrastructure"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+jobs:
+  destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛑 Validate confirmation input
+        if: ${{ github.event.inputs.confirm_destroy != 'YES' }}
+        run: |
+          echo "You must type YES to proceed with destroy."
+          exit 1
+
+      - name: 📦 Checkout code
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: 🔐 Azure Login with Service Principal
+        uses: azure/login@v1
+        with:
+          creds: >-
+            {
+              "clientId": "${{ secrets.ARM_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.ARM_TENANT_ID }}"
+            }
+
+      - name: 🧪 Verify Azure login
+        run: az account show
+
+      - name: 📥 Terraform Init
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="resource_group_name=soft-tfstate-rg" \
+            -backend-config="storage_account_name=softsastate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=terraform.tfstate"
+
+      - name: ⚠️ Terraform Destroy
+        run: |
+          terraform -chdir=infra destroy -auto-approve -input=false \
+            -var="subscription_id=${{ secrets.ARM_SUBSCRIPTION_ID }}" \
+            -var="client_id=${{ secrets.ARM_CLIENT_ID }}" \
+            -var="client_secret=${{ secrets.ARM_CLIENT_SECRET }}" \
+            -var="tenant_id=${{ secrets.ARM_TENANT_ID }}" \
+            -var="allowed_ssh_ip=${{ secrets.MY_IP_ADDRESS }}" \
+            -var="mysql_user=${{ secrets.MYSQL_USER }}" \
+            -var="mysql_admin_password=${{ secrets.MYSQL_ADMIN_PASSWORD }}" \
+            -var="ssh_public_key=${{ secrets.VM_SSH_PUB_KEY }}"

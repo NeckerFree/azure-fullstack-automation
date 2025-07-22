@@ -106,51 +106,133 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: terraform -chdir=infra apply -auto-approve -input=false -var-file=terraform.tfvars
 
+      # - name: 📄 Generate Terraform outputs
+      #   run: |
+      #     terraform -chdir=infra output -json > infra/tf_outputs.json
+      #     echo "✅ tf_outputs.json generated"
+      
       - name: 📄 Generate Terraform outputs
         run: |
-          terraform -chdir=infra output -json > infra/tf_outputs.json
+          "$TERRAFORM_CLI_PATH/terraform-bin" -chdir=infra output -json > infra/tf_outputs.json
 
-      # cat infra/tf_outputs.json
-      # echo "Trying to extract IP:"
-      # jq -r '.control_node_public_ip' infra/tf_outputs.json
-
+      # - name: 🐛 Debug Terraform outputs
+      #   run: |
+      #     cat infra/tf_outputs.json
+          
       - name: 📦 Upload inventory.ini as artifact
         uses: actions/upload-artifact@v4
         with:
           name: inventory
           path: ansible/inventory.ini
-
-      - name: 🔑 Configure SSH for jumpbox
+          
+      - name: 📤 Export Terraform outputs to GitHub ENV
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_ssh_key
-          chmod 600 ~/.ssh/vm_ssh_key
-          echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+          echo "📥 Exporting variables to GitHub ENV..."
+          echo "APP_SERVICE_NAME=$(jq -r '.app_service_name.value' infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP_NAME=$(jq -r '.resource_group_name.value' infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "LB_API_URL=$(jq -r '.lb_api_url.value' infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "LB_API_PORT=$(jq -r '.api_public_port.value' infra/tf_outputs.json)" >> $GITHUB_ENV
 
-      - name: 🚀 Upload Inventory to Jumpbox
+      - name: 🔧 Compose LB API URL
         run: |
+          echo "LB_API_URL=${LB_API_URL}:${LB_API_PORT}" >> $GITHUB_ENV
+ 
+      - name: 🗃️ Run Script Configure Jumpbox 
+        run: | 
+          chmod +x ./ansible/configure-jumpbox.sh
+
           # Get outputs from Terraform
-          JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip 2>/dev/null | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
-          JUMP_USER=$(terraform -chdir=infra output -raw ssh_user 2>/dev/null | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
+          JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
+          JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
 
-          # Log and validate
-          echo "JUMP_HOST: $JUMP_HOST"
-          echo "JUMP_USER: $JUMP_USER"
+          SSH_KEY_CONTENT="${{ secrets.VM_SSH_KEY }}"
+          ANSIBLE_DIR=./ansible
+          REMOTE_DIR=/home/${JUMP_USER}/ansible-setup
+          ./ansible/configure-jumpbox.sh "$JUMP_HOST" "$JUMP_USER" "$SSH_KEY_CONTENT" "$ANSIBLE_DIR" "$REMOTE_DIR"
 
-          if [[ -z "$JUMP_HOST" || -z "$JUMP_USER" ]]; then
-            echo "❌ Terraform outputs not found!"
+      - name: 🛢️ Run Script Deploy Database
+        run: |
+           chmod +x ./ansible/deploy-db-from-local.sh
+            # ✅ Ejecuta y guarda el resultado de terraform output
+                     # Get clean DB_HOST - Ultimate reliable method
+            DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+            # echo "Extracted DB_HOST='$DB_HOST'"
+            
+            # Fallback if raw output fails
+            if [ -z "$DB_HOST" ]; then
+              DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+              # echo "Fallback extracted DB_HOST='$DB_HOST'"
+            fi
+
+            # Final validation
+            if [[ ! "$DB_HOST" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+              echo "ERROR: Could not extract valid DB_HOST"
+              echo "Raw terraform output:"
+              terraform -chdir=infra output mysql_fqdn
+              exit 1
+            fi
+            DB_USER="${{ secrets.MYSQL_USER }}"
+            DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
+            DB_NAME="movie_analyst"
+
+            JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
+            JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
+
+            ./ansible/deploy-db-from-local.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
+                   
+      - name: 🧩 Run Script Deploy API from Jumpbox to VMs
+        run: |
+          chmod +x ./ansible/deploy-api-jumpbox-to-vms.sh
+
+          # Get clean DB_HOST - Ultimate reliable method
+          DB_HOST=$(terraform -chdir=infra output -raw mysql_fqdn 2>&1 | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+          # echo "Extracted DB_HOST='$DB_HOST'"
+          
+          # Fallback if raw output fails
+          if [ -z "$DB_HOST" ]; then
+            DB_HOST=$(terraform -chdir=infra output mysql_fqdn | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -n1)
+            # echo "Fallback extracted DB_HOST='$DB_HOST'"
+          fi
+
+          # Final validation
+          if [[ ! "$DB_HOST" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+            echo "ERROR: Could not extract valid DB_HOST"
+            echo "Raw terraform output:"
+            terraform -chdir=infra output mysql_fqdn
             exit 1
           fi
 
-          # Create remote directory
-          ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${JUMP_USER}@${JUMP_HOST} \
-            "mkdir -p /home/${JUMP_USER}/ansible-setup"
+          JUMP_HOST=$(terraform -chdir=infra output -raw control_node_public_ip | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | tail -n1)
+          JUMP_USER=$(terraform -chdir=infra output -raw ssh_user | grep -Eo '^[a-zA-Z0-9]+' | tail -n1)
 
-          # Upload inventory
-          scp -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no \
-            ./ansible/inventory.ini \
-            ${JUMP_USER}@${JUMP_HOST}:/home/${JUMP_USER}/ansible-setup/inventory.ini
 
-          # Verify upload
-          ssh -i ~/.ssh/vm_ssh_key -o StrictHostKeyChecking=no ${JUMP_USER}@${JUMP_HOST} \
-            "ls -la /home/${JUMP_USER}/ansible-setup/"
+          DB_USER="${{ secrets.MYSQL_USER }}"
+          DB_PASS="${{ secrets.MYSQL_ADMIN_PASSWORD }}"
+          DB_NAME="movie_analyst"
+
+          # echo "=== Final Variables ==="
+          # echo "DB_HOST: $DB_HOST"
+          # echo "JUMP_HOST: $JUMP_HOST"
+          # echo "JUMP_USER: $JUMP_USER"
+
+          ./ansible/deploy-api-jumpbox-to-vms.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
+
+      - name: Deploy Frontend
+        run: |
+          chmod +x ./ansible/deploy-frontend.yml
+          echo "Using values:"
+          echo "APP_SERVICE_NAME=$APP_SERVICE_NAME"
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME"
+          echo "LB_API_URL=$LB_API_URL"
+          ansible-playbook ansible/deploy-frontend.yml -i localhost,
+        env:
+          APP_SERVICE_NAME: ${{ env.APP_SERVICE_NAME }}
+          RESOURCE_GROUP_NAME: ${{ env.RESOURCE_GROUP_NAME }}
+          LB_API_URL: ${{ env.LB_API_URL }}
+
+      - name: 🌐 Show frontend URL
+        run: |
+          echo "✅ Your frontend is deployed and available at:"
+          echo "https://${APP_SERVICE_NAME}.azurewebsites.net"
+        env:
+          APP_SERVICE_NAME: ${{ env.APP_SERVICE_NAME }}
