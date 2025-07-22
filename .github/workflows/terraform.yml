@@ -93,7 +93,6 @@ jobs:
           allowed_ssh_ip        = "${{ secrets.MY_IP_ADDRESS }}"
           mysql_user            = "${{ secrets.MYSQL_USER }}"
           mysql_admin_password  = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
-          ssh_public_key        = "${{ secrets.VM_SSH_PUB_KEY }}"
           EOF
 
       - name: 🔍 Terraform Validate
@@ -109,13 +108,12 @@ jobs:
       - name: 📄 Generate Terraform outputs
         run: |
           terraform -chdir=infra output -json > infra/tf_outputs.json
+          echo "✅ tf_outputs.json generated"
 
-      # - name: 🐛 Debug Terraform outputs
-      #   run: |
-      #     cat infra/tf_outputs.json
+      - name: 🐛 Debug Terraform outputs
+        run: |
+          cat infra/tf_outputs.json
           
-      - name: 📄 Generate Terraform outputs
-        run: terraform -chdir=infra output -json > infra/tf_outputs.json
 
       - name: 📦 Upload inventory.ini as artifact
         uses: actions/upload-artifact@v4
@@ -125,10 +123,10 @@ jobs:
           
       - name: 📤 Export Terraform outputs to GitHub ENV
         run: |
-          echo "APP_SERVICE_NAME=$(jq -r .app_service_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
-          echo "RESOURCE_GROUP_NAME=$(jq -r .resource_group_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
-          echo "LB_API_URL=$(jq -r .lb_api_url.value infra/tf_outputs.json)" >> $GITHUB_ENV
-
+          echo "📥 Exporting variables to GitHub ENV..."
+          echo "APP_SERVICE_NAME=$(jq -r '.app_service_name.value' infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP_NAME=$(jq -r '.resource_group_name.value' infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "LB_API_URL=$(jq -r '.lb_api_url.value' infra/tf_outputs.json)" >> $GITHUB_ENV
 
       - name: 🗃️ Run Script Configure Jumpbox 
         run: | 
