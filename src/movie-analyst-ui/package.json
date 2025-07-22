@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "ui for the movie analyst website....im totally not ripping this off.......",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
@@ -21,7 +22,6 @@
     "superagent": "^3.6.0"
   },
   "devDependencies": {
-    "mocha": "^11.7.1",
-    "start": "node server.js"
+    "mocha": "^11.7.1"
   }
 }
