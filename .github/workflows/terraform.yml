@@ -208,30 +208,26 @@ jobs:
         run: |
           cd infra
           
-          # Get outputs using separate commands with proper sanitization
-          APP_NAME=$(terraform output app_service_name | sed 's/"//g' | tr -d '\n')
-          RG_NAME=$(terraform output resource_group_name | sed 's/"//g' | tr -d '\n')
-          API_URL=$(terraform output lb_api_url | sed 's/"//g' | tr -d '\n')
+          # Create a script to capture clean outputs
+          cat << 'EOF' > get_outputs.sh
+          #!/bin/bash
+          {
+              echo "app_service_name=$(terraform output -raw app_service_name | tr -d '\n')"
+              echo "resource_group_name=$(terraform output -raw resource_group_name | tr -d '\n')"
+              echo "lb_api_url=$(terraform output -raw lb_api_url | tr -d '\n')"
+          } >> $GITHUB_OUTPUT
+          EOF
           
-          # Verify outputs don't contain command strings
-          if [[ "$APP_NAME" == *"command"* || "$RG_NAME" == *"command"* || "$API_URL" == *"command"* ]]; then
-            echo "::error::Terraform outputs contain command strings!"
-            echo "APP_NAME: $APP_NAME"
-            echo "RG_NAME: $RG_NAME"
-            echo "API_URL: $API_URL"
-            exit 1
-          fi
+          # Make script executable and run it
+          chmod +x get_outputs.sh
+          ./get_outputs.sh
           
-          # Set outputs
-          echo "app_service_name=${APP_NAME}" >> $GITHUB_OUTPUT
-          echo "resource_group_name=${RG_NAME}" >> $GITHUB_OUTPUT
-          echo "lb_api_url=${API_URL}" >> $GITHUB_OUTPUT
-          
-          echo "✅ Verified clean outputs:"
-          echo "APP: ${APP_NAME}"
-          echo "RG: ${RG_NAME}"
-          echo "API: ${API_URL}"
-        shell: bash
+          # Verify outputs
+          echo "✅ Clean outputs captured:"
+          echo "APP: ${{ steps.tf.outputs.app_service_name }}"
+          echo "RG: ${{ steps.tf.outputs.resource_group_name }}"
+          echo "API: ${{ steps.tf.outputs.lb_api_url }}"
+
 
       - name: Deploy Frontend
         run: |

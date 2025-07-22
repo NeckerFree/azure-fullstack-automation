@@ -6,18 +6,18 @@
     node_version: "16-lts"
 
   tasks:
-    - name: Validate variables don't contain command strings
-      fail:
-        msg: |
+    - name: Validate variables
+      assert:
+        that:
+          - "'[' not in app_service_name"
+          - "'[' not in resource_group_name"
+          - "'[' not in lb_api_url"
+        fail_msg: |
           Invalid variables detected!
           - App Service: {{ app_service_name }}
           - Resource Group: {{ resource_group_name }}
           - API URL: {{ lb_api_url }}
-          Check GitHub Actions workflow for proper output handling.
-      when: >
-        '[command]' in app_service_name or
-        '[command]' in resource_group_name or
-        '[command]' in lb_api_url
+          Check GitHub Actions workflow.
 
     - name: Show deployment configuration
       debug:
