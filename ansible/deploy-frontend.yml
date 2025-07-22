@@ -14,13 +14,6 @@
       register: azure_login
       failed_when: azure_login.rc != 0
 
-    - name: Inject API URL into EJS templates (optional)
-      lineinfile:
-        path: "{{ frontend_project_path }}/views/index.ejs"
-        regexp: 'const API_URL = .*'
-        line: 'const API_URL = "{{ api_url }}"'
-      when: api_url is defined
-
     - name: Install dependencies
       command: npm install
       args:
@@ -33,6 +26,13 @@
         format: zip
         exclude_path:
           - node_modules
+
+    - name: Set BACKEND_URL in App Service configuration
+      command: >
+        az webapp config appsettings set
+        --name {{ app_name }}
+        --resource-group {{ resource_group }}
+        --settings BACKEND_URL={{ api_url }}
 
     - name: Deploy ZIP to Azure Web App
       command: >

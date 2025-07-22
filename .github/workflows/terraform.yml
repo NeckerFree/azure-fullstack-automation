@@ -122,7 +122,7 @@ jobs:
         #   name: terraform-vars
         #   path: infra/terraform.tfvars  
         #   retention-days: 1  
-      - name: 📤 Set environment variables from Terraform output
+      - name: 📤 Set Frontend environment variables from Terraform output
         id: set_vars
         run: |
           echo "APP_SERVICE_NAME=$(jq -r .frontend_app_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
