@@ -17,3 +17,8 @@ variable "lb_api_port" {
   type        = number
   default     = 8080
 }
+
+variable "lb_dns_name" {
+  description = "DNS label for the public IP"
+  type        = string
+}

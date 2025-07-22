@@ -33,7 +33,7 @@
 # 📖 Azure Cloud Web App Deployment <a name="about-project"></a>
 
 This project automates the provisioning and deployment of a scalable cloud application on Microsoft Azure. It uses **Terraform** to create infrastructure, and **Ansible** to configure services like a backend API running on 2 VMs behind a Load Balancer, connected to an **Azure MySQL** database, along with a frontend deployed on **Azure Web App**.
-
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 ## 🛠 Built With <a name="built-with"></a>
 
 ### Tech Stack <a name="tech-stack"></a>

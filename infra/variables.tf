@@ -52,5 +52,8 @@ variable "ssh_public_key" {
   sensitive = true
 }
 
-
+variable "lb_dns_name" {
+  description = "DNS label for the public IP"
+  type        = string
+}
 
