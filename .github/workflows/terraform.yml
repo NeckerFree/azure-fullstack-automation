@@ -116,9 +116,9 @@ jobs:
           "$TERRAFORM_CLI_PATH/terraform-bin" -chdir=infra output -json > infra/tf_outputs.json
 
 
-      - name: 🐛 Debug Terraform outputs
-        run: |
-          cat infra/tf_outputs.json
+      # - name: 🐛 Debug Terraform outputs
+      #   run: |
+      #     cat infra/tf_outputs.json
           
 
       - name: 📦 Upload inventory.ini as artifact

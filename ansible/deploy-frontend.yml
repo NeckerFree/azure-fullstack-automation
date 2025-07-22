@@ -1,6 +1,8 @@
 ---
 - name: Deploy Frontend to Azure Web App
   hosts: localhost
+  connection: local
+  gather_facts: false
   vars:
     frontend_project_path: "../src/movie-analyst-ui"
     zip_file: "movie-analyst-ui.zip"
