@@ -224,7 +224,7 @@ jobs:
           echo "APP_SERVICE_NAME=$APP_SERVICE_NAME"
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME"
           echo "LB_API_URL=$LB_API_URL"
-          ansible-playbook ansible/deploy-frontend.yml
+          ansible-playbook ansible/deploy-frontend.yml -i localhost,
         env:
           APP_SERVICE_NAME: ${{ env.APP_SERVICE_NAME }}
           RESOURCE_GROUP_NAME: ${{ env.RESOURCE_GROUP_NAME }}

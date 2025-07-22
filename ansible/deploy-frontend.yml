@@ -18,6 +18,11 @@
         state: present
       become: yes
 
+    - name: Install Node.js dependencies
+      shell: npm install
+      args:
+        chdir: "{{ FRONTEND_PATH }}"
+
     - name: Set BACKEND_URL in .env file
       copy:
         dest: "{{ FRONTEND_PATH }}/.env"
@@ -38,7 +43,7 @@
           --src-path {{ ZIP_PATH }} \
           --type zip
 
-    - name: Enable Oryx build by setting SCM_DO_BUILD_DURING_DEPLOYMENT=true
+    - name: Enable Oryx build (SCM_DO_BUILD_DURING_DEPLOYMENT=true)
       shell: |
         az webapp config appsettings set \
           --resource-group {{ RESOURCE_GROUP_NAME }} \
