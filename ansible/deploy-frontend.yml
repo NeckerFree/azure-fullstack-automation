@@ -1,59 +1,34 @@
 ---
-- name: Deploy EJS Frontend to Azure Web App (Node.js)
+- name: Deploy frontend to Azure Web App
   hosts: localhost
-  connection: local
   gather_facts: no
   vars:
-    APP_SERVICE_NAME: "{{ lookup('env', 'APP_SERVICE_NAME') }}"
-    RESOURCE_GROUP_NAME: "{{ lookup('env', 'RESOURCE_GROUP_NAME') }}"
-    FRONTEND_PATH: "../src/movie-analyst-ui"
-    ZIP_PATH: "/tmp/frontend.zip"
-    BACKEND_URL: "{{ lookup('env', 'LB_API_URL') }}"
+    resource_group: softdevrg
+    app_name: softdefault-movies-app
+    frontend_path: /home/adminuser/frontend   # Ajusta esta ruta si es diferente
+    zip_path: /tmp/frontend.zip
 
   tasks:
-    - name: Disable Oryx build to prevent deployment timeout
+    - name: Enable Oryx build (SCM_DO_BUILD_DURING_DEPLOYMENT=true)
       shell: |
         az webapp config appsettings set \
-          --resource-group {{ RESOURCE_GROUP_NAME }} \
-          --name {{ APP_SERVICE_NAME }} \
-          --settings SCM_DO_BUILD_DURING_DEPLOYMENT=false
+          --resource-group {{ resource_group }} \
+          --name {{ app_name }} \
+          --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
 
-    - name: Set BACKEND_URL in .env file
-      copy:
-        dest: "{{ FRONTEND_PATH }}/.env"
-        content: |
-          BACKEND_URL={{ BACKEND_URL }}
-
-    - name: Install Node.js dependencies using npm ci
-      shell: npm ci
+    - name: Create zip package (exclude node_modules and build artifacts)
+      shell: |
+        zip -r {{ zip_path }} . -x "node_modules/*" -x ".next/*" -x "dist/*"
       args:
-        chdir: "{{ FRONTEND_PATH }}"
+        chdir: "{{ frontend_path }}"
 
-    - name: Set startup file command (npm start)
+    - name: Deploy zip to Azure Web App
       shell: |
-        az webapp config set \
-          --resource-group {{ RESOURCE_GROUP_NAME }} \
-          --name {{ APP_SERVICE_NAME }} \
-          --startup-file "npm start"
-
-    - name: Ensure zip is installed
-      package:
-        name: zip
-        state: present
-      become: yes
-
-    - name: Create zip package for deployment (excluding node_modules)
-      shell: |
-        zip -r {{ ZIP_PATH }} . -x "node_modules/*"
-      args:
-        chdir: "{{ FRONTEND_PATH }}"
-
-    - name: Deploy zip to Azure Web App using config-zip
-      shell: |
-        az webapp deployment source config-zip \
-          --resource-group {{ RESOURCE_GROUP_NAME }} \
-          --name {{ APP_SERVICE_NAME }} \
-          --src {{ ZIP_PATH }}
+        az webapp deploy \
+          --resource-group {{ resource_group }} \
+          --name {{ app_name }} \
+          --src-path {{ zip_path }} \
+          --type zip
 
     - name: Show success message
       debug:
