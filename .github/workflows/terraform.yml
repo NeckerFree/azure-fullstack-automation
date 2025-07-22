@@ -93,6 +93,7 @@ jobs:
           allowed_ssh_ip        = "${{ secrets.MY_IP_ADDRESS }}"
           mysql_user            = "${{ secrets.MYSQL_USER }}"
           mysql_admin_password  = "${{ secrets.MYSQL_ADMIN_PASSWORD }}"
+          ssh_public_key        = "${{ secrets.VM_SSH_PUB_KEY }}"
           EOF
 
       - name: 🔍 Terraform Validate
