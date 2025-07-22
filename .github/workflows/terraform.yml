@@ -122,6 +122,12 @@ jobs:
         #   name: terraform-vars
         #   path: infra/terraform.tfvars  
         #   retention-days: 1  
+      - name: 📤 Set environment variables from Terraform output
+        id: set_vars
+        run: |
+          echo "APP_SERVICE_NAME=$(jq -r .frontend_app_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP_NAME=$(jq -r .resource_group_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "LB_API_URL=http://$(jq -r .lb_public_ip.value infra/tf_outputs.json)" >> $GITHUB_ENV
 
       - name: 🗃️ Run Script Configure Jumpbox 
         run: | 
@@ -202,66 +208,8 @@ jobs:
           # echo "JUMP_USER: $JUMP_USER"
 
           ./ansible/deploy-api-jumpbox-to-vms.sh "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME" "$JUMP_HOST" "$JUMP_USER"
- 
-      - name: Get Terraform outputs
-        id: tf
-        run: |
-          cd infra
-          
-          # Use the exact Terraform binary path (appending /terraform)
-          TF_PATH="$TERRAFORM_CLI_PATH/terraform"
-          echo "Using Terraform at: $TF_PATH"
-          
-          # Verify the terraform binary exists
-          if [[ ! -f "$TF_PATH" ]]; then
-            echo "::error::Terraform binary not found at $TF_PATH"
-            ls -la "$TERRAFORM_CLI_PATH"
-            exit 1
-          fi
-          
-          # Get version to verify binary works
-          $TF_PATH version
-          
-          # Create clean outputs using the full path
-          {
-            echo "app_service_name=$($TF_PATH output -raw app_service_name | tr -d '\n\r')"
-            echo "resource_group_name=$($TF_PATH output -raw resource_group_name | tr -d '\n\r')"
-            echo "lb_api_url=$($TF_PATH output -raw lb_api_url | tr -d '\n\r')"
-          } > terraform_outputs.env
-          
-          # Verify file was created and has content
-          if [[ ! -f terraform_outputs.env ]] || [[ ! -s terraform_outputs.env ]]; then
-            echo "::error::Failed to create or terraform_outputs.env is empty"
-            exit 1
-          fi
-          
-          # Debug: Show raw file content
-          echo "Raw terraform_outputs.env content:"
-          cat terraform_outputs.env
-          
-          # Load outputs
-          source terraform_outputs.env
-          
-          # Verify outputs exist
-          if [[ -z "$app_service_name" || -z "$resource_group_name" || -z "$lb_api_url" ]]; then
-            echo "::error::Missing required outputs in terraform_outputs.env"
-            exit 1
-          fi
-          
-          # Set GitHub outputs
-          echo "app_service_name=${app_service_name}" >> $GITHUB_OUTPUT
-          echo "resource_group_name=${resource_group_name}" >> $GITHUB_OUTPUT
-          echo "lb_api_url=${lb_api_url}" >> $GITHUB_OUTPUT
-          
-          echo "✅ Verified outputs:"
-          echo "APP: ${app_service_name}"
-          echo "RG: ${resource_group_name}"
-          echo "API: ${lb_api_url}"
 
       - name: Deploy Frontend
         run: |
-          ansible-playbook ./ansible/deploy-frontend.yml \
-            -e "app_service_name=${{ steps.tf.outputs.webapp_name }}" \
-            -e "resource_group_name=${{ steps.tf.outputs.resource_group }}" \
-            -e "lb_api_url=${{ steps.tf.outputs.api_url }}" \
-            -e "frontend_src_dir=$GITHUB_WORKSPACE/src/movie-analyst-ui"
+          chmod +x ./ansible/deploy-frontend.yml
+          ansible-playbook ./ansible/deploy-frontend.yml

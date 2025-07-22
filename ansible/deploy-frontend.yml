@@ -1,75 +1,42 @@
 ---
-- name: Deploy Frontend to Azure App Service
+- name: Deploy Frontend to Azure Web App
   hosts: localhost
-  connection: local
   vars:
-    node_version: "16-lts"
+    frontend_project_path: "../src/movie-analyst-ui"
+    zip_file: "movie-analyst-ui.zip"
+    app_name: "{{ lookup('env', 'APP_SERVICE_NAME') }}"
+    resource_group: "{{ lookup('env', 'RESOURCE_GROUP_NAME') }}"
+    api_url: "{{ lookup('env', 'LB_API_URL') }}"
 
   tasks:
-    - name: Validate variables exist
-      assert:
-        that:
-          - app_service_name is defined and app_service_name | length > 0
-          - resource_group_name is defined and resource_group_name | length > 0
-          - lb_api_url is defined and lb_api_url | length > 0
-        fail_msg: "One or more required variables are missing or empty"
-        
-    - name: Show deployment configuration
-      debug:
-        msg: |
-          Deployment Configuration:
-          - App Service: {{ app_service_name }}
-          - Resource Group: {{ resource_group_name }}
-          - API URL: {{ lb_api_url }}
-          - Node Version: {{ node_version }}
+    - name: Ensure Azure CLI is logged in
+      command: az account show
+      register: azure_login
+      failed_when: azure_login.rc != 0
 
-    - name: Update Node.js runtime
-      command: >
-        az webapp config set
-        --resource-group "{{ resource_group_name }}"
-        --name "{{ app_service_name }}"
-        --linux-fx-version "NODE|{{ node_version }}"
-        --output none
-      environment:
-        AZURE_CLI_DEFAULT_API_VERSION: "2025-04-01"
+    - name: Inject API URL into EJS templates (optional)
+      lineinfile:
+        path: "{{ frontend_project_path }}/views/index.ejs"
+        regexp: 'const API_URL = .*'
+        line: 'const API_URL = "{{ api_url }}"'
+      when: api_url is defined
 
-    - name: Set app settings
-      command: >
-        az webapp config appsettings set
-        --resource-group "{{ resource_group_name }}"
-        --name "{{ app_service_name }}"
-        --settings >-
-          NODE_ENV=production
-          WEBSITES_PORT=3000
-          BACKEND_URL="{{ lb_api_url }}:8080"
-          WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
-        --output none
-      environment:
-        AZURE_CLI_DEFAULT_API_VERSION: "{{ azure_api_version }}"
+    - name: Install dependencies
+      command: npm install
+      args:
+        chdir: "{{ frontend_project_path }}"
 
-    - name: Deploy ZIP package
+    - name: Archive frontend project
+      community.general.archive:
+        path: "{{ frontend_project_path }}"
+        dest: "/tmp/{{ zip_file }}"
+        format: zip
+        exclude_path:
+          - node_modules
+
+    - name: Deploy ZIP to Azure Web App
       command: >
         az webapp deployment source config-zip
-        --resource-group "{{ resource_group_name }}"
-        --name "{{ app_service_name }}"
-        --src "./frontend-deploy.zip"
-        --output none
-      environment:
-        AZURE_CLI_DEFAULT_API_VERSION: "{{ azure_api_version }}"
-
-    # --- Verification ---
-    - name: Verify deployment
-      uri:
-        url: "https://{{ app_service_name }}.azurewebsites.net"
-        return_content: yes
-        status_code: 200
-      register: deployment_check
-      retries: 5
-      delay: 30
-      until: deployment_check.status == 200
-      ignore_errors: yes
-
-    - name: Show deployment result
-      debug:
-        msg: "✅ Successfully deployed to https://{{ app_service_name }}.azurewebsites.net"
-      when: deployment_check.status == 200
+        --resource-group {{ resource_group }}
+        --name {{ app_name }}
+        --src /tmp/{{ zip_file }}
