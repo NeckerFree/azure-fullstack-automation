@@ -208,25 +208,25 @@ jobs:
         run: |
           cd infra
           
-          # Create a script to capture clean outputs
-          cat << 'EOF' > get_outputs.sh
-          #!/bin/bash
+          # Create a clean environment file
           {
-              echo "app_service_name=$(terraform output -raw app_service_name | tr -d '\n')"
-              echo "resource_group_name=$(terraform output -raw resource_group_name | tr -d '\n')"
-              echo "lb_api_url=$(terraform output -raw lb_api_url | tr -d '\n')"
-          } >> $GITHUB_OUTPUT
-          EOF
+            echo "app_service_name=$(terraform output -raw app_service_name | tr -d '\n')"
+            echo "resource_group_name=$(terraform output -raw resource_group_name | tr -d '\n')"
+            echo "lb_api_url=$(terraform output -raw lb_api_url | tr -d '\n')"
+          } > terraform_outputs.env
           
-          # Make script executable and run it
-          chmod +x get_outputs.sh
-          ./get_outputs.sh
+          # Load the clean outputs
+          source terraform_outputs.env
           
-          # Verify outputs
-          echo "✅ Clean outputs captured:"
-          echo "APP: ${{ steps.tf.outputs.app_service_name }}"
-          echo "RG: ${{ steps.tf.outputs.resource_group_name }}"
-          echo "API: ${{ steps.tf.outputs.lb_api_url }}"
+          # Set GitHub outputs
+          echo "app_service_name=${app_service_name}" >> $GITHUB_OUTPUT
+          echo "resource_group_name=${resource_group_name}" >> $GITHUB_OUTPUT
+          echo "lb_api_url=${lb_api_url}" >> $GITHUB_OUTPUT
+          
+          echo "✅ Verified outputs:"
+          echo "APP: ${app_service_name}"
+          echo "RG: ${resource_group_name}"
+          echo "API: ${lb_api_url}"
 
 
       - name: Deploy Frontend
