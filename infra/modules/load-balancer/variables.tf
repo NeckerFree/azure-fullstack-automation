@@ -6,6 +6,7 @@ variable "virtual_network_main_id" { type = string }
 variable "backend_subnet_id" { type = string }
 variable "mysql_fqdn" { type = string }
 variable "admin_username" { type = string }
+variable "lb_dns_name" { type = string }
 
 variable "ssh_public_key" {
   description = "Public SSH key to access VMs"
@@ -18,7 +19,4 @@ variable "lb_api_port" {
   default     = 8080
 }
 
-variable "lb_dns_name" {
-  description = "DNS label for the public IP"
-  type        = string
-}
+

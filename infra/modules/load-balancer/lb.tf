@@ -4,8 +4,7 @@ resource "azurerm_public_ip" "lb" {
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
-
-  domain_name_label = var.lb_dns_name
+  domain_name_label   = var.lb_dns_name
 }
 
 resource "azurerm_lb" "main" {
