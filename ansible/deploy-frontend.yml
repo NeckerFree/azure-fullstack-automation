@@ -1,6 +1,8 @@
 ---
 - name: Deploy Frontend to Azure Web App
   hosts: localhost
+  connection: local
+  gather_facts: no
   vars:
     APP_SERVICE_NAME: "{{ lookup('env', 'APP_SERVICE_NAME') }}"
     RESOURCE_GROUP_NAME: "{{ lookup('env', 'RESOURCE_GROUP_NAME') }}"
