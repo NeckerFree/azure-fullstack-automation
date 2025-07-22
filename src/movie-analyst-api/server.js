@@ -1,7 +1,7 @@
 // Get our dependencies
 const express = require('express');
+const mysql = require('mysql2');
 const app = express();
-const mysql = require('mysql');
 const util = require('util');
 
 // Database connection
@@ -95,10 +95,11 @@ app.get('/', (req, res) =>
 });
 
 // Start server
-const port = process.env.PORT || 8080;
-app.listen(port, '0.0.0.0', () =>
+const PORT = process.env.PORT || 8080; // 8080 como valor por defecto
+app.listen(PORT, () =>
 {
-  console.log(`Server running on port ${port}`);
+  console.log(`API listening on port ${PORT}`);
 });
+
 
 module.exports = app;

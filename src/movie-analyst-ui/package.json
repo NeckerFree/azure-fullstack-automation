@@ -21,6 +21,7 @@
     "superagent": "^3.6.0"
   },
   "devDependencies": {
-    "mocha": "^11.7.1"
+    "mocha": "^11.7.1",
+    "start": "node server.js"
   }
 }

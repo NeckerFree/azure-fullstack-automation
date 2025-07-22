@@ -50,3 +50,8 @@ output "network_interface_backend_1_id" {
 output "azurerm_lb_backend_address_pool_api_pool_id" {
   value = azurerm_lb_backend_address_pool.api_pool.id
 }
+
+output "api_port" {
+  description = "Puerto público del Load Balancer para el API"
+  value       = var.lb_api_port
+}
