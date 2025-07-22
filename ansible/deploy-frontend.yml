@@ -12,6 +12,13 @@
     BACKEND_URL: "{{ lookup('env', 'LB_API_URL') }}"
 
   tasks:
+    - name: Enable Oryx build (SCM_DO_BUILD_DURING_DEPLOYMENT=true)
+      shell: |
+        az webapp config appsettings set \
+          --resource-group {{ RESOURCE_GROUP_NAME }} \
+          --name {{ APP_SERVICE_NAME }} \
+          --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
+          
     - name: Ensure zip is installed
       package:
         name: zip
@@ -42,9 +49,3 @@
           --name {{ APP_SERVICE_NAME }} \
           --src {{ ZIP_PATH }}
 
-    - name: Enable Oryx build (SCM_DO_BUILD_DURING_DEPLOYMENT=true)
-      shell: |
-        az webapp config appsettings set \
-          --resource-group {{ RESOURCE_GROUP_NAME }} \
-          --name {{ APP_SERVICE_NAME }} \
-          --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
