@@ -41,7 +41,8 @@
           --resource-group {{ RESOURCE_GROUP_NAME }} \
           --name {{ APP_SERVICE_NAME }} \
           --src-path {{ ZIP_PATH }} \
-          --type zip
+          --type zip \
+          --debug
 
     - name: Enable Oryx build (SCM_DO_BUILD_DURING_DEPLOYMENT=true)
       shell: |
