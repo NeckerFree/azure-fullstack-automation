@@ -35,14 +35,12 @@
       args:
         chdir: "{{ FRONTEND_PATH }}"
 
-    - name: Deploy zip to Azure Web App (modern command)
+    - name: Deploy zip to Azure Web App using kudu zip push
       shell: |
-        az webapp deploy \
+        az webapp deployment source config-zip \
           --resource-group {{ RESOURCE_GROUP_NAME }} \
           --name {{ APP_SERVICE_NAME }} \
-          --src-path {{ ZIP_PATH }} \
-          --type zip \
-          --debug
+          --src {{ ZIP_PATH }}
 
     - name: Enable Oryx build (SCM_DO_BUILD_DURING_DEPLOYMENT=true)
       shell: |
