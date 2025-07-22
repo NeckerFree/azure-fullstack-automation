@@ -24,11 +24,10 @@
         content: |
           BACKEND_URL={{ BACKEND_URL }}
 
-    - name: Install Node.js dependencies
-      shell: npm install
+    - name: Install Node.js dependencies using npm ci
+      shell: npm ci
       args:
         chdir: "{{ FRONTEND_PATH }}"
-
 
     - name: Set startup file command (npm start)
       shell: |
@@ -55,4 +54,16 @@
           --resource-group {{ RESOURCE_GROUP_NAME }} \
           --name {{ APP_SERVICE_NAME }} \
           --src-path {{ ZIP_PATH }} \
-          --type zip
+          --type zip \
+          --no-wait
+
+    - name: Wait for frontend to become available
+      uri:
+        url: "https://{{ APP_SERVICE_NAME }}.azurewebsites.net"
+        status_code: 200
+        timeout: 30
+        validate_certs: no
+      register: frontend_status
+      retries: 10
+      delay: 5
+      until: frontend_status.status == 200
