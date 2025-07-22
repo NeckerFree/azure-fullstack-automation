@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/juan-ruiz/movie-analyst-ui#readme",
   "dependencies": {
+    "dotenv": "^16.4.5",
     "ejs": "^2.5.7",
     "express": "^4.15.4",
     "superagent": "^3.6.0"

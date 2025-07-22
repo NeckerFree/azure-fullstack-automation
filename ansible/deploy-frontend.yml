@@ -24,6 +24,12 @@
         content: |
           BACKEND_URL={{ BACKEND_URL }}
 
+    - name: Install Node.js dependencies
+      shell: npm install
+      args:
+        chdir: "{{ FRONTEND_PATH }}"
+
+
     - name: Set startup file command (npm start)
       shell: |
         az webapp config set \
