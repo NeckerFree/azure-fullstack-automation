@@ -6,14 +6,18 @@
     node_version: "16-lts"
 
   tasks:
-    - name: Validate required variables
-      assert:
-        that:
-          - app_service_name is defined
-          - resource_group_name is defined
-          - lb_api_url is defined
-        fail_msg: "Missing required variables from GitHub Actions"
-        success_msg: "All required variables present"
+    - name: Validate variables don't contain command strings
+      fail:
+        msg: |
+          Invalid variables detected!
+          - App Service: {{ app_service_name }}
+          - Resource Group: {{ resource_group_name }}
+          - API URL: {{ lb_api_url }}
+          Check GitHub Actions workflow for proper output handling.
+      when: >
+        '[command]' in app_service_name or
+        '[command]' in resource_group_name or
+        '[command]' in lb_api_url
 
     - name: Show deployment configuration
       debug:

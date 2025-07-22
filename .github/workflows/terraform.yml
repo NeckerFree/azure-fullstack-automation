@@ -115,6 +115,13 @@ jobs:
         with:
           name: inventory
           path: ansible/inventory.ini
+      - name: Upload terraform.tfvars
+      
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-vars
+          path: infra/terraform.tfvars  
+          retention-days: 1  
 
       - name: 🗃️ Run Script Configure Jumpbox 
         run: | 
@@ -201,28 +208,26 @@ jobs:
         run: |
           cd infra
           
-          # Get outputs using raw text format (not JSON)
-          APP_NAME=$(terraform output -raw app_service_name)
-          RG_NAME=$(terraform output -raw resource_group_name)
-          API_URL=$(terraform output -raw lb_api_url)
+          # Get outputs using separate commands with proper sanitization
+          APP_NAME=$(terraform output app_service_name | sed 's/"//g' | tr -d '\n')
+          RG_NAME=$(terraform output resource_group_name | sed 's/"//g' | tr -d '\n')
+          API_URL=$(terraform output lb_api_url | sed 's/"//g' | tr -d '\n')
           
-          # Verify outputs are not empty
-          if [[ -z "$APP_NAME" || -z "$RG_NAME" || -z "$API_URL" ]]; then
-            echo "::error::Missing required Terraform outputs"
-            terraform output
+          # Verify outputs don't contain command strings
+          if [[ "$APP_NAME" == *"command"* || "$RG_NAME" == *"command"* || "$API_URL" == *"command"* ]]; then
+            echo "::error::Terraform outputs contain command strings!"
+            echo "APP_NAME: $APP_NAME"
+            echo "RG_NAME: $RG_NAME"
+            echo "API_URL: $API_URL"
             exit 1
           fi
           
-          # Sanitize outputs (remove any special characters)
-          APP_NAME=$(echo "$APP_NAME" | tr -d '\n\r"')
-          RG_NAME=$(echo "$RG_NAME" | tr -d '\n\r"')
-          API_URL=$(echo "$API_URL" | tr -d '\n\r"')
+          # Set outputs
+          echo "app_service_name=${APP_NAME}" >> $GITHUB_OUTPUT
+          echo "resource_group_name=${RG_NAME}" >> $GITHUB_OUTPUT
+          echo "lb_api_url=${API_URL}" >> $GITHUB_OUTPUT
           
-          echo "webapp_name=${APP_NAME}" >> $GITHUB_OUTPUT
-          echo "resource_group=${RG_NAME}" >> $GITHUB_OUTPUT
-          echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
-          
-          echo "✅ Verified outputs:"
+          echo "✅ Verified clean outputs:"
           echo "APP: ${APP_NAME}"
           echo "RG: ${RG_NAME}"
           echo "API: ${API_URL}"
