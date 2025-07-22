@@ -110,9 +110,9 @@ jobs:
         run: |
           terraform -chdir=infra output -json > infra/tf_outputs.json
 
-      - name: 🐛 Debug Terraform outputs
-        run: |
-          cat infra/tf_outputs.json
+      # - name: 🐛 Debug Terraform outputs
+      #   run: |
+      #     cat infra/tf_outputs.json
           
       - name: 📄 Generate Terraform outputs
         run: terraform -chdir=infra output -json > infra/tf_outputs.json
@@ -123,12 +123,6 @@ jobs:
           name: inventory
           path: ansible/inventory.ini
           
-      # - name: Upload terraform.tfvars     
-        # uses: actions/upload-artifact@v4
-        # with:
-        #   name: terraform-vars
-        #   path: infra/terraform.tfvars  
-        #   retention-days: 1  
       - name: 📤 Set Frontend environment variables from Terraform output
         run: |
           echo "APP_SERVICE_NAME=$(jq -r .app_service_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
@@ -219,3 +213,14 @@ jobs:
         run: |
           chmod +x ./ansible/deploy-frontend.yml
           ansible-playbook ./ansible/deploy-frontend.yml
+        env:
+          APP_SERVICE_NAME: ${{ env.APP_SERVICE_NAME }}
+          RESOURCE_GROUP_NAME: ${{ env.RESOURCE_GROUP_NAME }}
+          LB_API_URL: ${{ env.LB_API_URL }}
+
+      - name: 🌐 Show frontend URL
+        run: |
+          echo "✅ Your frontend is deployed and available at:"
+          echo "https://${APP_SERVICE_NAME}.azurewebsites.net"
+        env:
+          APP_SERVICE_NAME: ${{ env.APP_SERVICE_NAME }}
