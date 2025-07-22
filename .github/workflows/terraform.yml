@@ -123,11 +123,12 @@ jobs:
           name: inventory
           path: ansible/inventory.ini
           
-      - name: 📤 Set Frontend environment variables from Terraform output
+      - name: 📤 Export Terraform outputs to GitHub ENV
         run: |
           echo "APP_SERVICE_NAME=$(jq -r .app_service_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
           echo "RESOURCE_GROUP_NAME=$(jq -r .resource_group_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
           echo "LB_API_URL=$(jq -r .lb_api_url.value infra/tf_outputs.json)" >> $GITHUB_ENV
+
 
       - name: 🗃️ Run Script Configure Jumpbox 
         run: | 
@@ -212,7 +213,11 @@ jobs:
       - name: Deploy Frontend
         run: |
           chmod +x ./ansible/deploy-frontend.yml
-          ansible-playbook ./ansible/deploy-frontend.yml
+          echo "Using values:"
+          echo "APP_SERVICE_NAME=$APP_SERVICE_NAME"
+          echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME"
+          echo "LB_API_URL=$LB_API_URL"
+          ansible-playbook ansible/deploy-frontend.yml
         env:
           APP_SERVICE_NAME: ${{ env.APP_SERVICE_NAME }}
           RESOURCE_GROUP_NAME: ${{ env.RESOURCE_GROUP_NAME }}
