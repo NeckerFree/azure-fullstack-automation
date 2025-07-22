@@ -130,11 +130,10 @@ jobs:
         #   path: infra/terraform.tfvars  
         #   retention-days: 1  
       - name: 📤 Set Frontend environment variables from Terraform output
-        id: set_vars
         run: |
-          echo "APP_SERVICE_NAME=$(jq -r .frontend_app_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "APP_SERVICE_NAME=$(jq -r .app_service_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
           echo "RESOURCE_GROUP_NAME=$(jq -r .resource_group_name.value infra/tf_outputs.json)" >> $GITHUB_ENV
-          echo "LB_API_URL=http://$(jq -r .lb_public_ip.value infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "LB_API_URL=$(jq -r .lb_api_url.value infra/tf_outputs.json)" >> $GITHUB_ENV
 
       - name: 🗃️ Run Script Configure Jumpbox 
         run: | 
