@@ -7,8 +7,6 @@
     APP_SERVICE_NAME: "{{ lookup('env', 'APP_SERVICE_NAME') }}"
     RESOURCE_GROUP_NAME: "{{ lookup('env', 'RESOURCE_GROUP_NAME') }}"
     FRONTEND_PATH: "../src/movie-analyst-ui"
-    ZIP_NAME: "frontend.zip"
-    ZIP_PATH: "/tmp/{{ ZIP_NAME }}"
     BACKEND_URL: "{{ lookup('env', 'LB_API_URL') }}"
 
   tasks:
@@ -18,17 +16,6 @@
           --resource-group {{ RESOURCE_GROUP_NAME }} \
           --name {{ APP_SERVICE_NAME }} \
           --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
-          
-    - name: Ensure zip is installed
-      package:
-        name: zip
-        state: present
-      become: yes
-
-    - name: Install Node.js dependencies
-      shell: npm install
-      args:
-        chdir: "{{ FRONTEND_PATH }}"
 
     - name: Set BACKEND_URL in .env file
       copy:
@@ -36,16 +23,10 @@
         content: |
           BACKEND_URL={{ BACKEND_URL }}
 
-    - name: Create zip package for deployment (excluding node_modules)
+    - name: Deploy app folder to Azure Web App (modern Oryx build)
       shell: |
-        zip -r {{ ZIP_PATH }} . -x "node_modules/*"
-      args:
-        chdir: "{{ FRONTEND_PATH }}"
-
-    - name: Deploy zip to Azure Web App using kudu zip push
-      shell: |
-        az webapp deployment source config-zip \
+        az webapp deploy \
           --resource-group {{ RESOURCE_GROUP_NAME }} \
           --name {{ APP_SERVICE_NAME }} \
-          --src {{ ZIP_PATH }}
-
+          --src-path "{{ FRONTEND_PATH }}" \
+          --type code
