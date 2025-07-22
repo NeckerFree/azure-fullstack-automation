@@ -53,7 +53,7 @@ variable "ssh_public_key" {
 }
 
 variable "lb_dns_name" {
-  description = "DNS label for the public IP"
-  type        = string
+  type    = string
+  default = "my-movie-analyst-lb"
 }
 
