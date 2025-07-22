@@ -132,12 +132,12 @@ jobs:
           echo "📥 Exporting variables to GitHub ENV..."
           echo "APP_SERVICE_NAME=$(jq -r '.app_service_name.value' infra/tf_outputs.json)" >> $GITHUB_ENV
           echo "RESOURCE_GROUP_NAME=$(jq -r '.resource_group_name.value' infra/tf_outputs.json)" >> $GITHUB_ENV
-          echo "LB_API_IP=$(jq -r '.lb_api_ip.value' infra/tf_outputs.json)" >> $GITHUB_ENV
-          echo "LB_API_PORT=$(jq -r '.lb_api_port.value' infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "LB_API_URL=$(jq -r '.lb_api_url.value' infra/tf_outputs.json)" >> $GITHUB_ENV
+          echo "LB_API_PORT=$(jq -r '.api_public_port.value' infra/tf_outputs.json)" >> $GITHUB_ENV
 
       - name: 🔧 Compose LB API URL
         run: |
-          echo "LB_API_URL=http://${LB_API_IP}:${LB_API_PORT}" >> $GITHUB_ENV
+          echo "LB_API_URL=${LB_API_URL}:${LB_API_PORT}" >> $GITHUB_ENV
  
       - name: 🗃️ Run Script Configure Jumpbox 
         run: | 
