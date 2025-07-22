@@ -30,19 +30,13 @@
       args:
         chdir: "{{ FRONTEND_PATH }}"
 
-    - name: Deploy zip to Azure Web App
+    - name: Deploy zip to Azure Web App (modern command)
       shell: |
-        az webapp deployment source config-zip \
+        az webapp deploy \
           --resource-group {{ RESOURCE_GROUP_NAME }} \
           --name {{ APP_SERVICE_NAME }} \
-          --src {{ ZIP_PATH }}
-
-    - name: Set custom startup command for Azure Web App
-      shell: |
-        az webapp config set \
-          --resource-group {{ RESOURCE_GROUP_NAME }} \
-          --name {{ APP_SERVICE_NAME }} \
-          --startup-file "npm start"
+          --src-path {{ ZIP_PATH }} \
+          --type zip
 
     - name: Enable Oryx build by setting SCM_DO_BUILD_DURING_DEPLOYMENT=true
       shell: |
