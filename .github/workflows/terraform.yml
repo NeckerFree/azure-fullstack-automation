@@ -115,13 +115,13 @@ jobs:
         with:
           name: inventory
           path: ansible/inventory.ini
-      - name: Upload terraform.tfvars
-      
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-vars
-          path: infra/terraform.tfvars  
-          retention-days: 1  
+          
+      # - name: Upload terraform.tfvars     
+        # uses: actions/upload-artifact@v4
+        # with:
+        #   name: terraform-vars
+        #   path: infra/terraform.tfvars  
+        #   retention-days: 1  
 
       - name: 🗃️ Run Script Configure Jumpbox 
         run: | 
@@ -208,9 +208,19 @@ jobs:
         run: |
           cd infra
           
-          # Use the exact Terraform path from environment
-          TF_PATH="$TERRAFORM_CLI_PATH"
+          # Use the exact Terraform binary path (appending /terraform)
+          TF_PATH="$TERRAFORM_CLI_PATH/terraform"
           echo "Using Terraform at: $TF_PATH"
+          
+          # Verify the terraform binary exists
+          if [[ ! -f "$TF_PATH" ]]; then
+            echo "::error::Terraform binary not found at $TF_PATH"
+            ls -la "$TERRAFORM_CLI_PATH"
+            exit 1
+          fi
+          
+          # Get version to verify binary works
+          $TF_PATH version
           
           # Create clean outputs using the full path
           {

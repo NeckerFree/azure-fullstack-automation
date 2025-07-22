@@ -6,17 +6,22 @@
     node_version: "16-lts"
 
   tasks:
-    - name: Validate variables
-      fail:
+    - name: Validate variables exist
+      assert:
+        that:
+          - app_service_name is defined and app_service_name | length > 0
+          - resource_group_name is defined and resource_group_name | length > 0
+          - lb_api_url is defined and lb_api_url | length > 0
+        fail_msg: "One or more required variables are missing or empty"
+        
+    - name: Show deployment configuration
+      debug:
         msg: |
-          Missing required variables!
+          Deployment Configuration:
           - App Service: {{ app_service_name }}
           - Resource Group: {{ resource_group_name }}
           - API URL: {{ lb_api_url }}
-      when: >
-        not app_service_name or
-        not resource_group_name or
-        not lb_api_url
+          - Node Version: {{ node_version }}
 
     - name: Update Node.js runtime
       command: >
