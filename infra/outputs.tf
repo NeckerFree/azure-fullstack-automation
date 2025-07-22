@@ -48,5 +48,5 @@ output "lb_api_url" {
 
 output "api_public_port" {
   description = "Puerto expuesto del Load Balancer para el API"
-  value       = module.load_balancer.api_port
+  value       = module.load-balancer.api_port
 }
