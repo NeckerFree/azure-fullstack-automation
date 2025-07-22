@@ -54,8 +54,7 @@
           --resource-group {{ RESOURCE_GROUP_NAME }} \
           --name {{ APP_SERVICE_NAME }} \
           --src-path {{ ZIP_PATH }} \
-          --type zip \
-          --no-wait
+          --type zip 
 
     - name: Wait for frontend to become available
       uri:
