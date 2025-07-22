@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-
 # [1/4] Define SSH paths and variables
 DB_HOST=${DB_HOST:-$1}
 DB_USER=${DB_USER:-$2}
@@ -45,6 +44,5 @@ ssh -i "$SSH_KEY_LOCAL" -p "$SSH_PORT" "$JUMP_USER@$JUMP_HOST" bash <<EOF
   ansible-playbook -i inventory.ini db-setup.yml \
     --extra-vars "db_user=${DB_USER} db_pass=${DB_PASS} db_name=${DB_NAME} db_host=${DB_HOST} jump_user=${JUMP_USER}"
 EOF
-
 
 echo "[3/4] Playbook executed successfully!"

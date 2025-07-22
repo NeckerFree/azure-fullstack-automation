@@ -1,0 +1,37 @@
+# name: 🚀 Deploy Node.js App to Azure Web App
+
+# on:
+#   push:
+#     branches:
+#       - main  # o tu rama principal
+#   workflow_dispatch:  # permite ejecutarlo manualmente también
+
+# jobs:
+#   build-and-deploy:
+#     runs-on: ubuntu-latest
+
+#     env:
+#       AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+#       AZURE_WEBAPP_PACKAGE_PATH: '.'  # carpeta raíz, ajústalo si está en otra
+
+#     steps:
+#       - name: 📦 Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: 🟢 Set up Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '16'  # Ajusta según tu versión en Azure
+
+#       - name: 📦 Install dependencies
+#         run: npm install
+
+#       - name: 🧪 Optional: Run tests
+#         run: echo "No tests defined"
+
+#       - name: 📤 Deploy to Azure Web App
+#         uses: azure/webapps-deploy@v2
+#         with:
+#           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+#           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+#           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
