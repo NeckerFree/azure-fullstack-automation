@@ -201,38 +201,23 @@ jobs:
         run: |
           cd infra
           
-          # Get the full path to terraform binary
-          TF_PATH=$(which terraform)
-          echo "Using Terraform at: $TF_PATH"
+          # Get outputs using raw text format (not JSON)
+          APP_NAME=$(terraform output -raw app_service_name)
+          RG_NAME=$(terraform output -raw resource_group_name)
+          API_URL=$(terraform output -raw lb_api_url)
           
-          # Execute terraform output properly
-          $TF_PATH output -json > outputs.json
-          
-          # Verify JSON file exists and is valid
-          if [[ ! -f outputs.json ]]; then
-            echo "::error::Terraform failed to create outputs.json"
-            exit 1
-          fi
-          
-          if ! jq empty outputs.json; then
-            echo "::error::Invalid JSON in outputs.json"
-            cat outputs.json
-            exit 1
-          fi
-          
-          # Extract values safely
-          APP_NAME=$(jq -r '.app_service_name.value' outputs.json)
-          RG_NAME=$(jq -r '.resource_group_name.value' outputs.json)
-          API_URL=$(jq -r '.lb_api_url.value' outputs.json)
-          
-          # Verify values
+          # Verify outputs are not empty
           if [[ -z "$APP_NAME" || -z "$RG_NAME" || -z "$API_URL" ]]; then
-            echo "::error::Missing required values in outputs"
-            jq . outputs.json
+            echo "::error::Missing required Terraform outputs"
+            terraform output
             exit 1
           fi
           
-          # Set outputs
+          # Sanitize outputs (remove any special characters)
+          APP_NAME=$(echo "$APP_NAME" | tr -d '\n\r"')
+          RG_NAME=$(echo "$RG_NAME" | tr -d '\n\r"')
+          API_URL=$(echo "$API_URL" | tr -d '\n\r"')
+          
           echo "webapp_name=${APP_NAME}" >> $GITHUB_OUTPUT
           echo "resource_group=${RG_NAME}" >> $GITHUB_OUTPUT
           echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
