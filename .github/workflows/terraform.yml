@@ -110,6 +110,13 @@ jobs:
         run: |
           terraform -chdir=infra output -json > infra/tf_outputs.json
 
+      - name: 🐛 Debug Terraform outputs
+        run: |
+          cat infra/tf_outputs.json
+          
+      - name: 📄 Generate Terraform outputs
+        run: terraform -chdir=infra output -json > infra/tf_outputs.json
+
       - name: 📦 Upload inventory.ini as artifact
         uses: actions/upload-artifact@v4
         with:
