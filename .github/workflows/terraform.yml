@@ -208,29 +208,33 @@ jobs:
         run: |
           cd infra
           
-          # Get the full path to terraform binary
-          TF_PATH=$(which terraform)
+          # Use the exact Terraform path from environment
+          TF_PATH="$TERRAFORM_CLI_PATH"
           echo "Using Terraform at: $TF_PATH"
           
-          # Create clean outputs using full path
+          # Create clean outputs using the full path
           {
-            echo "app_service_name=$($TF_PATH output -raw app_service_name | tr -d '\n')"
-            echo "resource_group_name=$($TF_PATH output -raw resource_group_name | tr -d '\n')"
-            echo "lb_api_url=$($TF_PATH output -raw lb_api_url | tr -d '\n')"
+            echo "app_service_name=$($TF_PATH output -raw app_service_name | tr -d '\n\r')"
+            echo "resource_group_name=$($TF_PATH output -raw resource_group_name | tr -d '\n\r')"
+            echo "lb_api_url=$($TF_PATH output -raw lb_api_url | tr -d '\n\r')"
           } > terraform_outputs.env
           
-          # Verify file was created
-          if [[ ! -f terraform_outputs.env ]]; then
-            echo "::error::Failed to create terraform_outputs.env"
+          # Verify file was created and has content
+          if [[ ! -f terraform_outputs.env ]] || [[ ! -s terraform_outputs.env ]]; then
+            echo "::error::Failed to create or terraform_outputs.env is empty"
             exit 1
           fi
           
-          # Load and verify outputs
+          # Debug: Show raw file content
+          echo "Raw terraform_outputs.env content:"
+          cat terraform_outputs.env
+          
+          # Load outputs
           source terraform_outputs.env
           
+          # Verify outputs exist
           if [[ -z "$app_service_name" || -z "$resource_group_name" || -z "$lb_api_url" ]]; then
-            echo "::error::Missing required outputs"
-            cat terraform_outputs.env
+            echo "::error::Missing required outputs in terraform_outputs.env"
             exit 1
           fi
           
