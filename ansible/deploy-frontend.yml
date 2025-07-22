@@ -24,6 +24,13 @@
         content: |
           BACKEND_URL={{ BACKEND_URL }}
 
+    - name: Set startup file command (npm start)
+      shell: |
+        az webapp config set \
+          --resource-group {{ RESOURCE_GROUP_NAME }} \
+          --name {{ APP_SERVICE_NAME }} \
+          --startup-file "npm start"
+
     - name: Ensure zip is installed
       package:
         name: zip
@@ -36,7 +43,7 @@
       args:
         chdir: "{{ FRONTEND_PATH }}"
 
-    - name: Deploy zip to Azure Web App using modern CLI
+    - name: Deploy zip to Azure Web App
       shell: |
         az webapp deploy \
           --resource-group {{ RESOURCE_GROUP_NAME }} \
