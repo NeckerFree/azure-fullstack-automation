@@ -208,15 +208,31 @@ jobs:
         run: |
           cd infra
           
-          # Create a clean environment file
+          # Get the full path to terraform binary
+          TF_PATH=$(which terraform)
+          echo "Using Terraform at: $TF_PATH"
+          
+          # Create clean outputs using full path
           {
-            echo "app_service_name=$(terraform output -raw app_service_name | tr -d '\n')"
-            echo "resource_group_name=$(terraform output -raw resource_group_name | tr -d '\n')"
-            echo "lb_api_url=$(terraform output -raw lb_api_url | tr -d '\n')"
+            echo "app_service_name=$($TF_PATH output -raw app_service_name | tr -d '\n')"
+            echo "resource_group_name=$($TF_PATH output -raw resource_group_name | tr -d '\n')"
+            echo "lb_api_url=$($TF_PATH output -raw lb_api_url | tr -d '\n')"
           } > terraform_outputs.env
           
-          # Load the clean outputs
+          # Verify file was created
+          if [[ ! -f terraform_outputs.env ]]; then
+            echo "::error::Failed to create terraform_outputs.env"
+            exit 1
+          fi
+          
+          # Load and verify outputs
           source terraform_outputs.env
+          
+          if [[ -z "$app_service_name" || -z "$resource_group_name" || -z "$lb_api_url" ]]; then
+            echo "::error::Missing required outputs"
+            cat terraform_outputs.env
+            exit 1
+          fi
           
           # Set GitHub outputs
           echo "app_service_name=${app_service_name}" >> $GITHUB_OUTPUT
@@ -227,7 +243,6 @@ jobs:
           echo "APP: ${app_service_name}"
           echo "RG: ${resource_group_name}"
           echo "API: ${lb_api_url}"
-
 
       - name: Deploy Frontend
         run: |

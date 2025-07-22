@@ -7,26 +7,16 @@
 
   tasks:
     - name: Validate variables
-      assert:
-        that:
-          - "'[' not in app_service_name"
-          - "'[' not in resource_group_name"
-          - "'[' not in lb_api_url"
-        fail_msg: |
-          Invalid variables detected!
-          - App Service: {{ app_service_name }}
-          - Resource Group: {{ resource_group_name }}
-          - API URL: {{ lb_api_url }}
-          Check GitHub Actions workflow.
-
-    - name: Show deployment configuration
-      debug:
+      fail:
         msg: |
-          Deployment Configuration:
+          Missing required variables!
           - App Service: {{ app_service_name }}
           - Resource Group: {{ resource_group_name }}
           - API URL: {{ lb_api_url }}
-          - Node Version: {{ node_version }}
+      when: >
+        not app_service_name or
+        not resource_group_name or
+        not lb_api_url
 
     - name: Update Node.js runtime
       command: >
