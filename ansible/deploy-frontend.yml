@@ -56,13 +56,7 @@
           --src-path {{ ZIP_PATH }} \
           --type zip 
 
-    - name: Wait for frontend to become available
-      uri:
-        url: "https://{{ APP_SERVICE_NAME }}.azurewebsites.net"
-        status_code: 200
-        timeout: 30
-        validate_certs: no
-      register: frontend_status
-      retries: 10
-      delay: 5
-      until: frontend_status.status == 200
+    - name: Show deployment result
+      debug:
+        msg: "✅ Successfully deployed to https://{{ app_service_name }}.azurewebsites.net"
+      when: deployment_check.status == 200

@@ -110,7 +110,7 @@ This project automates the provisioning and deployment of a scalable cloud appli
 ## 🚀 Live Demo <a name="live-demo"></a>
 
 - [Frontend Web App](https://softdefault-movies-app.azurewebsites.net/)
-- [API Endpoint (behind Load Balancer)](http://your-lb-ip-or-dns)
+- [API Endpoint (behind Load Balancer)](http://my-movie-analyst-lb.westus2.cloudapp.azure.com:8080/health)
 
 <div align="center">
 <img width="778" height="590" alt="Movie Analyst main page" src="https://github.com/user-attachments/assets/e804228f-3930-4fa1-bd6f-1106f811d83c" />
