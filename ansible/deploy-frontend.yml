@@ -19,13 +19,16 @@
       args:
         chdir: "{{ frontend_project_path }}"
 
-    - name: Archive frontend project
+    - name: Build frontend project
+      command: npm run build
+      args:
+        chdir: "{{ frontend_project_path }}"
+
+    - name: Archive build output
       community.general.archive:
-        path: "{{ frontend_project_path }}"
+        path: "{{ frontend_project_path }}/build"
         dest: "/tmp/{{ zip_file }}"
         format: zip
-        exclude_path:
-          - node_modules
 
     - name: Set BACKEND_URL in App Service configuration
       command: >
