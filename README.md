@@ -127,6 +127,7 @@ This project automates the provisioning and deployment of a scalable cloud appli
 <p align="center">Latest Movie Reviews</p>
 </div>
 
+<div align="center">
 <img width="771" height="827" alt="Our Publication Partners" src="https://github.com/user-attachments/assets/67478e8b-b0e5-4a5f-88ec-3de129e9bf6f" />
 <p align="center">Our Publication Partners</p>
 <div align="center">
