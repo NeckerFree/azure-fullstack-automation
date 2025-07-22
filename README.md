@@ -33,6 +33,10 @@
 # 📖 Azure Cloud Web App Deployment <a name="about-project"></a>
 
 This project automates the provisioning and deployment of a scalable cloud application on Microsoft Azure. It uses **Terraform** to create infrastructure, and **Ansible** to configure services like a backend API running on 2 VMs behind a Load Balancer, connected to an **Azure MySQL** database, along with a frontend deployed on **Azure Web App**.
+
+<img width="1050" height="556" alt="architecture diagram" src="https://github.com/user-attachments/assets/bece791c-5d88-4e46-8bcb-af4e2c420780" />
+<p align="center">Architecture Diagram</p>
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 ## 🛠 Built With <a name="built-with"></a>
 
@@ -90,6 +94,12 @@ This project automates the provisioning and deployment of a scalable cloud appli
 - 🧹 Automated environment teardown using `terraform-destroy.yml`  
 - 💸 Uses Azure Web App **F1 Free Tier** for cost-effective deployment  
 
+<img width="1001" height="697" alt="Azure secrets" src="https://github.com/user-attachments/assets/6252116c-f71a-41cd-b4a7-5528cc219a3c" />
+<p align="center">Azure Secrets</p>
+
+<img width="760" height="647" alt="SSH App Service" src="https://github.com/user-attachments/assets/eeb418df-f4b8-4c9a-8a46-0f2f81600618" />
+<p align="center">App Service</p>
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
@@ -98,6 +108,20 @@ This project automates the provisioning and deployment of a scalable cloud appli
 
 - [Frontend Web App](https://softdefault-movies-app.azurewebsites.net/)
 - [API Endpoint (behind Load Balancer)](http://your-lb-ip-or-dns)
+
+<img width="778" height="590" alt="Movie Analyst main page" src="https://github.com/user-attachments/assets/e804228f-3930-4fa1-bd6f-1106f811d83c" />
+<p align="center">Movie Analyst main page</p>
+
+<img width="773" height="820" alt="Our Movies Critics" src="https://github.com/user-attachments/assets/1f495fae-c29d-4ce6-a87c-d0ec9636dbc9" />
+<p align="center">Our Movies Critics</p>
+
+<img width="917" height="967" alt="Latest Movie Reviews" src="https://github.com/user-attachments/assets/c17f90c8-6720-4357-a275-639deecca0ed" />
+<p align="center">Latest Movie Reviews</p>
+
+<img width="771" height="827" alt="Our Publication Partners" src="https://github.com/user-attachments/assets/67478e8b-b0e5-4a5f-88ec-3de129e9bf6f" />
+<p align="center">Our Publication Partners</p>
+
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -145,6 +169,9 @@ Infrastructure provisioning is fully automated and triggered via **GitHub Action
 - The entire infrastructure is provisioned from scratch via `terraform.yml`.
 
 ## ⚙️ Configure Services (Ansible) <a name="ansible"></a>
+
+<img width="2216" height="1205" alt="Jumpbox NSG diagram" src="https://github.com/user-attachments/assets/8a402bc6-5bb5-4070-98cc-6a13babf379a" />
+<p align="center">Ansible Jumpbox Configuration</p>
 
 Once the infrastructure is up, **Ansible playbooks** are automatically triggered within the same CI/CD workflow to:
 
