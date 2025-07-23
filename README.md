@@ -53,7 +53,6 @@ This project automates the provisioning and deployment of a scalable cloud appli
   <summary>Configuration Management</summary>
   <ul>
     <li><a href="https://www.ansible.com/">Ansible</a></li>
-    <li><a href="https://github.com/ansible-collections/azure">azure.azcollection</a></li>
   </ul>
 </details>
 
@@ -93,6 +92,11 @@ This project automates the provisioning and deployment of a scalable cloud appli
 - 🏗️ End-to-end Terraform deployment from scratch included in workflow  
 - 🧹 Automated environment teardown using `terraform-destroy.yml`  
 - 💸 Uses Azure Web App **F1 Free Tier** for cost-effective deployment  
+
+<div align="center">
+<img width="1007" height="877" alt="Get Movies in Postman (Base Address LB IP)  " src="https://github.com/user-attachments/assets/52775015-3816-484f-8efc-9a14546a8b1f" />
+<p align="center">Load Balancer API (Backend)</p>
+</div>
 
 <div align="center">
 <img width="1001" height="697" alt="Azure secrets" src="https://github.com/user-attachments/assets/6252116c-f71a-41cd-b4a7-5528cc219a3c" />
