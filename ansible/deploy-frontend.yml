@@ -2,35 +2,49 @@
 - name: Deploy frontend to Azure Web App
   hosts: localhost
   connection: local
-  gather_facts: no
   vars:
-    resource_group: softdevrg
-    app_name: softdefault-movies-app
-    frontend_path: /home/adminuser/frontend
-    zip_path: /tmp/frontend.zip
+    APP_SERVICE_NAME: "{{ lookup('env', 'APP_SERVICE_NAME') }}"
+    RESOURCE_GROUP_NAME: "{{ lookup('env', 'RESOURCE_GROUP_NAME') }}"
+    FRONTEND_PATH: "../src/movie-analyst-ui"
+    ZIP_PATH: "/tmp/frontend.zip"
+    BACKEND_URL: "{{ lookup('env', 'LB_API_URL') }}"
 
   tasks:
+
+    - name: Ensure frontend path exists
+      stat:
+        path: "{{ FRONTEND_PATH }}"
+      register: frontend_dir
+
+    - name: Fail if frontend path does not exist
+      fail:
+        msg: "The frontend path '{{ FRONTEND_PATH }}' does not exist."
+      when: not frontend_dir.stat.exists
+
+    - name: Create zip package (exclude node_modules and build artifacts)
+      command: >
+        zip -r {{ ZIP_PATH }} . -x "node_modules/*" -x ".next/*" -x "dist/*"
+      args:
+        chdir: "{{ FRONTEND_PATH }}"
+
     - name: Enable Oryx build (SCM_DO_BUILD_DURING_DEPLOYMENT=true)
       shell: |
         az webapp config appsettings set \
-          --resource-group {{ resource_group }} \
-          --name {{ app_name }} \
+          --resource-group {{ RESOURCE_GROUP_NAME }} \
+          --name {{ APP_SERVICE_NAME }} \
           --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
 
-    - name: Create zip package (exclude node_modules and build artifacts)
+    - name: Set backend API URL as environment variable
       shell: |
-        zip -r {{ zip_path }} . -x "node_modules/*" -x ".next/*" -x "dist/*"
-      args:
-        chdir: "{{ frontend_path }}"
+        az webapp config appsettings set \
+          --resource-group {{ RESOURCE_GROUP_NAME }} \
+          --name {{ APP_SERVICE_NAME }} \
+          --settings NEXT_PUBLIC_BACKEND_URL={{ BACKEND_URL }}
 
     - name: Deploy zip to Azure Web App
       shell: |
         az webapp deploy \
-          --resource-group {{ resource_group }} \
-          --name {{ app_name }} \
-          --src-path {{ zip_path }} \
+          --resource-group {{ RESOURCE_GROUP_NAME }} \
+          --name {{ APP_SERVICE_NAME }} \
+          --src-path {{ ZIP_PATH }} \
           --type zip
-
-    - name: Show success message
-      debug:
-        msg: "✅ Successfully deployed to https://{{ APP_SERVICE_NAME }}.azurewebsites.net"
