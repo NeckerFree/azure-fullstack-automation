@@ -42,11 +42,17 @@
         state: present
       become: yes
 
-    - name: Create zip package for deployment (excluding node_modules)
+    # - name: Create zip package for deployment (excluding node_modules)
+    #   shell: |
+    #     zip -r {{ ZIP_PATH }} . -x "node_modules/*"
+    #   args:
+    #     chdir: "{{ FRONTEND_PATH }}"
+    - name: Create zip package for deployment (including node_modules)
       shell: |
-        zip -r {{ ZIP_PATH }} . -x "node_modules/*"
+        zip -r {{ ZIP_PATH }} .
       args:
         chdir: "{{ FRONTEND_PATH }}"
+
 
     - name: Deploy zip to Azure Web App
       shell: |
