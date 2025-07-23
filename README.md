@@ -105,6 +105,10 @@ This project automates the provisioning and deployment of a scalable cloud appli
 </div>
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+<div align="center">
+<img width="970" height="887" alt="Workflow" src="https://github.com/user-attachments/assets/b5112807-1e02-4558-a972-facba34dd5f0" />
+<p align="center">GH Actions Workflow</p>
+</div>
 ---
 
 ## 🚀 Live Demo <a name="live-demo"></a>
@@ -262,8 +266,6 @@ terraform {
 ---
 
 ## 🔭 Future Features <a name="future-features"></a>
-
-- [ ] Add CI/CD pipeline with GitHub Actions
 - [ ] Enable autoscaling for the API tier
 - [ ] Implement managed identity-based DB auth
 
