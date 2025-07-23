@@ -1,11 +1,12 @@
 ---
 - name: Deploy frontend to Azure Web App
   hosts: localhost
+  connection: local
   gather_facts: no
   vars:
     resource_group: softdevrg
     app_name: softdefault-movies-app
-    frontend_path: /home/adminuser/frontend   # Ajusta esta ruta si es diferente
+    frontend_path: /home/adminuser/frontend
     zip_path: /tmp/frontend.zip
 
   tasks:
