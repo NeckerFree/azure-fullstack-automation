@@ -169,10 +169,10 @@ Most dependencies are installed automatically in the GitHub Actions workflow. Ho
 git clone https://github.com/NeckerFree/azure-fullstack-automation.git
 cd azure-fullstack-automation
 ```
-
+create a file 
 ## 📦 Provision Infrastructure (Terraform) <a name="terraform"></a>
 
-Infrastructure provisioning is fully automated and triggered via **GitHub Actions** on every push or pull request to the `main` branch.
+Infrastructure provisioning is fully automated and triggered via **GitHub Actions** on every push or pull request to the `master` branch.
 
 - Terraform is initialized and executed within the workflow using predefined variables.
 - The deployment includes:
@@ -199,7 +199,7 @@ This configuration is handled through the `deploy-api.yml` GitHub Actions workfl
 
 ## 🚢 Deployment <a name="deployment"></a>
 
-- 🎯 **Trigger**: Every push or pull request to `main` kicks off a full deployment pipeline.
+- 🎯 **Trigger**: Every push or pull request to `master` kicks off a full deployment pipeline.
 - 🌐 **API** is publicly reachable via the Load Balancer’s IP address.
 - 💻 **Frontend** is deployed to Azure Web App using the **F1 Free Tier**.
 - 🔐 **Secure integration** between services via environment variables and Azure-managed credentials.
@@ -212,13 +212,15 @@ This configuration is handled through the `deploy-api.yml` GitHub Actions workfl
 
 You can modify the following variables to adapt the deployment to your needs. These are defined in the Terraform configuration files:
 
-## `infra/terraform.tfvars`
+### infra/terraform.tfvars:
 
 ```hcl
-allowed_ssh_ip        = "186.155.19.140/32"         # IP allowed to access VMs via SSH
+allowed_ssh_ip        = "xxx.xxx.xxx.xxx/32"         # IP allowed to access VMs via SSH
 mysql_user            = "mysqladmin"                # MySQL admin user
 mysql_admin_password  = "Sec#reP@ssword123!"        # MySQL admin password
-
+```
+### infra\variables.tf:
+```hcl
 variable "location" {
   default = "westus2"                               # Azure region to deploy resources
 }
