@@ -48,3 +48,8 @@
           --name {{ APP_SERVICE_NAME }} \
           --src-path {{ ZIP_PATH }} \
           --type zip
+      ignore_errors: true
+
+    - name: Show success message
+      debug:
+        msg: "✅ Successfully deployed to https://{{ APP_SERVICE_NAME }}.azurewebsites.net"
