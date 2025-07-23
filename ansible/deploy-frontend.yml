@@ -55,8 +55,17 @@
           --name {{ APP_SERVICE_NAME }} \
           --src-path {{ ZIP_PATH }} \
           --type zip
+      register: deploy_result
       ignore_errors: true
 
     - name: Show success message
       debug:
         msg: "✅ Successfully deployed to https://{{ APP_SERVICE_NAME }}.azurewebsites.net"
+      when: deploy_result.rc == 0
+
+    - name: Show deployment warning message
+      debug:
+        msg: |
+          ⚠️ Deployment failed with return code {{ deploy_result.rc }}.
+          Please review logs: https://{{ APP_SERVICE_NAME }}.scm.azurewebsites.net/api/deployments/latest
+      when: deploy_result.rc != 0
