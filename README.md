@@ -34,7 +34,7 @@
 
 This project automates the provisioning and deployment of a scalable cloud application on Microsoft Azure. It uses **Terraform** to create infrastructure, and **Ansible** to configure services like a backend API running on 2 VMs behind a Load Balancer, connected to an **Azure MySQL** database, along with a frontend deployed on **Azure Web App**.
 
-<img width="1080" height="503" alt="architecture diagram" src="https://github.com/user-attachments/assets/a66138ba-d8e5-48d2-9e0e-0f6b2160ce37" />
+<img width="1080" height="503" alt="architecture diagram" src="https://github.com/user-attachments/assets/8eb7974b-3d3a-4c93-bdf0-86bb4c32605a" />
 <p align="center">Architecture Diagram</p>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
