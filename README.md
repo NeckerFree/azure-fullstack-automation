@@ -1,3 +1,4 @@
+<img width="1536" height="1024" alt="azure-fullstack-automation" src="https://github.com/user-attachments/assets/a0b9290f-8a07-48b8-ad11-a6cba5c0234d" />
 <a name="readme-top"></a>
 
 <div align="center">
@@ -33,8 +34,8 @@
 # 📖 Azure Cloud Web App Deployment <a name="about-project"></a>
 
 This project automates the provisioning and deployment of a scalable cloud application on Microsoft Azure. It uses **Terraform** to create infrastructure, and **Ansible** to configure services like a backend API running on 2 VMs behind a Load Balancer, connected to an **Azure MySQL** database, along with a frontend deployed on **Azure Web App**.
+<img width="1536" height="1024" alt="azure-fullstack-automation" src="https://github.com/user-attachments/assets/0369e2bb-c778-410d-bc62-cb9defbdfb25" />
 
-<img width="1080" height="503" alt="architecture diagram" src="https://github.com/user-attachments/assets/8eb7974b-3d3a-4c93-bdf0-86bb4c32605a" />
 <p align="center">Architecture Diagram</p>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
